@@ -150,6 +150,7 @@ $(document).ready(function () {
 		const message = messageInputField.val().trim();
 		const chatHeaderId = chatHeaderIdInput.val(); // Get current chat ID
 		const selectedModel = localStorage.getItem('selectedLlmModel') || defaultModelId;
+		const selectedTone = localStorage.getItem('selectedPersonalityTone') || 'professional';
 		
 		if (!message) return; // Don't send empty messages
 		
@@ -169,7 +170,8 @@ $(document).ready(function () {
 				_token: $('meta[name="csrf-token"]').attr('content'), // CSRF token
 				message: message,
 				chat_header_id: chatHeaderId || null, // Send null if no ID (new chat)
-				llm_model: selectedModel
+				llm_model: selectedModel,
+				personality_tone: selectedTone
 			},
 			dataType: 'json',
 			success: function (data) {

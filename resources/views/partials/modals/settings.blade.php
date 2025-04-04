@@ -7,14 +7,20 @@
 			</div>
 			<div class="modal-body">
 				<div class="mb-3">
-					<label for="defaultModeSelect" class="form-label">Default Mode:</label>
+					<label for="defaultModeSelect" class="form-label">Default Model (for new chats):</label>
 					<select class="form-select" id="defaultModeSelect">
-						<option selected>Smart Mode</option>
-						<option>Llama 3.2</option>
-						<option>Claude Sonnet</option>
-						<option>Gemini Ultra</option>
-						<option>OpenAI O1</option>
+						{{-- Options should mirror mode_selector.blade.php, using model ID as value --}}
+						{{-- Define the default mapping --}}
+						<option value="openai/gpt-4o-mini">Smart Mode (4o Mini)</option>
+						{{-- Separator isn't applicable in <select>, maybe add comments or organize --}}
+						<option value="openai/gpt-4o-mini">OpenAI: GPT-4o Mini</option>
+						<option value="openai/o1-mini">OpenAI: O1 Mini</option>
+						<option value="anthropic/claude-3.5-haiku">Anthropic: Claude 3.5 Haiku</option>
+						<option value="google/gemini-2.0-flash-001">Google: Gemini 2 Flash</option>
+						<option value="deepseek/deepseek-chat-v3-0324">Deepseek: V3 Chat</option>
+						{{-- Add any other models from mode_selector here --}}
 					</select>
+					<small class="form-text text-muted">This model will be used by default when you start a new chat.</small>
 				</div>
 				
 				<div class="mb-3">
@@ -30,29 +36,29 @@
 					<div class="row">
 						<div class="col">
 							<div class="form-check mb-2">
-								<input class="form-check-input" type="radio" name="personalityTone" id="toneProfessional" checked>
+								<input class="form-check-input" type="radio" name="personalityTone" id="toneProfessional" value="professional" checked>
 								<label class="form-check-label" for="toneProfessional">Professional</label>
 							</div>
 							<div class="form-check mb-2">
-								<input class="form-check-input" type="radio" name="personalityTone" id="toneWitty">
+								<input class="form-check-input" type="radio" name="personalityTone" id="toneWitty" value="witty">
 								<label class="form-check-label" for="toneWitty">Witty</label>
 							</div>
 							<div class="form-check mb-2">
-								<input class="form-check-input" type="radio" name="personalityTone" id="toneMotivational">
+								<input class="form-check-input" type="radio" name="personalityTone" id="toneMotivational" value="motivational">
 								<label class="form-check-label" for="toneMotivational">Motivational</label>
 							</div>
 						</div>
 						<div class="col">
 							<div class="form-check mb-2">
-								<input class="form-check-input" type="radio" name="personalityTone" id="toneFriendly">
+								<input class="form-check-input" type="radio" name="personalityTone" id="toneFriendly" value="friendly">
 								<label class="form-check-label" for="toneFriendly">Friendly</label>
 							</div>
 							<div class="form-check mb-2">
-								<input class="form-check-input" type="radio" name="personalityTone" id="tonePoetic">
+								<input class="form-check-input" type="radio" name="personalityTone" id="tonePoetic" value="poetic">
 								<label class="form-check-label" for="tonePoetic">Poetic</label>
 							</div>
 							<div class="form-check mb-2">
-								<input class="form-check-input" type="radio" name="personalityTone" id="toneSarcastic">
+								<input class="form-check-input" type="radio" name="personalityTone" id="toneSarcastic" value="sarcastic">
 								<label class="form-check-label" for="toneSarcastic">Sarcastic</label>
 							</div>
 						</div>

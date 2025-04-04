@@ -286,13 +286,27 @@ $(document).ready(function () {
 	
 	// Settings - Save (Simulation)
 	$('#saveSettingsButton').on('click', function () {
-		const mode = $('#defaultModeSelect').val();
-		const theme = $('#themeSelect').val();
-		const tone = $('input[name="personalityTone"]:checked').attr('id').replace('tone', ''); // e.g., Professional
-		console.log('Saving settings:', {mode, theme, tone});
-		// --- TODO: Add AJAX call here to save settings ---
+		// Get selected values
+		const selectedDefaultModel = $('#defaultModeSelect').val(); // Gets the model ID (e.g., 'openai/gpt-4o-mini')
+		const selectedThemeValue = $('#themeSelect').val().toLowerCase();
+		const selectedToneValue = $('input[name="personalityTone"]:checked').val();
+		
+		console.log('Saving settings:', {
+			defaultModel: selectedDefaultModel,
+			theme: selectedThemeValue,
+			tone: selectedToneValue
+		});
+		
+		// Save theme
+		applyTheme(selectedThemeValue); // Applies theme visually and saves to localStorage 'theme'
+		
+		// Save personality tone
+		localStorage.setItem('selectedPersonalityTone', selectedToneValue);
+		localStorage.setItem('selectedLlmModel', selectedDefaultModel);
+		console.log('Saved default model setting:', selectedDefaultModel);
+		// --- END NEW ---
+		
 		$('#settingsModal').modal('hide'); // Close modal on save
-		alert('Settings saved (simulated)!');
 	});
 	
 	// Summarize Content - Button Actions (Simulation)
@@ -394,5 +408,18 @@ $(document).ready(function () {
 		}
 	});
 	
+	
+	$('#settingsModal').on('show.bs.modal', function () {
+		const savedTheme = localStorage.getItem('theme') || 'light';
+		$('#themeSelect').val(savedTheme.charAt(0).toUpperCase() + savedTheme.slice(1));
+		
+		const savedTone = localStorage.getItem('selectedPersonalityTone') || 'professional';
+		$(`input[name="personalityTone"][value="${savedTone}"]`).prop('checked', true);
+		
+		const savedDefaultModel = localStorage.getItem('selectedLlmModel') || defaultModelId;
+		$('#defaultModeSelect').val(savedDefaultModel);
+		
+		console.log('Loaded default model setting:', savedDefaultModel);
+	});
 	
 }); // End $(document).ready

@@ -73,12 +73,15 @@
 				'message' => 'required|string|max:4000',
 				'chat_header_id' => 'nullable|integer|exists:chat_headers,id',
 				'llm_model' => 'nullable|string|max:100',
+				'personality_tone' => 'nullable|string|in:professional,witty,motivational,friendly,poetic,sarcastic',
 			]);
 
 			$user = Auth::user();
 			$userMessageContent = $request->input('message');
+			$selectedTone = $request->input('personality_tone', 'professional');
 			$chatHeaderId = $request->input('chat_header_id');
 			$selectedModel = $request->input('llm_model');
+
 			$chatHeader = null;
 			$isNewChat = false;
 
@@ -121,7 +124,31 @@
 				Log::info("LLM Messages for chat ID {$chatHeaderId}", ['messages' => $llmMessages]);
 
 				// Define system prompt (optional, can be customized)
-				$systemPrompt = "You are Bex, a helpful AI assistant.";
+				$basePrompt = "You are Bex, an AI assistant.";
+				switch ($selectedTone) {
+					case 'professional':
+						$systemPrompt = $basePrompt . " Respond in a helpful, professional, and concise manner.";
+						break;
+					case 'witty':
+						$systemPrompt = $basePrompt . " You have a witty and slightly humorous personality. Keep it clever but helpful.";
+						break;
+					case 'motivational':
+						$systemPrompt = $basePrompt . " You are an upbeat and motivational assistant. Encourage the user and respond with positivity.";
+						break;
+					case 'friendly':
+						$systemPrompt = $basePrompt . " You are warm, friendly, and approachable. Respond in a conversational and encouraging manner.";
+						break;
+					case 'poetic':
+						$systemPrompt = $basePrompt . " You often respond with a touch of poetic flair or thoughtful reflection, while still being helpful.";
+						break;
+					case 'sarcastic':
+						$systemPrompt = $basePrompt . " You are known for dry wit and occasional sarcasm, but ultimately aim to be helpful (even if begrudgingly).";
+						break;
+					default: // Fallback to professional
+						$systemPrompt = $basePrompt . " Respond in a helpful, professional, and concise manner.";
+						break;
+				}
+				Log::info("Using personality tone: {$selectedTone}");
 
 				$modelToUse = $selectedModel ?: env('DEFAULT_LLM', 'openai/gpt-4o-mini');
 
