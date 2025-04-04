@@ -1,0 +1,186 @@
+/* Add this entire section to the end of your app.css */
+
+/* ============================================= */
+/* Dark Mode Styles */
+/* ============================================= */
+html.dark-mode {
+    color-scheme: dark; /* Hint to browser/OS for default element styling */
+}
+
+/* Body and General Layout */
+html.dark-mode body {
+    background-color: #1a1a1a; /* Darker background */
+    color: #e0e0e0; /* Lighter default text */
+}
+html.dark-mode .sidebar {
+    background-color: #212529; /* Bootstrap dark color */
+    border-right-color: #343a40; /* Darker border */
+}
+html.dark-mode .main-content {
+    background-color: #2b2f33; /* Slightly lighter dark */
+}
+html.dark-mode .content-header,
+html.dark-mode .chat-area {
+    background-color: #212529; /* Match sidebar */
+    box-shadow: 0 1px 3px rgba(0,0,0,.5); /* Darker shadow */
+    border: 1px solid #343a40;
+}
+html.dark-mode h2, html.dark-mode h5 {
+    color: #f8f9fa; /* White text for headings */
+}
+
+/* Buttons */
+html.dark-mode .btn-success { /* Keep sidebar buttons consistent */
+    background-color: #198754;
+    border-color: #198754;
+    color: #fff;
+}
+html.dark-mode .btn-outline-secondary {
+    color: #adb5bd; /* Lighter grey */
+    border-color: #495057; /* Mid-grey border */
+}
+html.dark-mode .btn-outline-secondary:hover {
+    background-color: #495057;
+    color: #f8f9fa;
+}
+html.dark-mode .btn-primary {
+    /* Assuming primary is used for mode toggle, adjust if needed */
+}
+html.dark-mode .btn-dark {
+    background-color: #495057;
+    border-color: #495057;
+    color: #f8f9fa;
+}
+html.dark-mode .btn-dark:hover {
+    background-color: #5a6268;
+    border-color: #5a6268;
+}
+html.dark-mode .btn-secondary {
+    background-color: #495057;
+    border-color: #495057;
+    color: #f8f9fa;
+}
+html.dark-mode .btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #5a6268;
+}
+
+
+/* Forms and Inputs */
+html.dark-mode .form-control,
+html.dark-mode .form-select {
+    background-color: #2b2f33; /* Dark input background */
+    color: #e0e0e0; /* Light text */
+    border-color: #495057; /* Mid-grey border */
+}
+html.dark-mode .form-control::placeholder {
+    color: #6c757d; /* Darker placeholder */
+}
+html.dark-mode .form-check-input {
+    background-color: #495057;
+    border-color: #6c757d;
+}
+html.dark-mode .form-check-input:checked {
+    background-color: #0d6efd; /* Or your primary color */
+    border-color: #0d6efd;
+}
+html.dark-mode .input-group-text {
+    background-color: #343a40;
+    border-color: #495057;
+    color: #adb5bd;
+}
+
+/* Sidebar Specifics */
+html.dark-mode .sidebar .nav-link {
+    color: #adb5bd; /* Lighter grey for links */
+}
+html.dark-mode .sidebar .nav-link:hover {
+    color: #f8f9fa; /* White on hover */
+}
+html.dark-mode .sidebar h6 {
+    color: #6c757d; /* Keep muted titles */
+}
+
+/* Modals */
+html.dark-mode .modal-content {
+    background-color: #212529; /* Dark modal background */
+    color: #e0e0e0;
+    border: 1px solid #343a40;
+}
+html.dark-mode .modal-header {
+    border-bottom-color: #343a40;
+}
+html.dark-mode .modal-footer {
+    border-top-color: #343a40;
+}
+html.dark-mode .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%); /* Make close button visible */
+}
+html.dark-mode .list-group {
+    /* No change needed if using list-group-flush */
+}
+html.dark-mode .list-group-item {
+    background-color: #212529; /* Match modal content */
+    border-color: #343a40;
+    color: #e0e0e0;
+}
+html.dark-mode .list-group-item-action:hover,
+html.dark-mode .list-group-item-action:focus {
+    background-color: #343a40; /* Darker hover */
+    color: #f8f9fa;
+}
+html.dark-mode .list-group-item.active {
+    background-color: #0d6efd; /* Example primary color for active */
+    border-color: #0d6efd;
+    color: #fff;
+}
+html.dark-mode .details-pane {
+    color: #adb5bd; /* Lighter muted color */
+    border-color: #343a40 !important; /* Ensure border overrides inline style if needed */
+}
+html.dark-mode .nav-tabs .nav-link {
+    color: #adb5bd;
+    border-color: transparent transparent #343a40;
+}
+html.dark-mode .nav-tabs .nav-link.active {
+    color: #f8f9fa;
+    background-color: #2b2f33; /* Slightly lighter active tab */
+    border-color: #343a40 #343a40 #2b2f33;
+}
+html.dark-mode .card {
+    background-color: #2b2f33;
+    border-color: #343a40;
+}
+
+/* Other Elements */
+html.dark-mode .text-muted {
+    color: #6c757d !important; /* Keep muted text relatively dark */
+}
+html.dark-mode .text-secondary {
+    color: #adb5bd !important; /* Use lighter grey for secondary */
+}
+html.dark-mode .dropdown-menu {
+    background-color: #2b2f33;
+    border-color: #343a40;
+    color: #e0e0e0;
+}
+html.dark-mode .dropdown-item {
+    color: #e0e0e0;
+}
+html.dark-mode .dropdown-item:hover,
+html.dark-mode .dropdown-item:focus {
+    background-color: #343a40;
+    color: #f8f9fa;
+}
+html.dark-mode .dropdown-item.active,
+html.dark-mode .dropdown-item:active {
+    background-color: #0d6efd; /* Example primary color */
+    color: #fff;
+}
+html.dark-mode hr {
+    border-top-color: #343a40;
+}
+
+html.dark-mode .icon-color {
+    color: #adb5bd; /* Lighter grey for icons */
+}
