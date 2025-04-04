@@ -58,6 +58,8 @@
 				->where('chatHeader', '[0-9]+') // Ensure header ID is numeric
 				->name('chat.headers.destroy');
 
+			Route::post('/chat/tts', [ChatController::class, 'textToSpeech'])->name('chat.tts');
+
 			//     Route::get('/meetings/{meetingId}', [AppController::class, 'getMeetingDetails']);
 			//     Route::get('/notes/{noteId}', [AppController::class, 'getNoteDetails']);
 			//     Route::get('/files/{fileId}', [AppController::class, 'getFileDetails']);

@@ -87,7 +87,9 @@
 @section('content')
 	<!-- Content Header -->
 	<div class="content-header">
-		{{-- Display chat title or 'New Chat' --}}
+		<div class="d-flex align-items-center me-3"> {{-- Wrap dropdown --}}
+			@include('partials.dropdowns.mode_selector')
+		</div>
 		<h5 id="chat-title-display" class="mb-0 me-auto">
 			{{ $activeChat ? Str::limit($activeChat->title, 50) : 'New Chat' }}
 		</h5>
@@ -124,24 +126,43 @@
 	
 	<!-- Chat Area -->
 	<div class="chat-area mt-3 flex-grow-1 d-flex flex-column">
-		
 		{{-- Chat History --}}
 		<div id="chat-history-area" class="chat-history mb-3 flex-grow-1">
 			@if($messages->isEmpty())
 				<div class="text-center text-muted mt-5" id="empty-conversation">Start the conversation by typing below.</div>
 			@else
 				@foreach ($messages as $message)
-					<div class="message-bubble {{ $message->role }}" id="message-{{ $message->id }}">
+					<div class="message-bubble {{ $message->role }}" id="message-{{ $message->id }}"  data-message-content="{!! nl2br(e($message->content)) !!}">
 						{!! nl2br(e($message->content)) !!}
+						
 						@if ($message->role === 'user')
 							<button class="delete-message-btn" title="Delete pair" data-message-id="{{ $message->id }}">
 								<i class="bi bi-trash3-fill"></i>
 							</button>
 						@endif
-						{{-- Show server creation time for initially loaded messages --}}
+						
+						{{-- Show server creation time --}}
 						<div class="message-meta">
 							{{ $message->created_at->format('H:i') }} {{-- Format as HH:MM --}}
 						</div>
+						
+						{{-- Add Action Buttons for Assistant --}}
+						@if ($message->role === 'assistant')
+							<div class="message-actions">
+								<button class="btn btn-sm btn-outline-secondary copy-btn" title="Copy text"
+								        data-message-id="{{ $message->id }}"
+								        data-message-content="{{ $message->content }}"> {{-- Store raw content --}}
+									<i class="bi bi-clipboard"></i>
+								</button>
+								<button class="btn btn-sm btn-outline-secondary read-aloud-btn" title="Read aloud"
+								        data-message-id="{{ $message->id }}"
+								        data-message-content="{{ $message->content }}"> {{-- Store raw content --}}
+									<i class="bi bi-play-circle"></i>
+									{{-- Spinner placeholder (hidden by default) --}}
+									<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
+								</button>
+							</div>
+						@endif
 					</div>
 				@endforeach
 			@endif

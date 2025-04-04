@@ -72,11 +72,13 @@
 			$request->validate([
 				'message' => 'required|string|max:4000',
 				'chat_header_id' => 'nullable|integer|exists:chat_headers,id',
+				'llm_model' => 'nullable|string|max:100',
 			]);
 
 			$user = Auth::user();
 			$userMessageContent = $request->input('message');
 			$chatHeaderId = $request->input('chat_header_id');
+			$selectedModel = $request->input('llm_model');
 			$chatHeader = null;
 			$isNewChat = false;
 
@@ -99,10 +101,9 @@
 				$historyMessages = $chatHeader->messages()
 					->orderBy('created_at', 'desc')
 					->limit(self::MAX_HISTORY_PAIRS * 2) // Get last N pairs
-					->get(); // Order from oldest to newest
+					->get();
 
 				$llmMessages = [];
-				//loop through messages and add to LLM messages and add in reverse order
 				foreach ($historyMessages as $message) {
 					$llmMessages[] = [
 						'role' => $message->role,
@@ -110,13 +111,11 @@
 					];
 				}
 
-				// Save the user's message
 				$userMessage = $chatHeader->messages()->create([
 					'role' => 'user',
 					'content' => $userMessageContent,
 				]);
 
-				// Add the user's message to the LLM messages
 				$llmMessages[] = ['role' => 'user', 'content' => $userMessageContent];
 
 				Log::info("LLM Messages for chat ID {$chatHeaderId}", ['messages' => $llmMessages]);
@@ -124,9 +123,11 @@
 				// Define system prompt (optional, can be customized)
 				$systemPrompt = "You are Bex, a helpful AI assistant.";
 
+				$modelToUse = $selectedModel ?: env('DEFAULT_LLM', 'openai/gpt-4o-mini');
+
 				// Call the LLM
 				$llmResult = MyHelper::llm_no_tool_call(
-					env('DEFAULT_LLM'), // Or get model from user settings/request
+					$modelToUse,
 					$systemPrompt,
 					$llmMessages,
 					false // Get raw text content
@@ -171,7 +172,7 @@
 						$titlePrompt = "Based on the following user query and assistant response, generate a very short, concise title (max 5 words) for this conversation. Only output the title text, nothing else.\n\nUser: " . Str::limit($userMessageContent, 100) . "\n\nAssistant: " . Str::limit($assistantMessageContent, 150);
 
 						$titleResult = MyHelper::llm_no_tool_call(
-							env('DEFAULT_LLM'), // Use a cheap/fast model maybe?
+							env('DEFAULT_LLM', 'openai/gpt-4o-mini'),
 							"You are a title generator. Only output the title text.",
 							[['role' => 'user', 'content' => $titlePrompt]],
 							false
@@ -300,6 +301,45 @@
 				DB::rollBack();
 				Log::error("Error deleting chat header: " . $e->getMessage(), ['chat_header_id' => $chatHeader->id]);
 				return response()->json(['error' => 'Could not delete chat.'], 500);
+			}
+		}
+
+		public function textToSpeech(Request $request)
+		{
+			$validated = $request->validate([
+				'message_text' => 'required|string|max:4096', // Limit text length for safety
+				'voice' => 'nullable|string|in:alloy,echo,fable,onyx,nova,shimmer', // Optional: Allow specific OpenAI voices
+			]);
+
+			$text = $validated['message_text'];
+			// Use provided voice or a default one
+			$voice = $validated['voice'] ?? 'alloy'; // Defaulting to 'alloy'
+
+			Log::info("TTS request received. Voice: {$voice}, Text length: " . strlen($text));
+
+			try {
+				// Use the MyHelper function
+				$result = MyHelper::text2speech($text, $voice);
+
+				if ($result['success'] && isset($result['fileUrl'])) {
+					Log::info("TTS generation successful. URL: " . $result['fileUrl']);
+					return response()->json([
+						'success' => true,
+						'fileUrl' => $result['fileUrl']
+					]);
+				} else {
+					Log::error("TTS generation failed in Helper.", ['result' => $result]);
+					return response()->json([
+						'success' => false,
+						'error' => $result['message'] ?? 'Text-to-Speech generation failed.'
+					], 500); // Internal Server Error status
+				}
+			} catch (\Exception $e) {
+				Log::error("Exception during TTS generation: " . $e->getMessage(), ['exception' => $e]);
+				return response()->json([
+					'success' => false,
+					'error' => 'An unexpected error occurred during audio generation.'
+				], 500);
 			}
 		}
 	}
