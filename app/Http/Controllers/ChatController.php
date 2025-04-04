@@ -346,7 +346,7 @@
 
 			try {
 				// Use the MyHelper function
-				$result = MyHelper::text2speech($text, $voice);
+				$result = MyHelper::text2speech($text, $voice, 'tts_' . Str::slug(Str::limit($text, 20)));
 
 				if ($result['success'] && isset($result['fileUrl'])) {
 					Log::info("TTS generation successful. URL: " . $result['fileUrl']);
