@@ -5,6 +5,87 @@ $(document).ready(function () {
 	const lightIcon = 'bi-brightness-high-fill';
 	const darkIcon = 'bi-moon-stars-fill';
 	
+	
+	// --- Sidebar Toggle Elements ---
+	const sidebarToggle = $('#sidebarToggle');
+	const body = $('body');
+	const sidebarBackdrop = $('.sidebar-backdrop');
+	const breakpoint = 991.98; // Bootstrap LG breakpoint
+	
+	// Function to check if we are on a mobile-sized screen
+	function isMobile() {
+		return $(window).width() <= breakpoint;
+	}
+	
+	// Function to apply the correct sidebar state based on screen size and local storage
+	function applySidebarState() {
+		if (isMobile()) {
+			// On mobile, always start collapsed, remove desktop class
+			body.removeClass('sidebar-collapsed');
+			body.removeClass('sidebar-mobile-shown'); // Ensure it starts hidden
+			sidebarToggle.find('i').removeClass('bi-x').addClass('bi-list'); // Reset icon
+		} else {
+			// On desktop, check local storage
+			const desktopState = localStorage.getItem('sidebarState');
+			if (desktopState === 'collapsed') {
+				body.addClass('sidebar-collapsed');
+				sidebarToggle.find('i').removeClass('bi-x').addClass('bi-list');
+			} else {
+				body.removeClass('sidebar-collapsed'); // Default is expanded
+				sidebarToggle.find('i').removeClass('bi-list').addClass('bi-x');
+			}
+			// Ensure mobile class/backdrop are hidden on desktop
+			body.removeClass('sidebar-mobile-shown');
+		}
+	}
+	
+	// --- Sidebar Toggle Logic ---
+	sidebarToggle.on('click', function () {
+		const icon = $(this).find('i');
+		if (isMobile()) {
+			body.toggleClass('sidebar-mobile-shown');
+			// Toggle icon on mobile
+			if (body.hasClass('sidebar-mobile-shown')) {
+				icon.removeClass('bi-list').addClass('bi-x');
+			} else {
+				icon.removeClass('bi-x').addClass('bi-list');
+			}
+		} else {
+			body.toggleClass('sidebar-collapsed');
+			// Save desktop state and toggle icon
+			if (body.hasClass('sidebar-collapsed')) {
+				localStorage.setItem('sidebarState', 'collapsed');
+				icon.removeClass('bi-x').addClass('bi-list');
+			} else {
+				localStorage.setItem('sidebarState', 'expanded');
+				icon.removeClass('bi-list').addClass('bi-x');
+			}
+		}
+	});
+	
+	// Click backdrop to hide sidebar on mobile
+	sidebarBackdrop.on('click', function () {
+		if (isMobile() && body.hasClass('sidebar-mobile-shown')) {
+			body.removeClass('sidebar-mobile-shown');
+			sidebarToggle.find('i').removeClass('bi-x').addClass('bi-list'); // Reset icon
+		}
+	});
+	
+	// Re-apply state on window resize
+	let resizeTimer;
+	$(window).on('resize', function () {
+		clearTimeout(resizeTimer);
+		resizeTimer = setTimeout(function () {
+			// Apply state after resize debounce
+			applySidebarState();
+		}, 250); // Debounce resize event
+	});
+	
+	// Initial Sidebar State Application
+	applySidebarState();
+	// --- End Sidebar Toggle Logic ---
+	
+	
 	// Function to apply theme and save preference
 	function applyTheme(theme) {
 		if (theme === 'dark') {
@@ -189,6 +270,77 @@ $(document).ready(function () {
 		
 		console.log('Mode changed to:', selectedText);
 		// You might trigger an update via AJAX if needed
+	});
+	
+	// --- Dashboard Prompt Input Handling ---
+	const dashboardPromptForm = $('#dashboard-prompt-form');
+	const dashboardPromptInput = $('#dashboard-prompt-input');
+	
+	if (dashboardPromptForm.length && dashboardPromptInput.length) {
+		dashboardPromptForm.on('submit', function (e) {
+			e.preventDefault(); // Prevent default GET submission
+			const promptText = dashboardPromptInput.val().trim();
+			
+			if (promptText) {
+				// Construct the URL for the new chat page with the prompt as a query parameter
+				const chatUrl = $(this).attr('action'); // Get base URL from form action
+				const redirectUrl = chatUrl + '?prompt=' + encodeURIComponent(promptText);
+				
+				// Redirect the user
+				window.location.href = redirectUrl;
+			}
+		});
+		
+		dashboardPromptInput.focus();
+	}
+	
+	$('.sidebar .nav').on('click', '.delete-chat-btn', function (e) {
+		e.preventDefault(); // Prevent link navigation
+		e.stopPropagation(); // Stop event bubbling to the link
+		
+		const chatLinkElement = $(this).closest('a'); // Get the parent <a> tag
+		const chatId = $(this).data('chat-id');
+		const chatTitle = chatLinkElement.attr('title') || `Chat ID ${chatId}`;
+		
+		if (!chatId) {
+			console.error('Could not find chat ID for deletion.');
+			alert('Error: Could not determine which chat to delete.');
+			return;
+		}
+		
+		if (confirm(`Are you sure you want to delete the chat "${chatTitle}"? This cannot be undone.`)) {
+			// Add visual indicator (optional)
+			chatLinkElement.css('opacity', '0.5');
+			
+			$.ajax({
+				url: `/api/chat/headers/${chatId}`, // Correct API endpoint
+				method: 'DELETE',
+				data: {
+					_token: $('meta[name="csrf-token"]').attr('content') // CSRF token
+				},
+				dataType: 'json',
+				success: function (data) {
+					if (data.success) {
+						chatLinkElement.fadeOut(300, function () {
+							$(this).remove();
+						});
+						// Optional: Redirect if deleting the currently active chat
+						// if (window.location.pathname.includes(`/chat/${chatId}`)) {
+						//     window.location.href = '/'; // Redirect to dashboard
+						// }
+					} else {
+						alert(data.error || 'Could not delete chat.');
+						console.error("Chat deletion error:", data.error);
+						chatLinkElement.css('opacity', '1'); // Restore opacity on error
+					}
+				},
+				error: function (jqXHR, textStatus, errorThrown) {
+					alert('An error occurred while trying to delete the chat.');
+					console.error("AJAX Chat Deletion Error:", textStatus, errorThrown);
+					chatLinkElement.css('opacity', '1'); // Restore opacity on error
+				}
+			});
+		}
 	});
 	
 	

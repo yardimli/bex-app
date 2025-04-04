@@ -699,6 +699,126 @@
 			}
 		}
 
+		public static function amplifyMp3Volume($inputFile, $outputFile, $volumeLevel = 2.0)
+		{
+			// Check if input file exists
+			if (!file_exists($inputFile)) {
+				return false;
+			}
+
+			// Validate volume level (prevent negative values)
+			$volumeLevel = max(0, (float)$volumeLevel);
+			$bitrate = '128k';
+
+			// Construct FFmpeg command
+			$command = sprintf(
+				'ffmpeg -i %s -filter:a "volume=%.2f" -c:a libmp3lame -b:a %s %s',
+				escapeshellarg($inputFile),
+				$volumeLevel,
+				$bitrate,
+				escapeshellarg($outputFile)
+			);
+
+			// Execute command
+			exec($command, $output, $returnCode);
+
+			return $returnCode === 0;
+		}
+
+
+		public static function text2speech(
+			string $text,
+			string $voiceName,
+			string $outputFilenameBase = 'tts_output'
+		): array
+		{
+			// Determine engine, defaulting from .env
+			$filename = Str::slug($outputFilenameBase) . '.mp3'; // Use mp3 for both now
+			$directory = 'tts'; // Store in storage/app/public/tts
+			$storagePath = $directory . '/' . $filename;
+
+			if (!Storage::exists($directory)) {
+				Storage::makeDirectory($directory); // This is relative to the disk's root (storage/app)
+			}
+
+			Log::info("text2speech called. Voice: {$voiceName}, Text: '" . Str::limit($text, 50) . "...'");
+
+			try {
+				// Ensure the directory exists
+				Storage::disk('public')->makeDirectory($directory);
+
+				// --- OpenAI TTS Implementation ---
+				$apiKey = env('OPENAI_API_KEY');
+				$openAiVoice = $voiceName; // Directly use the voice name provided
+				$openAiModel = env('OPENAI_TTS_MODEL', 'tts-1');
+
+				if (!$apiKey) {
+					throw new \Exception('OpenAI API key is not configured in .env');
+				}
+
+				$response = Http::withToken($apiKey)
+					->timeout(60) // Increased timeout for audio generation
+					->post('https://api.openai.com/v1/audio/speech', [
+						'model' => $openAiModel,
+						'input' => $text,
+						'voice' => $openAiVoice,
+						'instructions' => 'Speak in a cheerful and positive tone.',
+						'response_format' => 'mp3', // Request MP3 format
+					]);
+
+				if ($response->successful()) {
+					// Save the raw audio content directly
+					$saved = Storage::disk('public')->put($storagePath, $response->body());
+					if (!$saved) {
+						throw new \Exception("Failed to save OpenAI TTS audio to disk at {$storagePath}. Check permissions.");
+					}
+
+					$loudness = 4.0; // Adjust volume level as needed
+					$newFilePath = Storage::disk('public')->path($storagePath);
+					$newFilePath = str_replace('.mp3', '_loud.mp3', $newFilePath);
+					$amplified = self::amplifyMp3Volume(Storage::disk('public')->path($storagePath), $newFilePath, $loudness);
+
+					if ($amplified) {
+						$fileUrl = Storage::disk('public')->url(str_replace('.mp3', '_loud.mp3', $storagePath));
+						$storagePath = str_replace('.mp3', '_loud.mp3', $storagePath);
+					} else {
+						$fileUrl = Storage::disk('public')->url($storagePath);
+					}
+					Log::info("OpenAI TTS successful. File saved: {$storagePath}, URL: {$fileUrl}");
+					return [
+						'success' => true,
+						'storage_path' => $storagePath,
+						'fileUrl' => $fileUrl,
+						'message' => 'OpenAI TTS generated successfully.',
+					];
+				} else {
+					$errorMessage = "OpenAI TTS API request failed. Status: " . $response->status();
+					$errorBody = $response->body();
+					Log::error($errorMessage . " Body: " . $errorBody);
+					// Attempt to decode JSON error if possible
+					$decodedError = json_decode($errorBody, true);
+					if (isset($decodedError['error']['message'])) {
+						$errorMessage .= " Message: " . $decodedError['error']['message'];
+					}
+					throw new \Exception($errorMessage);
+				}
+
+
+			} catch (\Throwable $e) {
+				Log::error("text2speech Error ({$selectedEngine}): " . $e->getMessage(), [
+					'exception' => $e,
+					'text' => Str::limit($text, 100) . '...',
+					'voice' => $voiceName,
+					'engine' => $selectedEngine
+				]);
+				return [
+					'success' => false,
+					'storage_path' => null,
+					'fileUrl' => null,
+					'message' => "TTS generation failed ({$selectedEngine}): " . $e->getMessage(),
+				];
+			}
+		}
 
 		// --- End of MyHelper class ---
 	}

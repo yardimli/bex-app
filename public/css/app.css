@@ -1,4 +1,171 @@
-/* Add this entire section to the end of your app.css */
+/* Basic styling to mimic layout */
+body {
+    background-color: #f8f9fa; /* Light background */
+}
+
+.main-wrapper {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 280px;
+    min-width: 280px;
+    transition: width 0.3s ease, min-width 0.3s ease, padding 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+    overflow-x: hidden; /* Hide horizontal overflow during transition */
+    background-color: #fff; /* White sidebar */
+    padding: 1.5rem 1rem;
+    border-right: 1px solid #dee2e6;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.main-content {
+    transition: margin-left 0.3s ease; /* For desktop push/pull */
+    position: relative; /* Needed for absolute positioning of toggle button inside */
+    /*padding-top: 70px; !* Ensure content below fixed toggle button/header *!*/
+    flex-grow: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    background-color: #e9ecef; /* Slightly darker content background */
+    display: flex;
+    flex-direction: column;
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    background-color: #fff; /* White header bar */
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem; /* Rounded corners */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .1);
+}
+
+.chat-area {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center initial prompt */
+    align-items: center;
+    background-color: #fff; /* White chat area */
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .1);
+}
+
+.message-input-wrapper {
+    margin-top: auto; /* Pushes input to bottom when chat history exists */
+    width: 100%;
+    padding-top: 1rem; /* Space above input */
+}
+
+.message-input {
+    position: relative;
+}
+
+.message-input .form-control {
+    padding-right: 7rem; /* Space for icons */
+}
+
+.message-input-icons {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.message-input-icons i {
+    margin-left: 10px;
+    cursor: pointer;
+    color: #6c757d;
+}
+
+.action-buttons {
+    text-align: center;
+    margin-top: 1rem;
+    margin-bottom: 1rem; /* Space below buttons */
+}
+
+.action-buttons .btn {
+    margin: 0 5px;
+    font-size: 0.875rem;
+}
+
+/* Modal specific styles */
+.modal-body .row .list-group {
+    max-height: 400px; /* Limit height and make scrollable */
+    overflow-y: auto;
+    border-right: 1px solid #dee2e6;
+}
+
+.modal-body .row .list-group-item {
+    cursor: pointer;
+}
+
+.modal-body .row .list-group-item.active {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+    color: #212529;
+}
+
+.details-pane {
+    padding-left: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px; /* Ensure pane has some height */
+    color: #6c757d;
+}
+
+.team-files-sidebar {
+    padding-right: 1.5rem;
+    border-right: 1px solid #dee2e6;
+}
+
+.team-files-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#summarizeContentModal .nav-tabs .nav-link {
+    cursor: pointer;
+}
+
+#summarizeContentModal .tab-pane {
+    padding-top: 1rem;
+}
+
+/* Sidebar Specific */
+.sidebar .btn-success { /* Green buttons */
+    background-color: #198754; /* Standard Bootstrap green */
+    border-color: #198754;
+}
+
+.sidebar .nav-link {
+    color: #495057;
+}
+
+.sidebar h6 { /* History/Features titles */
+    color: #6c757d;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Ensure modals appear above backdrop */
+.modal {
+    z-index: 1055;
+}
+
+.modal-backdrop {
+    z-index: 1050;
+}
+
 
 /* ============================================= */
 /* Dark Mode Styles */
@@ -12,19 +179,23 @@ html.dark-mode body {
     background-color: #1a1a1a; /* Darker background */
     color: #e0e0e0; /* Lighter default text */
 }
+
 html.dark-mode .sidebar {
     background-color: #212529; /* Bootstrap dark color */
     border-right-color: #343a40; /* Darker border */
 }
+
 html.dark-mode .main-content {
     background-color: #2b2f33; /* Slightly lighter dark */
 }
+
 html.dark-mode .content-header,
 html.dark-mode .chat-area {
     background-color: #212529; /* Match sidebar */
-    box-shadow: 0 1px 3px rgba(0,0,0,.5); /* Darker shadow */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .5); /* Darker shadow */
     border: 1px solid #343a40;
 }
+
 html.dark-mode h2, html.dark-mode h5 {
     color: #f8f9fa; /* White text for headings */
 }
@@ -35,31 +206,38 @@ html.dark-mode .btn-success { /* Keep sidebar buttons consistent */
     border-color: #198754;
     color: #fff;
 }
+
 html.dark-mode .btn-outline-secondary {
     color: #adb5bd; /* Lighter grey */
     border-color: #495057; /* Mid-grey border */
 }
+
 html.dark-mode .btn-outline-secondary:hover {
     background-color: #495057;
     color: #f8f9fa;
 }
+
 html.dark-mode .btn-primary {
     /* Assuming primary is used for mode toggle, adjust if needed */
 }
+
 html.dark-mode .btn-dark {
     background-color: #495057;
     border-color: #495057;
     color: #f8f9fa;
 }
+
 html.dark-mode .btn-dark:hover {
     background-color: #5a6268;
     border-color: #5a6268;
 }
+
 html.dark-mode .btn-secondary {
     background-color: #495057;
     border-color: #495057;
     color: #f8f9fa;
 }
+
 html.dark-mode .btn-secondary:hover {
     background-color: #5a6268;
     border-color: #5a6268;
@@ -73,17 +251,21 @@ html.dark-mode .form-select {
     color: #e0e0e0; /* Light text */
     border-color: #495057; /* Mid-grey border */
 }
+
 html.dark-mode .form-control::placeholder {
     color: #6c757d; /* Darker placeholder */
 }
+
 html.dark-mode .form-check-input {
     background-color: #495057;
     border-color: #6c757d;
 }
+
 html.dark-mode .form-check-input:checked {
     background-color: #0d6efd; /* Or your primary color */
     border-color: #0d6efd;
 }
+
 html.dark-mode .input-group-text {
     background-color: #343a40;
     border-color: #495057;
@@ -94,9 +276,11 @@ html.dark-mode .input-group-text {
 html.dark-mode .sidebar .nav-link {
     color: #adb5bd; /* Lighter grey for links */
 }
+
 html.dark-mode .sidebar .nav-link:hover {
     color: #f8f9fa; /* White on hover */
 }
+
 html.dark-mode .sidebar h6 {
     color: #6c757d; /* Keep muted titles */
 }
@@ -107,80 +291,284 @@ html.dark-mode .modal-content {
     color: #e0e0e0;
     border: 1px solid #343a40;
 }
+
 html.dark-mode .modal-header {
     border-bottom-color: #343a40;
 }
+
 html.dark-mode .modal-footer {
     border-top-color: #343a40;
 }
+
 html.dark-mode .btn-close {
     filter: invert(1) grayscale(100%) brightness(200%); /* Make close button visible */
 }
+
 html.dark-mode .list-group {
     /* No change needed if using list-group-flush */
 }
+
 html.dark-mode .list-group-item {
     background-color: #212529; /* Match modal content */
     border-color: #343a40;
     color: #e0e0e0;
 }
+
 html.dark-mode .list-group-item-action:hover,
 html.dark-mode .list-group-item-action:focus {
     background-color: #343a40; /* Darker hover */
     color: #f8f9fa;
 }
+
 html.dark-mode .list-group-item.active {
     background-color: #0d6efd; /* Example primary color for active */
     border-color: #0d6efd;
     color: #fff;
 }
+
 html.dark-mode .details-pane {
     color: #adb5bd; /* Lighter muted color */
     border-color: #343a40 !important; /* Ensure border overrides inline style if needed */
 }
+
 html.dark-mode .nav-tabs .nav-link {
     color: #adb5bd;
     border-color: transparent transparent #343a40;
 }
+
 html.dark-mode .nav-tabs .nav-link.active {
     color: #f8f9fa;
     background-color: #2b2f33; /* Slightly lighter active tab */
     border-color: #343a40 #343a40 #2b2f33;
 }
+
 html.dark-mode .card {
     background-color: #2b2f33;
     border-color: #343a40;
+    color: #e0e0e0;
 }
 
 /* Other Elements */
 html.dark-mode .text-muted {
     color: #6c757d !important; /* Keep muted text relatively dark */
 }
+
 html.dark-mode .text-secondary {
     color: #adb5bd !important; /* Use lighter grey for secondary */
 }
+
 html.dark-mode .dropdown-menu {
     background-color: #2b2f33;
     border-color: #343a40;
     color: #e0e0e0;
 }
+
 html.dark-mode .dropdown-item {
     color: #e0e0e0;
 }
+
 html.dark-mode .dropdown-item:hover,
 html.dark-mode .dropdown-item:focus {
     background-color: #343a40;
     color: #f8f9fa;
 }
+
 html.dark-mode .dropdown-item.active,
 html.dark-mode .dropdown-item:active {
     background-color: #0d6efd; /* Example primary color */
     color: #fff;
 }
+
 html.dark-mode hr {
     border-top-color: #343a40;
 }
 
 html.dark-mode .icon-color {
     color: #adb5bd; /* Lighter grey for icons */
+}
+
+html.dark-mode .icon-color:hover {
+    color: #f8f9fa; /* White on hover */
+}
+
+html.dark-mode .col-form-label {
+    color: #adb5bd; /* Lighter grey for labels */
+}
+
+
+
+
+
+
+
+/* Responsive adjustments */
+
+
+/* Toggle Button Styling */
+.sidebar-toggle-btn {
+    position: fixed; /* Fixed position relative to viewport */
+    top: 15px;
+    left: 15px;
+    width: 40px;
+    height: 40px;
+    z-index: 1051; /* Above sidebar/modals maybe? Check z-index conflicts */
+    display: none; /* Hidden by default on larger screens unless collapsed */
+    padding: 0.25rem 0.5rem;
+    font-size: 1.2rem;
+    line-height: 1;
+    background-color: var(--bs-body-bg); /* Match background */
+    border: 1px solid var(--bs-border-color);
+    color: var(--bs-body-color);
+}
+
+html.dark-mode .sidebar-toggle-btn {
+    background-color: #343a40; /* Darker bg for button */
+    border-color: #495057;
+    color: #e0e0e0;
+}
+
+.sidebar-toggle-btn:hover {
+    background-color: var(--bs-secondary-bg);
+}
+
+html.dark-mode .sidebar-toggle-btn:hover {
+    background-color: #495057;
+}
+
+
+/* --- Desktop Collapsed State --- */
+@media (min-width: 992px) {
+    body.sidebar-collapsed .sidebar {
+        width: 0;
+        min-width: 0;
+        padding-left: 0;
+        padding-right: 0;
+        opacity: 0;
+        overflow: hidden;
+    }
+
+    body.sidebar-collapsed .main-content {
+        /* Flexbox in main-wrapper should handle this automatically */
+        /* margin-left: 0; */
+    }
+
+    /* Show toggle button when collapsed on desktop */
+    body.sidebar-collapsed .sidebar-toggle-btn {
+        display: block;
+        left: 15px;
+    }
+
+    /* Position toggle button next to expanded sidebar on desktop */
+    body:not(.sidebar-collapsed) .sidebar-toggle-btn {
+        display: block;
+        left: calc(280px - 50px); /* Adjust based on sidebar width and button size */
+    }
+
+}
+
+
+/* --- Mobile/Tablet Styles (<= 991.98px) --- */
+@media (max-width: 991.98px) {
+    .sidebar {
+        position: fixed; /* Take out of flow */
+        left: 0;
+        top: 0;
+        height: 100%;
+        z-index: 1045; /* Below modal backdrop */
+        transform: translateX(-100%); /* Start hidden */
+        transition: transform 0.3s ease;
+        width: 280px; /* Restore width */
+        min-width: 280px;
+        opacity: 1; /* Ensure visible when shown */
+        border-right: 1px solid var(--bs-border-color); /* Re-add border */
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); /* Add shadow when overlaying */
+    }
+
+    html.dark-mode .sidebar {
+        border-right-color: #343a40;
+    }
+
+
+    /* When shown on mobile */
+    body.sidebar-mobile-shown .sidebar {
+        transform: translateX(0);
+    }
+
+    /* Main content takes full width on mobile */
+    .main-content {
+        margin-left: 0 !important; /* Override potential inline styles */
+        width: 100%;
+    }
+
+    /* Always show toggle button on mobile */
+    .sidebar-toggle-btn {
+        display: block;
+        left: 15px; /* Keep fixed on left */
+    }
+
+    /* Mobile Backdrop */
+    .sidebar-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1040; /* Below sidebar */
+        display: none; /* Hidden by default */
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    body.sidebar-mobile-shown .sidebar-backdrop {
+        display: block;
+        opacity: 1;
+    }
+
+    /* Ensure chat history has correct height with fixed header */
+    .chat-history {
+        height: calc(100vh - 280px); /* Adjust based on actual header/input height on mobile */
+    }
+
+    .sidebar .nav {
+        max-height: calc(100vh - 250px); /* Adjust scrollable height */
+    }
+}
+
+/* Adjust Content Header padding */
+.content-header {
+    margin-left: 0; /* Reset margin potentially added */
+    margin-right: 0; /* Reset margin potentially added */
+    padding-left: 1.5rem; /* Add padding back if needed */
+    padding-right: 1.5rem; /* Add padding back if needed */
+    /* Removed fixed width/margin adjustments */
+    /* Ensure it aligns correctly within the main-content padding */
+}
+
+/* Minor tweak for main-wrapper */
+.main-wrapper {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+@media (max-width: 991.98px) {
+    .main-wrapper {
+        /* Sidebar is fixed, wrapper doesn't need flex */
+        display: block;
+    }
+}
+
+/* Adjust main content padding if toggle button overlaps */
+.main-content {
+    /*padding-top: 75px; !* Slightly more space *!*/
+}
+
+/* Ensure modals still work */
+.modal {
+    z-index: 1055 !important;
+}
+
+.modal-backdrop {
+    z-index: 1050 !important;
 }

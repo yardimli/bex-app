@@ -3,13 +3,26 @@
 	namespace App\Http\Controllers;
 
 	use Illuminate\Http\Request;
+	use Illuminate\Support\Facades\Auth;
 
 	class AppController extends Controller
 	{
 		public function index()
 		{
-			// You might pass initial data here later if needed
-			return view('pages.dashboard');
+			$user = Auth::user();
+			if ($user) {
+				$chatHeaders = $user->chatHeaders()->orderBy('updated_at', 'desc')->get();
+
+				return view('pages.dashboard', [
+					'chatHeaders' => $chatHeaders,
+					'activeChat' => null, // Pass the active chat object (or null)
+					'messages' => null,
+				]);
+
+			} else {
+				// You might pass initial data here later if needed
+				return view('pages.dashboard');
+			}
 		}
 
 		// --- Placeholder AJAX endpoints (Add these later if needed) ---
