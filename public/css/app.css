@@ -527,7 +527,7 @@ html.dark-mode .sidebar-toggle-btn:hover {
 
     /* Ensure chat history has correct height with fixed header */
     .chat-history {
-        height: calc(100vh - 280px); /* Adjust based on actual header/input height on mobile */
+        height: calc(100vh - 300px); /* Adjust based on actual header/input height on mobile */
     }
 
     .sidebar .nav {
@@ -571,4 +571,24 @@ html.dark-mode .sidebar-toggle-btn:hover {
 
 .modal-backdrop {
     z-index: 1050 !important;
+}
+
+
+/* --- Action Item Modal Styles --- */
+#actionItemsList .list-group-item.item-done .form-check-label {
+    text-decoration: line-through;
+    color: #6c757d; /* Optional: Mute the color */
+}
+
+#actionItemsList .delete-action-item-btn {
+    opacity: 0.6; /* Make delete less prominent until hover */
+    transition: opacity 0.2s ease-in-out;
+}
+#actionItemsList .list-group-item:hover .delete-action-item-btn {
+    opacity: 1; /* Show delete button clearly on hover */
+}
+
+/* Dark mode specific if needed */
+html.dark-mode #actionItemsList .list-group-item.item-done .form-check-label {
+    color: #adb5bd; /* Lighter muted color for dark mode */
 }

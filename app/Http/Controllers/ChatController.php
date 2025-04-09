@@ -86,8 +86,25 @@
 			$isNewChat = false;
 
 			DB::beginTransaction(); // Start transaction for atomicity
-
 			try {
+				// --- START: Action Item Extraction ---
+				// We do this *before* creating the user message in DB,
+				// but it needs to be inside the transaction.
+				// Run this extraction regardless of whether it's a new chat or not.
+				$extractedActionItems = null;
+				try {
+					// Use a potentially faster/cheaper model for detection if desired
+					// Pass null to use the default from the helper/env
+					$actionItemModel = 'openai/gpt-4o-mini'; // Or another suitable model like Claude Haiku
+					//$actionItemModel = 'anthropic/claude-3-haiku-20240307';
+					$extractedActionItems = MyHelper::extractActionItems($userMessageContent, $actionItemModel);
+				} catch (\Exception $e) {
+					Log::error("Exception during action item extraction call", ['error' => $e->getMessage()]);
+					// Do not stop the chat flow, just log the error.
+				}
+				// --- END: Action Item Extraction ---
+
+
 				// Find existing or create new ChatHeader
 				if ($chatHeaderId) {
 					$chatHeader = ChatHeader::where('user_id', $user->id)->findOrFail($chatHeaderId);
@@ -99,6 +116,45 @@
 					$chatHeaderId = $chatHeader->id;
 					$isNewChat = true;
 				}
+
+				// --- START: Save Extracted Action Items ---
+				if (!empty($extractedActionItems) && is_array($extractedActionItems)) {
+					Log::info("Saving extracted action items", ['count' => count($extractedActionItems), 'chat_header_id' => $chatHeaderId]);
+					foreach ($extractedActionItems as $itemContent) {
+						// Basic check to avoid overly long items, although the model should handle length
+						$itemContent = Str::limit(trim($itemContent), 990); // Limit slightly below DB max
+						if (!empty($itemContent)) {
+							try {
+								// Check for duplicates (optional, based on exact content match)
+								$exists = $user->actionItems()
+									->where('content', $itemContent)
+									->where('is_done', false) // Only check against open items
+									->exists();
+
+								if (!$exists) {
+									$user->actionItems()->create([
+										'content' => $itemContent,
+										'is_done' => false,
+										// 'due_date' => null, // Add logic later if needed
+									]);
+									Log::info("Action item saved", ['content' => $itemContent]);
+								} else {
+									Log::info("Duplicate action item skipped", ['content' => $itemContent]);
+								}
+							} catch (\Exception $e) {
+								Log::error("Failed to save an extracted action item", [
+									'content' => $itemContent,
+									'error' => $e->getMessage(),
+									'chat_header_id' => $chatHeaderId
+								]);
+								// Continue saving other items if possible
+							}
+						}
+					}
+					// Potential future enhancement: Notify user in chat response or via UI toast
+				}
+				// --- END: Save Extracted Action Items ---
+
 
 				// Prepare message history for LLM
 				$historyMessages = $chatHeader->messages()

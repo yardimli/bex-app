@@ -4,7 +4,7 @@
 @push('styles')
 	<style>
       .chat-history {
-          height: calc(100vh - 350px);
+          height: calc(100vh - 380px);
 		      width: 100%;
           overflow-y: auto;
           padding: 15px;
@@ -177,6 +177,14 @@
 		
 		{{-- Message Input Area --}}
 		<div class="message-input-wrapper mt-auto w-100 px-3 pb-3"> {{-- Use w-100 and add padding --}}
+			<div class="action-buttons">
+				<button class="btn btn-outline-secondary" id="meetingSummaryButton"><i class="bi bi-calendar-check me-1"></i> Meeting Summary</button>
+				<button class="btn btn-outline-secondary" id="actionItemsButton"><i class="bi bi-check2-square me-1"></i> My Action Items</button>
+				<button class="btn btn-outline-secondary" id="myNotesButton"><i class="bi bi-journal-text me-1"></i> My Notes</button>
+				<button class="btn btn-outline-secondary" id="myRecordingsButton"><i class="bi bi-mic me-1"></i> My Recordings</button>
+				<button class="btn btn-outline-secondary" id="moreActionsButton"><i class="bi bi-three-dots me-1"></i> More</button> {{-- Consider adding functionality or removing if not used --}}
+			</div>
+			
 			<form id="chat-input-form">
 				@csrf {{-- Include CSRF token --}}
 				{{-- Hidden input to store the current chat ID --}}
@@ -186,8 +194,8 @@
 					<textarea class="form-control form-control-lg" id="message-input-field" name="message" placeholder="Message Bex..." rows="1" style="resize: none;" required>{{ $initialPrompt ? e($initialPrompt) : '' }}</textarea>
 					<div class="message-input-icons">
 						<i class="bi bi-paperclip icon-color" title="Attach file (Not implemented)"></i>
-						<button type="submit" class="btn btn-link p-0 ms-2" id="send-message-button" title="Send">
-							<i class="bi bi-send-fill fs-5 icon-color"></i>
+						<button type="submit" class="btn btn-link p-0 ms-0 mt-0 pt-0" style="border:0px; vertical-align: top;" id="send-message-button" title="Send">
+							<i class="bi bi-send-fill fs-6 icon-color" style="font-size:0.9rem !important;"></i>
 						</button>
 						 <i class="bi bi-mic-fill icon-color ms-2" title="Voice input (Not implemented)"></i>
 					</div>

@@ -1,5 +1,6 @@
 <?php
 
+	use App\Http\Controllers\Api\ActionItemController;
 	use App\Http\Controllers\Auth\LoginController;
 	use App\Http\Controllers\Auth\RegisterController;
 	use App\Http\Controllers\ChatController;
@@ -60,12 +61,22 @@
 
 			Route::post('/chat/tts', [ChatController::class, 'textToSpeech'])->name('chat.tts');
 
+
+
+			Route::get('/action-items', [ActionItemController::class, 'index'])->name('action-items.index');
+			Route::post('/action-items', [ActionItemController::class, 'store'])->name('action-items.store');
+			Route::patch('/action-items/{actionItem}', [ActionItemController::class, 'update'])
+				->where('actionItem', '[0-9]+')
+				->name('action-items.update'); // Use PATCH for partial updates
+			Route::delete('/action-items/{actionItem}', [ActionItemController::class, 'destroy'])
+				->where('actionItem', '[0-9]+')
+				->name('action-items.destroy');
+
+
 			//     Route::get('/meetings/{meetingId}', [AppController::class, 'getMeetingDetails']);
 			//     Route::get('/notes/{noteId}', [AppController::class, 'getNoteDetails']);
 			//     Route::get('/files/{fileId}', [AppController::class, 'getFileDetails']);
 			//     Route::get('/recordings/{recordingId}', [AppController::class, 'getRecordingDetails']);
-			//     Route::get('/action-items', [AppController::class, 'getActionItems']);
-			//     Route::post('/action-items', [AppController::class, 'addActionItem']);
 			//     Route::post('/settings', [AppController::class, 'updateSettings']);
 			//     Route::post('/summarize', [AppController::class, 'summarize']);
 			//     Route::post('/transcribe', [AppController::class, 'transcribe']);

@@ -252,38 +252,6 @@ $(document).ready(function () {
 	handleListItemClick('#myRecordingsModal', '.details-pane', 'Select a recording to play');
 	handleListItemClick('#teamFilesModal', '.details-pane', 'Select a file to view details or preview'); // Note: target the specific details pane in team files
 	
-	// --- Specific Modal Interactions ---
-	
-	// Action Items - Add Item (Simulation)
-	$('#addActionItemButton').on('click', function () {
-		const newItemText = $('#newActionItemInput').val().trim();
-		if (newItemText) {
-			const newItemId = 'action' + Date.now(); // Simple unique ID
-			const newItemHtml = `
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <input class="form-check-input me-2" type="checkbox" value="" id="${newItemId}">
-                        <label class="form-check-label" for="${newItemId}">
-                            ${$('<div>').text(newItemText).html()} <!-- Basic XSS protection -->
-                        </label>
-                        <br><small class="text-muted ms-4">Due: Not set</small>
-                    </div>
-                    <button class="btn btn-sm btn-outline-danger ms-2 remove-item-btn"><i class="bi bi-trash"></i></button>
-                </li>`;
-			$('#actionItemsModal .list-group').append(newItemHtml);
-			$('#newActionItemInput').val('');
-			console.log('Added action item:', newItemText);
-			// --- TODO: Add AJAX call here to save the item ---
-		}
-	});
-	// Action Items - Remove Item (Event delegation for dynamically added items)
-	$('#actionItemsModal .list-group').on('click', '.remove-item-btn', function () {
-		$(this).closest('.list-group-item').remove();
-		console.log('Removed action item.');
-		// --- TODO: Add AJAX call here to remove the item ---
-	});
-	
-	
 	// Settings - Save (Simulation)
 	$('#saveSettingsButton').on('click', function () {
 		// Get selected values

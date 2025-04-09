@@ -56,6 +56,8 @@
         crossorigin="anonymous"></script>
 <!-- Custom JS -->
 <script src="{{ asset('js/app.js') }}"></script>
+<script src="{{ asset('js/action-items.js') }}"></script>
+
 @stack('scripts')
 
 </body>

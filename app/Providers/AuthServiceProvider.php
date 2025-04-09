@@ -1,26 +1,33 @@
 <?php
 
-namespace App\Providers;
+	namespace App\Providers;
 
-// use Illuminate\Support\Facades\Gate;
-use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+	// use Illuminate\Support\Facades\Gate;
+	use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
-class AuthServiceProvider extends ServiceProvider
-{
-    /**
-     * The model to policy mappings for the application.
-     *
-     * @var array<class-string, class-string>
-     */
-    protected $policies = [
-        //
-    ];
+	use App\Models\ActionItem;
 
-    /**
-     * Register any authentication / authorization services.
-     */
-    public function boot(): void
-    {
-        //
-    }
-}
+	// Add model
+	use App\Policies\ActionItemPolicy;
+
+	// Add policy
+
+	class AuthServiceProvider extends ServiceProvider
+	{
+		/**
+		 * The model to policy mappings for the application.
+		 *
+		 * @var array<class-string, class-string>
+		 */
+		protected $policies = [
+			ActionItem::class => ActionItemPolicy::class, // Register the policy
+		];
+
+		/**
+		 * Register any authentication / authorization services.
+		 */
+		public function boot(): void
+		{
+			//
+		}
+	}

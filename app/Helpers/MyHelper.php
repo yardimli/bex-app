@@ -820,5 +820,92 @@
 			}
 		}
 
+		public static function extractActionItems(string $text, ?string $model = null): ?array
+		{
+			if (empty(trim($text))) {
+				return null; // Nothing to process
+			}
+
+			// Use a specific, potentially cheaper/faster model if desired for this task
+			$modelToUse = $model ?: env('ACTION_ITEM_LLM', 'openai/gpt-4o-mini');
+
+			// Specific system prompt for action item extraction
+			$systemPrompt = "You are an action item detection assistant. Analyze the following user message carefully. Identify any specific tasks, action items, reminders, or to-do list items that the user explicitly states they need to do or be reminded of. Extract the core content of each distinct action item. Respond ONLY with a valid JSON array containing strings of the identified action items. Each string in the array should represent a single action item. If no action items are found, respond with an empty JSON array `[]`. Do not include explanations, introductions, or any conversational text outside the JSON array.";
+
+			$messages = [
+				['role' => 'user', 'content' => $text]
+			];
+
+			Log::info("Attempting action item extraction via llm_no_tool_call", ['model' => $modelToUse, 'text_preview' => Str::limit($text, 100)]);
+
+			// Call the reusable LLM function
+			$llmResult = self::llm_no_tool_call(
+				$modelToUse,
+				$systemPrompt,
+				$messages,
+				false, // Request JSON mode
+				300   // Set max tokens (adjust as needed)
+			);
+
+			Log::info("LLM call completed for action item extraction", ['model' => $modelToUse, 'result' => $llmResult]);
+
+			if (is_null($llmResult['content'])) {
+				Log::error("Action Item Extraction failed in llm_no_tool_call", [
+					'error' => $llmResult['error'],
+					'model' => $modelToUse,
+				]);
+				return null;
+			}
+
+			$content = trim($llmResult['content']);
+			Log::info("Action Item Extraction Raw Response", ['content' => $content]);
+
+			// Attempt to decode the JSON content
+			$decoded = json_decode($content, true);
+
+			$actionItems = []; // Initialize empty array
+
+			// Check if decoding failed or result is not an array
+			if (json_last_error() !== JSON_ERROR_NONE ||  !is_array($decoded)) {
+				// Maybe the LLM returned { "action_items": [...] } even with json_object mode?
+				if(is_array($decoded) && isset($decoded['action_items']) && is_array($decoded['action_items'])) {
+					$actionItems = $decoded['action_items'];
+					Log::info("Action Item Extraction: Parsed from nested 'action_items' key.");
+				} else {
+					Log::warning("Action Item Extraction: LLM response was not valid JSON array.", ['raw_content' => $content]);
+					// Attempt to find JSON array within the string as a fallback
+					if (preg_match('/\[\s*(?:".*?"\s*,\s*)*".*?"?\s*\]/s', $content, $matches)) { // Improved regex for quoted strings
+						$potentialJson = $matches[0];
+						$decodedFallback = json_decode($potentialJson, true);
+						if (json_last_error() === JSON_ERROR_NONE && is_array($decodedFallback)) {
+							Log::info("Action Item Extraction: Successfully extracted JSON array via regex fallback.");
+							$actionItems = $decodedFallback;
+						} else {
+							Log::warning("Action Item Extraction: Regex fallback failed to decode JSON.", ['potential_json' => $potentialJson]);
+							return null; // Failed to get valid JSON
+						}
+					} else {
+						return null; // No JSON array found
+					}
+				}
+			} else {
+				// Successfully decoded the main content as a JSON array
+				$actionItems = $decoded;
+				Log::info("Action Item Extraction: Parsed directly decoded JSON array.");
+			}
+
+			// Ensure all items are strings and filter out empty ones
+			$validItems = array_filter(array_map('strval', $actionItems ?? []), function($item) {
+				return !empty(trim($item));
+			});
+
+			if (!empty($validItems)) {
+				Log::info("Action Items Extracted Successfully", ['items' => $validItems]);
+				return array_values($validItems); // Return re-indexed array
+			} else {
+				Log::info("No valid action items detected or extracted by LLM.");
+				return []; // Return empty array instead of null if no items found but call succeeded
+			}
+		}
 		// --- End of MyHelper class ---
 	}

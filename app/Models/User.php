@@ -6,12 +6,18 @@
 	use Illuminate\Database\Eloquent\Factories\HasFactory;
 	use Illuminate\Foundation\Auth\User as Authenticatable;
 	use Illuminate\Notifications\Notifiable;
-	use Laravel\Sanctum\HasApiTokens; // If using Sanctum
+	use Laravel\Sanctum\HasApiTokens;
+	use Illuminate\Database\Eloquent\Relations\HasMany;
+
+	use App\Models\ChatHeader;
+	use App\Models\ActionItem;
 
 // class User extends Authenticatable implements MustVerifyEmail // <-- Original if it existed
 	class User extends Authenticatable // <-- CHANGE TO THIS
 	{
-		use HasApiTokens, HasFactory, Notifiable; // Adapt traits as needed
+		use HasApiTokens, HasFactory, Notifiable;
+
+		// Adapt traits as needed
 
 		/**
 		 * The attributes that are mass assignable.
@@ -47,6 +53,11 @@
 		public function chatHeaders()
 		{
 			return $this->hasMany(ChatHeader::class)->orderBy('updated_at', 'desc'); // Order by most recently updated
+		}
+
+		public function actionItems() : HasMany
+		{
+			return $this->hasMany(ActionItem::class)->orderBy('created_at', 'asc'); // Or order as you prefer
 		}
 
 	}
