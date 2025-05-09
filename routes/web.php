@@ -1,6 +1,7 @@
 <?php
 
 	use App\Http\Controllers\Api\ActionItemController;
+	use App\Http\Controllers\Api\NoteController;
 	use App\Http\Controllers\Auth\LoginController;
 	use App\Http\Controllers\Auth\RegisterController;
 	use App\Http\Controllers\ChatController;
@@ -73,11 +74,11 @@
 				->name('action-items.destroy');
 
 			// Note Routes
-			Route::get('/notes', [Api\NoteController::class, 'index'])->name('notes.index');
-			Route::post('/notes', [Api\NoteController::class, 'store'])->name('notes.store');
-			Route::get('/notes/{note}', [Api\NoteController::class, 'show'])->name('notes.show')->where('note', '[0-9]+');
-			Route::put('/notes/{note}', [Api\NoteController::class, 'update'])->name('notes.update')->where('note', '[0-9]+'); // Or PATCH
-			Route::delete('/notes/{note}', [Api\NoteController::class, 'destroy'])->name('notes.destroy')->where('note', '[0-9]+');
+			Route::get('/notes', [NoteController::class, 'index'])->name('notes.index');
+			Route::post('/notes', [NoteController::class, 'store'])->name('notes.store');
+			Route::get('/notes/{note}', [NoteController::class, 'show'])->name('notes.show')->where('note', '[0-9]+');
+			Route::put('/notes/{note}', [NoteController::class, 'update'])->name('notes.update')->where('note', '[0-9]+'); // Or PATCH
+			Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->name('notes.destroy')->where('note', '[0-9]+');
 
 
 			//     Route::get('/meetings/{meetingId}', [AppController::class, 'getMeetingDetails']);
