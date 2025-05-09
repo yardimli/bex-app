@@ -12,6 +12,7 @@
 	use Illuminate\Support\Facades\DB;
 	use Illuminate\Support\Facades\Log;
 	use Illuminate\Support\Str;
+	use App\Models\Note;
 
 	class ChatController extends Controller
 	{
@@ -88,9 +89,6 @@
 			DB::beginTransaction(); // Start transaction for atomicity
 			try {
 				// --- START: Action Item Extraction ---
-				// We do this *before* creating the user message in DB,
-				// but it needs to be inside the transaction.
-				// Run this extraction regardless of whether it's a new chat or not.
 				$extractedActionItems = null;
 				try {
 					// Use a potentially faster/cheaper model for detection if desired
@@ -103,6 +101,46 @@
 					// Do not stop the chat flow, just log the error.
 				}
 				// --- END: Action Item Extraction ---
+
+				// --- START: Note Intent Extraction ---
+				$noteIntentData = null;
+				$createdNoteFromChat = null; // To potentially inform the user
+				try {
+					// You can use a different model if desired, e.g., a faster one for intent detection
+					$noteIntentModel = env('NOTE_INTENT_LLM', 'openai/gpt-4o-mini');
+					$noteIntentData = MyHelper::extractNoteIntents($userMessageContent, $noteIntentModel);
+
+					if ($noteIntentData && isset($noteIntentData['intent'])) {
+						if ($noteIntentData['intent'] === 'create_note' && !empty($noteIntentData['title']) && isset($noteIntentData['content'])) {
+							$noteTitle = Str::limit(trim($noteIntentData['title']), 250);
+							$noteContent = trim($noteIntentData['content']);
+
+							if (!empty($noteTitle)) { // Ensure title is not empty after trim/limit
+								$newNote = $user->notes()->create([
+									'title' => $noteTitle,
+									'content' => $noteContent,
+								]);
+								$createdNoteFromChat = $newNote; // Store for potential feedback
+								Log::info("New note created from chat intent", ['note_id' => $newNote->id, 'title' => $noteTitle]);
+							} else {
+								Log::warning("Note creation intent detected, but title was empty after processing.", ['data' => $noteIntentData]);
+							}
+						} elseif ($noteIntentData['intent'] === 'append_to_note') {
+							// TODO: Implement logic to find and append to an existing note
+							// This is more complex: needs to find the note by title_hint,
+							// potentially ask for clarification if multiple matches or no match.
+							// For now, just log it.
+							Log::info("Append to note intent detected (not yet implemented)", [
+								'hint' => $noteIntentData['note_title_hint'] ?? 'N/A',
+								'content_to_append' => $noteIntentData['content_to_append'] ?? 'N/A'
+							]);
+						}
+					}
+				} catch (\Exception $e) {
+					Log::error("Exception during note intent extraction or creation", ['error' => $e->getMessage()]);
+					// Do not stop the chat flow, just log.
+				}
+				// --- END: Note Intent Extraction ---
 
 
 				// Find existing or create new ChatHeader

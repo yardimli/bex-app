@@ -29,155 +29,6 @@
 
 	class MyHelper
 	{
-		public static function checkLLMsJson()
-		{
-			// Ensure Storage facade is correctly used
-			$llmsJsonPath = storage_path('app/public/llms.json'); // Store in storage/app/public
-
-			// Create public directory if it doesn't exist
-			if (!File::exists(storage_path('app/public'))) {
-				Storage::disk('public')->makeDirectory('/');
-			}
-
-
-			if (!File::exists($llmsJsonPath) || Carbon::now()->diffInDays(Carbon::createFromTimestamp(File::lastModified($llmsJsonPath))) > 1) {
-				try {
-					$client = new Client(['timeout' => 30]); // Add timeout
-					$response = $client->get('https://openrouter.ai/api/v1/models');
-					$data = json_decode($response->getBody(), true);
-
-					if (isset($data['data'])) {
-						File::put($llmsJsonPath, json_encode($data['data'], JSON_PRETTY_PRINT)); // Make it readable
-					} else {
-						Log::warning('Failed to fetch or parse LLMs from OpenRouter.');
-						// Fallback: Check if an older file exists, otherwise return empty
-						return File::exists($llmsJsonPath) ? json_decode(File::get($llmsJsonPath), true) : [];
-					}
-				} catch (\Exception $e) {
-					Log::error('Error fetching LLMs from OpenRouter: ' . $e->getMessage());
-					// Fallback: Check if an older file exists, otherwise return empty
-					return File::exists($llmsJsonPath) ? json_decode(File::get($llmsJsonPath), true) : [];
-				}
-			}
-
-			// --- Modification for no-login ---
-			// For this app, we always act as if the user has *no* key initially.
-			// We could potentially allow an admin key via env for wider model access internally.
-			// $openrouter_admin_or_key = false;
-			// if ((Auth::user() && Auth::user()->isAdmin()) ||
-			//     (Auth::user() && !empty(Auth::user()->openrouter_key))) {
-			//     $openrouter_admin_or_key = true;
-			// }
-			// Let's simplify: Use a flag based on whether an ADMIN key is set,
-			// otherwise assume the cheaper models are desired.
-			$allow_expensive_models = !empty(env('ADMIN_OPEN_ROUTER_KEY')); // Example env var
-
-			$llms_with_rank_path = resource_path('data/llms_with_rank.json');
-			$llms_with_rank = [];
-			if (File::exists($llms_with_rank_path)) {
-				$llms_with_rank = json_decode(File::get($llms_with_rank_path), true) ?? [];
-			} else {
-				Log::warning('llms_with_rank.json not found in resources/data/');
-				// You might want to create this file or handle its absence
-			}
-
-			$llms = json_decode(File::get($llmsJsonPath), true);
-			if (!is_array($llms)) { // Handle case where file is corrupted
-				Log::error('Failed to decode llms.json');
-				return [];
-			}
-
-
-			$filtered_llms = array_filter($llms, function ($llm) use ($allow_expensive_models) {
-				if (!isset($llm['id'])) return false; // Skip if no ID
-
-				// --- Your existing filters ---
-				if (stripos($llm['id'], 'openrouter/auto') !== false) return false;
-				if (stripos($llm['id'], 'vision') !== false) return false; // Keep vision filter
-				if (stripos($llm['id'], '-3b-') !== false) return false;
-				if (stripos($llm['id'], '-1b-') !== false) return false;
-				if (stripos($llm['id'], 'online') !== false) return false;
-				if (stripos($llm['id'], 'gpt-3.5') !== false) return false;
-				// Add other models to explicitly exclude if needed
-				if (in_array($llm['id'], ['google/gemma-7b-it', 'huggingfaceh4/zephyr-7b-beta'])) {
-					return false;
-				}
-
-
-				// --- Price filter ---
-				if (isset($llm['pricing']['completion'])) {
-					// Normalize pricing - OpenRouter gives price per 1k tokens, needs conversion to per 1M
-					$price_per_million = 0;
-					// Handle potential string or numeric values robustly
-					try {
-						// Remove '$' if present and convert to float
-						$completion_price_str = str_replace('$', '', (string)$llm['pricing']['completion']);
-						$price_per_thousand = floatval($completion_price_str);
-						$price_per_million = $price_per_thousand * 1000;
-					} catch (\Exception $e) {
-						Log::warning("Could not parse price for LLM {$llm['id']}: " . $e->getMessage());
-						return false; // Exclude if price parsing fails
-					}
-
-
-					if ($allow_expensive_models) {
-						// Allow more expensive models if admin key might be used (e.g., up to $20/M)
-						return $price_per_million <= 20.0;
-					} else {
-						// Stricter limit for general use (e.g., up to $1.5/M)
-						return $price_per_million <= 1.5;
-					}
-				}
-
-				// Exclude if no completion pricing is available
-				return false;
-			});
-
-			// Add score/ugi and handle missing ranks
-			foreach ($filtered_llms as &$filtered_llm) { // Use reference to modify array directly
-				$found_rank = false;
-				if (is_array($llms_with_rank)) { // Ensure rank data is iterable
-					foreach ($llms_with_rank as $llm_with_rank) {
-						// Check both elements exist before comparing
-						if (isset($filtered_llm['id'], $llm_with_rank['id']) && $filtered_llm['id'] === $llm_with_rank['id']) {
-							$filtered_llm['score'] = $llm_with_rank['score'] ?? 0;
-							$filtered_llm['ugi'] = $llm_with_rank['ugi'] ?? 0;
-							$found_rank = true;
-							break; // Found the rank, no need to continue inner loop
-						}
-					}
-				}
-				if (!$found_rank) {
-					$filtered_llm['score'] = 0;
-					$filtered_llm['ugi'] = 0;
-				}
-			}
-			unset($filtered_llm); // Unset reference after loop
-
-			// Sort $filtered_llms by score, then alphabetically for score 0
-			usort($filtered_llms, function ($a, $b) {
-				// Ensure 'score' and 'name' keys exist, defaulting if not
-				$scoreA = $a['score'] ?? 0;
-				$scoreB = $b['score'] ?? 0;
-				$nameA = $a['name'] ?? '';
-				$nameB = $b['name'] ?? '';
-
-
-				// First, compare by score in descending order
-				$scoreComparison = $scoreB <=> $scoreA;
-
-				// If scores are different, return this comparison
-				if ($scoreComparison !== 0) {
-					return $scoreComparison;
-				}
-
-				// If scores are the same, sort alphabetically by name
-				return strcmp($nameA, $nameB);
-			});
-
-			// Return array values to reset keys
-			return array_values($filtered_llms);
-		}
 
 		public static function validateJson($str)
 		{
@@ -206,80 +57,6 @@
 				default:
 					return "Unknown JSON error";
 			}
-		}
-
-		public static function repaceNewLineWithBRInsideQuotes($input)
-		{
-			// If input is not a string, return it as is
-			if (!is_string($input)) {
-				return $input;
-			}
-
-			$output = '';
-			$inQuotes = false;
-			$length = strlen($input);
-			$i = 0;
-
-			while ($i < $length) {
-				$char = $input[$i];
-				$escaped = false;
-
-				// Check for preceding backslash to handle escaped quotes
-				if ($i > 0 && $input[$i - 1] === '\\') {
-					// Count consecutive backslashes ending at i-1
-					$backslashCount = 0;
-					for ($j = $i - 1; $j >= 0; $j--) {
-						if ($input[$j] === '\\') {
-							$backslashCount++;
-						} else {
-							break;
-						}
-					}
-					// If odd number of backslashes, the quote is escaped
-					if ($backslashCount % 2 !== 0) {
-						$escaped = true;
-					}
-				}
-
-
-				if ($char === '"' && !$escaped) {
-					$inQuotes = !$inQuotes;
-					$output .= $char;
-				} elseif ($inQuotes) {
-					// Handle \n, \r, \r\n within quotes
-					if ($char === '\\' && $i + 1 < $length) {
-						$nextChar = $input[$i + 1];
-						if ($nextChar === 'n') { // Check for literal \n
-							$output .= '<BR>'; // Replace with <BR>
-							$i++; // Skip the 'n'
-						} elseif ($nextChar === 'r') { // Check for literal \r
-							$output .= '<BR>'; // Replace with <BR>
-							$i++; // Skip the 'r'
-							// Check for subsequent \n (for \r\n)
-							if ($i + 1 < $length && $input[$i + 1] === '\\' && $i + 2 < $length && $input[$i + 2] === 'n') {
-								$i += 2; // Skip the '\' and 'n'
-							}
-						} else {
-							// Not an escaped newline, append the backslash and the next character
-							$output .= $char . $nextChar;
-							$i++;
-						}
-					} elseif (($char === "\n" || $char === "\r") && !$escaped) { // Handle actual newline characters
-						$output .= '<BR>';
-						// Handle Windows CRLF (\r\n) - skip the \n if preceded by \r
-						if ($char === "\r" && $i + 1 < $length && $input[$i + 1] === "\n") {
-							$i++;
-						}
-					} else {
-						$output .= $char; // Append other characters within quotes
-					}
-				} else {
-					$output .= $char; // Append characters outside quotes
-				}
-				$i++;
-			}
-
-			return $output;
 		}
 
 		public static function getContentsInBackticksOrOriginal($input)
@@ -388,39 +165,6 @@
 			// If no matching end bracket found (e.g., truncated JSON), return empty or partial?
 			// Returning empty is safer for preventing parsing errors later.
 			return '';
-		}
-
-		public static function mergeStringsWithoutRepetition($string1, $string2, $maxRepetitionLength = 100)
-		{
-			// Handle non-string inputs
-			if (!is_string($string1) || !is_string($string2)) {
-				Log::warning("mergeStringsWithoutRepetition received non-string input.");
-				// Decide on behavior: return first string, empty, or throw error?
-				return (string)$string1 . (string)$string2; // Simple concatenation as fallback
-			}
-
-
-			$len1 = strlen($string1);
-			$len2 = strlen($string2);
-
-			// Ensure maxRepetitionLength is not negative
-			$maxRepetitionLength = max(0, $maxRepetitionLength);
-
-
-			// Determine the maximum possible overlap length
-			$maxPossibleOverlap = min($maxRepetitionLength, $len1, $len2);
-
-			// Find the length of the longest suffix of string1 that is a prefix of string2
-			$overlapLength = 0;
-			for ($length = $maxPossibleOverlap; $length >= 1; $length--) {
-				if (substr($string1, -$length) === substr($string2, 0, $length)) {
-					$overlapLength = $length;
-					break; // Found the longest overlap
-				}
-			}
-
-			// Append the non-overlapping part of string2
-			return $string1 . substr($string2, $overlapLength);
 		}
 
 		public static function getOpenRouterKey()
@@ -908,4 +652,90 @@
 			}
 		}
 		// --- End of MyHelper class ---
+
+		public static function extractNoteIntents(string $text, ?string $model = null): ?array
+		{
+			if (empty(trim($text))) {
+				return null;
+			}
+
+			$modelToUse = $model ?: env('NOTE_INTENT_LLM', 'openai/gpt-4o-mini'); // Use a specific or default LLM
+
+			$systemPrompt = <<<PROMPT
+You are a note-taking assistant. Analyze the following user message carefully.
+Your primary goal is to detect if the user wants to create a new note or add content to an existing note.
+
+1.  **Create New Note Intent**: If the user explicitly states they want to create a new note, or if the message content strongly implies the creation of a new note (e.g., "note this down:", "remember to write about X", "make a note titled Y with content Z"), extract a suitable title and the main content for the note.
+    - The title should be concise and derived from the user's request or the main topic. If no title is specified, try to infer a short one.
+    - The content should be the substance of the note.
+    - Respond with JSON: `{"intent": "create_note", "title": "Extracted Note Title", "content": "Extracted note content..."}`
+
+2.  **Append to Existing Note Intent**: If the user wants to add content to an existing note (e.g., "add to my 'Project Ideas' note...", "append this to the shopping list note..."), extract a hint for the note title and the content to be appended.
+    - Respond with JSON: `{"intent": "append_to_note", "note_title_hint": "Hint for note title (e.g., 'Project Ideas')", "content_to_append": "Content to add..."}`
+    (For now, the application will primarily focus on handling 'create_note'. 'append_to_note' is for future enhancement but detect it if present).
+
+3.  **No Clear Intent**: If no clear note-related intent (create or append) is found, or if the intent is too ambiguous to act upon confidently, respond with `{"intent": "none"}`.
+
+Respond ONLY with a valid JSON object. Do not include explanations, introductions, or any conversational text outside the JSON.
+
+Examples:
+User: "Can you create a note for me called Project Alpha and put in it that I need to research competitor pricing and marketing channels."
+JSON: `{"intent": "create_note", "title": "Project Alpha", "content": "Research competitor pricing and marketing channels."}`
+
+User: "Note: meeting with John tomorrow at 10 AM to discuss the Q3 report."
+JSON: `{"intent": "create_note", "title": "Meeting with John", "content": "Tomorrow at 10 AM to discuss the Q3 report."}`
+
+User: "Add to my grocery list: avocados and bananas."
+JSON: `{"intent": "append_to_note", "note_title_hint": "grocery list", "content_to_append": "avocados and bananas."}`
+
+User: "What's the weather like today?"
+JSON: `{"intent": "none"}`
+PROMPT;
+
+			$messages = [
+				['role' => 'user', 'content' => $text]
+			];
+
+			Log::info("Attempting note intent extraction via llm_no_tool_call", ['model' => $modelToUse, 'text_preview' => Str::limit($text, 100)]);
+
+			$llmResult = self::llm_no_tool_call(
+				$modelToUse,
+				$systemPrompt,
+				$messages,
+				true, // Request JSON mode from llm_no_tool_call
+				1     // Max retries
+			);
+
+			Log::info("LLM call completed for note intent extraction", ['model' => $modelToUse, 'result_preview' => Str::limit(json_encode($llmResult), 200)]);
+
+			if (isset($llmResult['error'])) {
+				Log::error("Note Intent Extraction failed in llm_no_tool_call", [
+					'error' => $llmResult['error'],
+					'details' => $llmResult['details'] ?? null,
+					'model' => $modelToUse,
+				]);
+				return null;
+			}
+
+			// $llmResult should already be a parsed array if return_json=true and successful
+			if (is_array($llmResult) && isset($llmResult['intent'])) {
+				// Basic validation of expected fields based on intent
+				if ($llmResult['intent'] === 'create_note' && isset($llmResult['title']) && isset($llmResult['content'])) {
+					Log::info("Note Intent Extraction: Create Note detected.", ['title' => $llmResult['title']]);
+					return $llmResult;
+				} elseif ($llmResult['intent'] === 'append_to_note' && isset($llmResult['note_title_hint']) && isset($llmResult['content_to_append'])) {
+					Log::info("Note Intent Extraction: Append to Note detected.", ['hint' => $llmResult['note_title_hint']]);
+					return $llmResult; // Handle this later
+				} elseif ($llmResult['intent'] === 'none') {
+					Log::info("Note Intent Extraction: No note intent detected.");
+					return $llmResult;
+				} else {
+					Log::warning("Note Intent Extraction: JSON structure is valid but intent or required fields are missing/mismatched.", ['raw_result' => $llmResult]);
+					return null; // Or return ['intent' => 'none'] to be safe
+				}
+			} else {
+				Log::warning("Note Intent Extraction: LLM response was not a valid JSON object or 'intent' key is missing.", ['raw_result' => $llmResult]);
+				return null;
+			}
+		}
 	}

@@ -57,6 +57,7 @@
 <!-- Custom JS -->
 <script src="{{ asset('js/app.js') }}"></script>
 <script src="{{ asset('js/action-items.js') }}"></script>
+<script src="{{ asset('js/my-notes.js') }}"></script>
 
 @stack('scripts')
 

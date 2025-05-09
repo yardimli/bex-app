@@ -60,4 +60,9 @@
 			return $this->hasMany(ActionItem::class)->orderBy('created_at', 'asc'); // Or order as you prefer
 		}
 
+		public function notes(): HasMany
+		{
+			return $this->hasMany(Note::class)->orderBy('updated_at', 'desc'); // Order by most recently updated
+		}
+
 	}
