@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(document).ready(function () {
 	const notesModal = $('#myNotesModal');
 	const notesList = $('#notesList');
 	const noteForm = $('#noteForm');
@@ -58,7 +58,7 @@ $(document).ready(function() {
 			url: '/api/notes',
 			method: 'GET',
 			dataType: 'json',
-			success: function(notes) {
+			success: function (notes) {
 				notesLoadingMsg.hide();
 				if (notes.length > 0) {
 					notes.forEach(note => {
@@ -79,24 +79,24 @@ $(document).ready(function() {
 					}
 				}
 			},
-			error: function(jqXHR) {
+			error: function (jqXHR) {
 				notesLoadingMsg.text('Could not load notes.').show();
 				console.error("Error loading notes:", jqXHR.responseText);
 			}
 		});
 	}
 	
-	notesModal.on('show.bs.modal', function() {
+	notesModal.on('show.bs.modal', function () {
 		if (notesList.length) { // Check if user is logged in (elements exist)
 			loadNotes();
 		}
 	});
 	
-	newNoteButton.on('click', function() {
+	newNoteButton.on('click', function () {
 		resetForm();
 	});
 	
-	notesList.on('click', '.list-group-item', function(e) {
+	notesList.on('click', '.list-group-item', function (e) {
 		e.preventDefault();
 		const listItem = $(this);
 		const noteId = listItem.data('id');
@@ -115,47 +115,60 @@ $(document).ready(function() {
 			url: `/api/notes/${noteId}`,
 			method: 'GET',
 			dataType: 'json',
-			success: function(note) {
+			success: function (note) {
 				noteIdInput.val(note.id);
 				noteTitleInput.val(note.title);
 				noteContentInput.val(note.content);
 			},
-			error: function(jqXHR) {
+			error: function (jqXHR) {
 				alert('Could not load note details.');
 				console.error("Error loading note:", jqXHR.responseText);
 				resetForm(); // Go back to new note state
 			},
-			complete: function() {
+			complete: function () {
 				saveNoteButton.prop('disabled', false).html('<i class="bi bi-save"></i> Save Note');
 			}
 		});
 	});
 	
-	noteForm.on('submit', function(e) {
+	noteForm.on('submit', function (e) {
 		e.preventDefault();
+		console.log('Note form submission triggered.'); // Log 1: Handler starts
+		
 		const title = noteTitleInput.val().trim();
 		const content = noteContentInput.val().trim();
 		const noteId = noteIdInput.val();
 		
+		console.log('Note ID:', noteId); // Log 2: Note ID
+		console.log('Title input raw value:', noteTitleInput.val()); // Log 3: Raw title
+		console.log('Title to save:', title); // Log 4: Trimmed title
+		console.log('Content to save:', content); // Log 5: Content
+		
 		if (!title) {
+			console.error('Title is empty. Aborting save.'); // Log 6: Title validation failed
 			alert('Please enter a title for the note.');
 			noteTitleInput.focus();
 			return;
 		}
 		
+		console.log('Title is valid. Proceeding with AJAX.'); // Log 7: Title validation passed
+		
 		const ajaxData = {
 			title: title,
 			content: content,
-			_token: csrfToken
+			_token: csrfToken // Ensure csrfToken is defined and has a value
 		};
-		
 		let ajaxUrl = '/api/notes';
 		let ajaxMethod = 'POST';
 		
-		if (noteId) { // Existing note - Update
+		if (noteId) {
 			ajaxUrl = `/api/notes/${noteId}`;
 			ajaxMethod = 'PUT';
 		}
+		
+		console.log('AJAX URL:', ajaxUrl); // Log 8: AJAX details
+		console.log('AJAX Method:', ajaxMethod);
+		console.log('AJAX Data:', ajaxData);
 		
 		saveNoteButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
 		
@@ -164,51 +177,53 @@ $(document).ready(function() {
 			method: ajaxMethod,
 			data: JSON.stringify(ajaxData),
 			contentType: 'application/json',
-			headers: { 'X-CSRF-TOKEN': csrfToken },
+			headers: {
+				'X-CSRF-TOKEN': csrfToken
+			},
 			dataType: 'json',
-			success: function(savedNote) {
-				currentEditNoteId = savedNote.id; // Set for potential re-selection
+			success: function (savedNote) {
+				console.log('Note saved successfully:', savedNote); // Log 9: AJAX success
+				currentEditNoteId = savedNote.id;
 				loadNotes(); // Reload list to show changes/new item
-				// After loadNotes, it will try to re-select or reset
 			},
-			error: function(jqXHR) {
+			error: function (jqXHR) {
+				console.error('Error saving note via AJAX:', jqXHR.responseText); // Log 10: AJAX error
 				alert('Could not save note. Error: ' + (jqXHR.responseJSON?.message || 'Please try again.'));
-				console.error("Error saving note:", jqXHR.responseText);
 			},
-			complete: function() {
+			complete: function () {
+				console.log('AJAX call complete.'); // Log 11: AJAX complete
 				saveNoteButton.prop('disabled', false).html('<i class="bi bi-save"></i> Save Note');
 			}
 		});
-	});
-	
-	deleteNoteButton.on('click', function() {
-		const noteId = noteIdInput.val();
-		if (!noteId) return;
 		
-		const noteTitle = noteTitleInput.val() || "this note";
-		if (confirm(`Are you sure you want to delete "${noteTitle}"?`)) {
-			deleteNoteButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...');
-			$.ajax({
-				url: `/api/notes/${noteId}`,
-				method: 'DELETE',
-				headers: { 'X-CSRF-TOKEN': csrfToken },
-				dataType: 'json',
-				success: function(response) {
-					if (response.success) {
-						currentEditNoteId = null; // Clear current edit
-						loadNotes(); // Reload list
-					} else {
-						alert(response.message || 'Could not delete note.');
+		deleteNoteButton.on('click', function () {
+			const noteId = noteIdInput.val();
+			if (!noteId) return;
+			
+			const noteTitle = noteTitleInput.val() || "this note";
+			if (confirm(`Are you sure you want to delete "${noteTitle}"?`)) {
+				deleteNoteButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...');
+				$.ajax({
+					url: `/api/notes/${noteId}`,
+					method: 'DELETE',
+					headers: {'X-CSRF-TOKEN': csrfToken},
+					dataType: 'json',
+					success: function (response) {
+						if (response.success) {
+							currentEditNoteId = null; // Clear current edit
+							loadNotes(); // Reload list
+						} else {
+							alert(response.message || 'Could not delete note.');
+						}
+					},
+					error: function (jqXHR) {
+						alert('Could not delete note. Please try again.');
+						console.error("Error deleting note:", jqXHR.responseText);
+					},
+					complete: function () {
+						deleteNoteButton.prop('disabled', false).html('<i class="bi bi-trash"></i> Delete');
 					}
-				},
-				error: function(jqXHR) {
-					alert('Could not delete note. Please try again.');
-					console.error("Error deleting note:", jqXHR.responseText);
-				},
-				complete: function() {
-					deleteNoteButton.prop('disabled', false).html('<i class="bi bi-trash"></i> Delete');
-				}
-			});
-		}
+				});
+			}
+		});
 	});
-});
