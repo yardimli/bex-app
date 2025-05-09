@@ -195,35 +195,36 @@ $(document).ready(function () {
 				saveNoteButton.prop('disabled', false).html('<i class="bi bi-save"></i> Save Note');
 			}
 		});
-		
-		deleteNoteButton.on('click', function () {
-			const noteId = noteIdInput.val();
-			if (!noteId) return;
-			
-			const noteTitle = noteTitleInput.val() || "this note";
-			if (confirm(`Are you sure you want to delete "${noteTitle}"?`)) {
-				deleteNoteButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...');
-				$.ajax({
-					url: `/api/notes/${noteId}`,
-					method: 'DELETE',
-					headers: {'X-CSRF-TOKEN': csrfToken},
-					dataType: 'json',
-					success: function (response) {
-						if (response.success) {
-							currentEditNoteId = null; // Clear current edit
-							loadNotes(); // Reload list
-						} else {
-							alert(response.message || 'Could not delete note.');
-						}
-					},
-					error: function (jqXHR) {
-						alert('Could not delete note. Please try again.');
-						console.error("Error deleting note:", jqXHR.responseText);
-					},
-					complete: function () {
-						deleteNoteButton.prop('disabled', false).html('<i class="bi bi-trash"></i> Delete');
-					}
-				});
-			}
-		});
 	});
+	
+	deleteNoteButton.on('click', function () {
+		const noteId = noteIdInput.val();
+		if (!noteId) return;
+		
+		const noteTitle = noteTitleInput.val() || "this note";
+		if (confirm(`Are you sure you want to delete "${noteTitle}"?`)) {
+			deleteNoteButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...');
+			$.ajax({
+				url: `/api/notes/${noteId}`,
+				method: 'DELETE',
+				headers: {'X-CSRF-TOKEN': csrfToken},
+				dataType: 'json',
+				success: function (response) {
+					if (response.success) {
+						currentEditNoteId = null; // Clear current edit
+						loadNotes(); // Reload list
+					} else {
+						alert(response.message || 'Could not delete note.');
+					}
+				},
+				error: function (jqXHR) {
+					alert('Could not delete note. Please try again.');
+					console.error("Error deleting note:", jqXHR.responseText);
+				},
+				complete: function () {
+					deleteNoteButton.prop('disabled', false).html('<i class="bi bi-trash"></i> Delete');
+				}
+			});
+		}
+	});
+});
