@@ -71,7 +71,7 @@ class ChatController extends Controller
 	public function store(Request $request)
 	{
 		$request->validate([
-			'message' => 'required|string|max:4000',
+			'message' => 'required|string|max:30000',
 			'chat_header_id' => 'nullable|integer|exists:chat_headers,id',
 			'llm_model' => 'nullable|string|max:100',
 			'personality_tone' => 'nullable|string|in:professional,witty,motivational,friendly,poetic,sarcastic',
