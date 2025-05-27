@@ -30,17 +30,14 @@ class ChatController extends Controller
 	{
 		$user = Auth::user();
 		if (!$user) {
-			return redirect()->route('login'); // Should be handled by middleware, but belt-and-suspenders
+			return redirect()->route('login');
 		}
 
 		$chatHeader = null;
-		// If a chat ID was provided, try to find it
 		if ($chatHeaderId) {
 			$chatHeader = ChatHeader::where('id', $chatHeaderId)
 				->where('user_id', $user->id)
 				->first();
-
-			// If requested chat doesn't exist or doesn't belong to user, redirect to main chat page
 			if (!$chatHeader) {
 				return redirect()->route('chat.show')->with('error', 'Chat not found or was deleted.');
 			}
@@ -50,8 +47,29 @@ class ChatController extends Controller
 		$messages = $chatHeader ? $chatHeader->messages()->get() : collect();
 
 		$initialPrompt = null;
-		if (!$chatHeader && $request->has('prompt')) {
-			$initialPrompt = trim($request->input('prompt'));
+		if (!$chatHeader) { // Only process initial prompts for new chats
+			if ($request->has('prompt')) {
+				$initialPrompt = trim($request->input('prompt'));
+			} elseif ($request->has('summarize_key') && $request->has('prompt_prefix')) {
+				$sessionKey = $request->input('summarize_key');
+				$promptPrefix = $request->input('prompt_prefix');
+				if (session()->has($sessionKey)) {
+					$fullText = session($sessionKey);
+					// Prepend the prefix and limit the text for the textarea
+					// The full text is available for the first LLM call if needed,
+					// but the textarea might not handle extremely long text well.
+					$initialPrompt = $promptPrefix . Str::limit($fullText, UtilityController::MAX_TEXT_FOR_CHAT_INPUT);
+
+					// We'll store the full text in a separate session variable
+					// that the `store` method can pick up for the first message.
+					session(['pending_full_text_for_chat' => $fullText]);
+					session()->forget($sessionKey); // Clean up original key
+				} else {
+					Log::warning("Summarize key '{$sessionKey}' not found in session.");
+					// Optionally, set an error message or a default prompt
+					$initialPrompt = $promptPrefix . "[Error: Content for summarization not found. Please try again.]";
+				}
+			}
 		}
 
 		return view('pages.chat', [
@@ -71,7 +89,7 @@ class ChatController extends Controller
 	public function store(Request $request)
 	{
 		$request->validate([
-			'message' => 'required|string|max:30000',
+			'message' => 'required|string|max:60000',
 			'chat_header_id' => 'nullable|integer|exists:chat_headers,id',
 			'llm_model' => 'nullable|string|max:100',
 			'personality_tone' => 'nullable|string|in:professional,witty,motivational,friendly,poetic,sarcastic',
@@ -85,6 +103,28 @@ class ChatController extends Controller
 
 		$chatHeader = null;
 		$isNewChat = false;
+
+		// --- Check for pending full text for the first message of a new chat ---
+		$actualUserMessageForLlm = $userMessageContent;
+		if (empty($chatHeaderId) && session()->has('pending_full_text_for_chat')) {
+			// This is likely the first message of a summarization chat.
+			// The $userMessageContent might be a truncated version for the textarea.
+			// We use the full text from the session for the LLM.
+			$fullTextFromSession = session('pending_full_text_for_chat');
+			$promptPrefix = Str::before($userMessageContent, $fullTextFromSession); // Attempt to get prefix if any
+			if(Str::contains($userMessageContent, Str::limit($fullTextFromSession, UtilityController::MAX_TEXT_FOR_CHAT_INPUT))) {
+				// Reconstruct with full text
+				$actualUserMessageForLlm = Str::before($userMessageContent, Str::limit($fullTextFromSession, UtilityController::MAX_TEXT_FOR_CHAT_INPUT)) . $fullTextFromSession;
+			} else {
+				// Fallback if string reconstruction is tricky, just use the full text with a generic prefix.
+				// This might happen if Str::limit changed the string significantly.
+				$actualUserMessageForLlm = "Summarize the following content:\n\n" . $fullTextFromSession;
+				Log::warning("Could not accurately reconstruct prompt prefix for full text summarization. Using generic prefix.");
+			}
+			session()->forget('pending_full_text_for_chat'); // Clean up
+			Log::info("Using full text from session for initial summarization message. Original input length: " . strlen($userMessageContent) . ", Full text length: " . strlen($actualUserMessageForLlm));
+		}
+		// --- End check for pending full text ---
 
 		DB::beginTransaction(); // Start transaction for atomicity
 

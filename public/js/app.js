@@ -199,6 +199,29 @@ $(document).ready(function () {
 	
 	// --- Summarize Content Logic ---
 	// Helper function to redirect to chat with a prompt
+	function redirectToChatWithSummarizationData(data) {
+		const chatUrl = '/chat';
+		let redirectUrl;
+		
+		if (data.text_key) {
+			// Pass the key and a preview (or a flag to fetch full text)
+			// The chat page will use the key to get the full text from session
+			redirectUrl = chatUrl + '?summarize_key=' + encodeURIComponent(data.text_key) +
+				'&prompt_prefix=' + encodeURIComponent(data.prompt_prefix || '');
+		} else if (data.full_text_for_prompt) {
+			const promptText = (data.prompt_prefix || '') + data.full_text_for_prompt;
+			redirectUrl = chatUrl + '?prompt=' + encodeURIComponent(promptText);
+		} else {
+			alert('Error: Could not prepare summarization data.');
+			return;
+		}
+		
+		$('#summarizeContentModal').modal('hide');
+		setTimeout(() => {
+			window.location.href = redirectUrl;
+		}, 150);
+	}
+	
 	function redirectToChatWithPrompt(promptText) {
 		const chatUrl = '/chat'; // Base URL for new chats
 		const redirectUrl = chatUrl + '?prompt=' + encodeURIComponent(promptText);
@@ -227,7 +250,7 @@ $(document).ready(function () {
 		button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Fetching & Processing URL...');
 		
 		$.ajax({
-			url: '/api/summarize/url', // Your new API endpoint
+			url: '/api/summarize/url',
 			method: 'POST',
 			data: {
 				_token: $('meta[name="csrf-token"]').attr('content'),
@@ -235,24 +258,23 @@ $(document).ready(function () {
 			},
 			dataType: 'json',
 			success: function(response) {
-				if (response.success && response.text) {
-					const promptText = `Summarize the following content from URL ${url}:\n\n${response.text}`;
-					redirectToChatWithPrompt(promptText);
+				if (response.success) {
+					redirectToChatWithSummarizationData({
+						text_key: response.text_key, // Will be undefined if not set
+						full_text_for_prompt: response.full_text_for_prompt, // Will be undefined if not set
+						prompt_prefix: response.prompt_prefix
+					});
 				} else {
 					alert('Error: ' + (response.error || 'Could not process the URL.'));
 					button.prop('disabled', false).html(originalButtonText);
 				}
 			},
 			error: function(jqXHR) {
+				// ... (error handling remains similar)
 				let errorMsg = 'An unknown error occurred while processing the URL.';
 				if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
 					errorMsg = jqXHR.responseJSON.error;
-				} else if (jqXHR.responseText) {
-					try {
-						const err = JSON.parse(jqXHR.responseText);
-						if (err.message) errorMsg = err.message;
-					} catch (e) { /* ignore parsing error */ }
-				}
+				} else if (jqXHR.responseText) { try { const err = JSON.parse(jqXHR.responseText); if (err.message) errorMsg = err.message; } catch (e) {} }
 				alert('Error: ' + errorMsg);
 				button.prop('disabled', false).html(originalButtonText);
 			}
@@ -265,8 +287,12 @@ $(document).ready(function () {
 			alert('Please paste some text to summarize.');
 			return;
 		}
+		// For direct text, we always use the 'prompt' method as it's user-entered
 		const promptText = `Summarize the following text:\n\n${text}`;
-		redirectToChatWithPrompt(promptText);
+		const chatUrl = '/chat';
+		const redirectUrl = chatUrl + '?prompt=' + encodeURIComponent(promptText);
+		$('#summarizeContentModal').modal('hide');
+		setTimeout(() => { window.location.href = redirectUrl; }, 150);
 	});
 	
 	$('#summarizeFileButton').on('click', function () {
@@ -288,7 +314,7 @@ $(document).ready(function () {
 			fileInput.val('');
 			return;
 		}
-		if (file.size > 10 * 1024 * 1024) { // 10MB limit
+		if (file.size > 1 * 1024 * 1024) { // 10MB limit
 			alert('File is too large. Maximum size is 10MB.');
 			fileInput.val('');
 			return;
@@ -304,35 +330,32 @@ $(document).ready(function () {
 		button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading & Processing File...');
 		
 		$.ajax({
-			url: '/api/summarize/upload', // Your new API endpoint
+			url: '/api/summarize/upload',
 			method: 'POST',
 			data: formData,
-			processData: false, // Important!
-			contentType: false, // Important!
+			processData: false,
+			contentType: false,
 			dataType: 'json',
 			success: function(response) {
-				if (response.success && response.text) {
-					const promptText = `Summarize the following document content from file "${file.name}":\n\n${response.text}`;
-					redirectToChatWithPrompt(promptText);
+				if (response.success) {
+					redirectToChatWithSummarizationData({
+						text_key: response.text_key,
+						full_text_for_prompt: response.full_text_for_prompt,
+						prompt_prefix: response.prompt_prefix
+					});
 				} else {
 					alert('Error: ' + (response.error || 'Could not process the file.'));
 					button.prop('disabled', false).html(originalButtonText);
-					fileInput.val(''); // Clear file input on error
+					fileInput.val('');
 				}
 			},
 			error: function(jqXHR) {
+				// ... (error handling remains similar)
 				let errorMsg = 'An unknown error occurred while processing the file.';
-				if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
-					errorMsg = jqXHR.responseJSON.error;
-				} else if (jqXHR.responseText) {
-					try {
-						const err = JSON.parse(jqXHR.responseText);
-						if (err.message) errorMsg = err.message;
-					} catch (e) { /* ignore parsing error */ }
-				}
+				if (jqXHR.responseJSON && jqXHR.responseJSON.error) { errorMsg = jqXHR.responseJSON.error; } else if (jqXHR.responseText) { try { const err = JSON.parse(jqXHR.responseText); if (err.message) errorMsg = err.message; } catch (e) {} }
 				alert('Error: ' + errorMsg);
 				button.prop('disabled', false).html(originalButtonText);
-				fileInput.val(''); // Clear file input on error
+				fileInput.val('');
 			}
 		});
 	});
