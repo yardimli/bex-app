@@ -15,7 +15,7 @@
 	</div>
 	
 	<h6>History</h6>
-	<nav class="nav flex-column mb-3 flex-grow-1 overflow-auto overflow-x-hidden" style="max-height: calc(100vh - 350px);"> {{-- Make scrollable --}}
+	<nav class="nav d-flex flex-column mb-3 overflow-auto" style="max-height: calc(100vh - 350px); flex-wrap: nowrap;">
 		@if(isset($chatHeaders) && $chatHeaders->isNotEmpty())
 			@foreach ($chatHeaders as $header)
 				<a class="nav-link py-1 ps-3 pe-2 d-flex justify-content-between align-items-center @if(isset($activeChat) && $activeChat->id == $header->id) active fw-bold @endif"
