@@ -743,7 +743,7 @@ PROMPT;
 			}
 		}
 
-		public static function getTextFromUploadedFile(\Illuminate\Http\UploadedFile $file): strin
+		public static function getTextFromUploadedFile(\Illuminate\Http\UploadedFile $file): string
 		{
 			$extension = strtolower($file->getClientOriginalExtension());
 			$path = $file->getRealPath();
