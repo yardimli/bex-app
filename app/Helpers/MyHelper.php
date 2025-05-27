@@ -7,7 +7,7 @@
 	use Illuminate\Http\Request;
 	use Illuminate\Support\Facades\Auth;
 	use Illuminate\Http\UploadedFile;
-	
+
 	use Illuminate\Support\Facades\DB;
 	use Illuminate\Support\Facades\File;
 	use Illuminate\Support\Facades\Http;
@@ -26,6 +26,8 @@
 	use Google\Cloud\TextToSpeech\V1\TextToSpeechClient;
 	use Google\Cloud\TextToSpeech\V1\VoiceSelectionParams;
 	use Exception;
+	use PhpOffice\PhpWord\IOFactory;
+	use Spatie\PdfToText\Pdf;
 	use Symfony\Component\DomCrawler\Crawler;
 
 
