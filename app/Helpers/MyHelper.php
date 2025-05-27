@@ -738,4 +738,115 @@ PROMPT;
 				return null;
 			}
 		}
+
+		public static function getTextFromUploadedFile(UploadedFile $file): string
+		{
+			$extension = strtolower($file->getClientOriginalExtension());
+			$path = $file->getRealPath();
+			$text = '';
+
+			try {
+				if ($extension === 'txt') {
+					$text = File::get($path);
+				} elseif ($extension === 'pdf') {
+					// Ensure pdftotext is installed and in PATH, or configure the binary path
+					// Pdf::getText($path, '/usr/bin/pdftotext'); // Example if not in PATH
+					$text = Pdf::getText($path);
+				} elseif ($extension === 'docx') {
+					$phpWord = IOFactory::load($path);
+					$sections = $phpWord->getSections();
+					foreach ($sections as $section) {
+						$elements = $section->getElements();
+						foreach ($elements as $element) {
+							if ($element instanceof TextRun) {
+								foreach ($element->getElements() as $textElement) {
+									if (method_exists($textElement, 'getText')) {
+										$text .= $textElement->getText() . ' ';
+									}
+								}
+								$text .= "\n"; // Add a newline after each TextRun
+							} elseif (method_exists($element, 'getText')) { // For simple Text elements
+								$text .= $element->getText() . "\n";
+							}
+							// You might need to handle other element types like Tables, Lists etc.
+						}
+					}
+				} else {
+					throw new \Exception("Unsupported file type: {$extension}");
+				}
+			} catch (\Exception $e) {
+				Log::error("Error extracting text from file: " . $e->getMessage(), ['file' => $file->getClientOriginalName()]);
+				throw $e; // Re-throw to be caught by controller
+			}
+
+			return trim($text);
+		}
+
+		public static function getTextFromUrl(string $url): string
+		{
+			try {
+				$client = new Client(['timeout' => 20.0, 'allow_redirects' => ['max' => 5]]);
+				$response = $client->get($url, [
+					'headers' => [ // Be a good bot
+						'User-Agent' => 'BexSummarizerBot/1.0 (+'.env('APP_URL').')',
+						'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+						'Accept-Language' => 'en-US,en;q=0.5',
+					]
+				]);
+
+				if ($response->getStatusCode() !== 200) {
+					throw new \Exception("Failed to fetch URL. Status: " . $response->getStatusCode());
+				}
+
+				$htmlContent = $response->getBody()->getContents();
+				$crawler = new Crawler($htmlContent);
+
+				// Remove script and style tags
+				$crawler->filter('script, style, nav, footer, header, aside, form, noscript, iframe, [aria-hidden="true"], .noprint')
+					->each(function (Crawler $crawlerNode) {
+						foreach ($crawlerNode as $node) {
+							$node->parentNode->removeChild($node);
+						}
+					});
+
+				// Attempt to find a main content area
+				$contentNode = $crawler->filter('article, main, [role="main"], .content, .post-content, .entry-content')->first();
+				if ($contentNode->count() == 0) {
+					// Fallback to body if no specific content area found
+					$contentNode = $crawler->filter('body')->first();
+				}
+
+				// Extract text from common text-bearing elements
+				$text = '';
+				if ($contentNode->count() > 0) {
+					$text = $contentNode->filter('p, h1, h2, h3, h4, h5, h6, li, td, blockquote, pre')
+						->each(function (Crawler $node) {
+							return $node->text();
+						});
+					$text = implode("\n\n", array_filter(array_map('trim', $text)));
+				}
+
+
+				if (empty($text)) { // If still empty, try a more generic text extraction
+					$text = $crawler->filter('body')->text();
+				}
+
+				// Clean up excessive newlines and whitespace
+				$text = preg_replace('/\s\s+/', ' ', $text); // Replace multiple spaces with single
+				$text = preg_replace('/(\r\n|\r|\n){3,}/', "\n\n", $text); // Replace 3+ newlines with two
+
+				if (empty(trim($text))) {
+					throw new \Exception("Could not extract meaningful text content from the URL.");
+				}
+
+				return trim($text);
+
+			} catch (\GuzzleHttp\Exception\RequestException $e) {
+				Log::error("Guzzle error fetching URL {$url}: " . $e->getMessage());
+				throw new \Exception("Failed to fetch URL: " . $e->getMessage());
+			} catch (\Exception $e) {
+				Log::error("Error extracting text from URL {$url}: " . $e->getMessage());
+				throw $e; // Re-throw
+			}
+		}
 	}

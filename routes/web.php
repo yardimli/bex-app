@@ -80,12 +80,16 @@
 			Route::put('/notes/{note}', [NoteController::class, 'update'])->name('notes.update')->where('note', '[0-9]+'); // Or PATCH
 			Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->name('notes.destroy')->where('note', '[0-9]+');
 
+			// Summarization Helper Routes
+			Route::post('/summarize/upload', [UtilityController::class, 'processFileUploadForSummarization'])->name('summarize.upload');
+			Route::post('/summarize/url', [UtilityController::class, 'processUrlForSummarization'])->name('summarize.url');
+
+
 
 			//     Route::get('/meetings/{meetingId}', [AppController::class, 'getMeetingDetails']);
 			//     Route::get('/files/{fileId}', [AppController::class, 'getFileDetails']);
 			//     Route::get('/recordings/{recordingId}', [AppController::class, 'getRecordingDetails']);
 			//     Route::post('/settings', [AppController::class, 'updateSettings']);
-			//     Route::post('/summarize', [AppController::class, 'summarize']);
 			//     Route::post('/transcribe', [AppController::class, 'transcribe']);
 		});
 
