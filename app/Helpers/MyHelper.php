@@ -25,6 +25,7 @@
 	use Google\Cloud\TextToSpeech\V1\TextToSpeechClient;
 	use Google\Cloud\TextToSpeech\V1\VoiceSelectionParams;
 	use Exception;
+	use Symfony\Component\DomCrawler\Crawler;
 
 
 	class MyHelper
