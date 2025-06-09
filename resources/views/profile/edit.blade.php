@@ -7,20 +7,20 @@
 			<div class="col-md-8">
 				<div class="card">
 					<div class="card-header"><h2>{{ __('Profile Information') }}</h2></div>
-					
+
 					<div class="card-body">
 						<p class="text-muted">{{ __("Update your account's profile information and email address.") }}</p>
-						
+
 						@if (session('status') === 'profile-updated')
 							<div class="alert alert-success" role="alert">
 								{{ __('Profile successfully updated.') }}
 							</div>
 						@endif
-						
+
 						<form method="post" action="{{ route('profile.update') }}" class="mt-4 space-y-6">
 							@csrf
 							@method('patch') {{-- Use PATCH method for updates --}}
-							
+
 							{{-- Name Field --}}
 							<div class="mb-3 row">
 								<label for="name" class="col-md-4 col-form-label text-md-end">{{ __('Name') }}</label>
@@ -33,7 +33,7 @@
 									@enderror
 								</div>
 							</div>
-							
+
 							{{-- Email Field --}}
 							<div class="mb-3 row">
 								<label for="email" class="col-md-4 col-form-label text-md-end">{{ __('Email') }}</label>
@@ -44,14 +44,14 @@
                                         <strong>{{ $message }}</strong>
                                     </span>
 									@enderror
-									
+
 									{{-- Optional: Add message about email verification if applicable --}}
 									{{-- @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail()) --}}
 									{{-- Add verification resend logic here if needed --}}
 									{{-- @endif --}}
 								</div>
 							</div>
-							
+
 							{{-- Save Button --}}
 							<div class="mb-0 row">
 								<div class="col-md-6 offset-md-4">
@@ -63,13 +63,64 @@
 						</form>
 					</div>
 				</div>
-				
+
 				{{-- Optional: Add separate cards/sections for Password Update and Delete Account --}}
 				<div class="card mt-4">
 						<div class="card-header"><h2>{{ __('Update Password') }}</h2></div>
 						 <div class="card-body">
 								<p class="text-muted">{{ __('Ensure your account is using a long, random password to stay secure.') }}</p>
-								// Password update form here
+                             @if (session('status') === 'password-updated')
+                                 <div class="alert alert-success" role="alert">
+                                     {{ __('Password successfully updated.') }}
+                                 </div>
+                             @endif
+                             <form method="post" action="{{ route('password.update') }}" class="mt-4">
+                                 @csrf
+                                 @method('put')
+
+                                 {{-- Current Password Field --}}
+                                 <div class="mb-3 row">
+                                     <label for="current_password" class="col-md-4 col-form-label text-md-end">{{ __('Current Password') }}</label>
+                                     <div class="col-md-6">
+                                         <input id="current_password" name="current_password" type="password" class="form-control @error('current_password') is-invalid @enderror" autocomplete="current-password" required>
+                                         @error('current_password')
+                                         <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                                         @enderror
+                                     </div>
+                                 </div>
+
+                                 {{-- New Password Field --}}
+                                 <div class="mb-3 row">
+                                     <label for="password" class="col-md-4 col-form-label text-md-end">{{ __('New Password') }}</label>
+                                     <div class="col-md-6">
+                                         <input id="password" name="password" type="password" class="form-control @error('password') is-invalid @enderror" autocomplete="new-password" required>
+                                         @error('password')
+                                         <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                                         @enderror
+                                     </div>
+                                 </div>
+
+                                 {{-- Confirm New Password Field --}}
+                                 <div class="mb-3 row">
+                                     <label for="password_confirmation" class="col-md-4 col-form-label text-md-end">{{ __('Confirm Password') }}</label>
+                                     <div class="col-md-6">
+                                         <input id="password_confirmation" name="password_confirmation" type="password" class="form-control" autocomplete="new-password" required>
+                                     </div>
+                                 </div>
+
+                                 {{-- Save Button --}}
+                                 <div class="mb-0 row">
+                                     <div class="col-md-6 offset-md-4">
+                                         <button type="submit" class="btn btn-primary">
+                                             {{ __('Save') }}
+                                         </button>
+                                     </div>
+                                 </div>
+                             </form>
 						</div>
 				</div>
 
@@ -80,7 +131,7 @@
 								 // Delete account button/modal trigger here
 						 </div>
 				 </div>
-			
+
 			</div>
 		</div>
 	</div>

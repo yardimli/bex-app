@@ -6,6 +6,8 @@
 	use Illuminate\Support\Facades\Auth;
 	use Illuminate\View\View; // <-- Import View
 	use Illuminate\Http\RedirectResponse; // <-- Import RedirectResponse
+    use Illuminate\Support\Facades\Hash;
+    use Illuminate\Validation\Rules\Password;
 
 	class ProfileController extends Controller
 	{
@@ -49,4 +51,19 @@
 			// Redirect back to the profile edit page with a success message
 			return redirect()->route('profile.edit')->with('status', 'profile-updated');
 		}
+
+        public function updatePassword(Request $request): RedirectResponse
+        {
+            $validated = $request->validate([
+                'current_password' => ['required', 'current_password'],
+                'password' => ['required', Password::defaults(), 'confirmed'],
+            ]);
+
+            $request->user()->update([
+                'password' => Hash::make($validated['password']),
+            ]);
+
+            return back()->with('status', 'password-updated');
+        }
+
 	}

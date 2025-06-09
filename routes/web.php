@@ -43,6 +43,7 @@
 	Route::middleware('auth')->group(function () {
 		Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
 		Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update'); // For handling form submission
+        Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
 
 		// Chat Routes
 		Route::get('/chat/{chatHeaderId?}', [ChatController::class, 'show'])
