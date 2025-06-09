@@ -127,8 +127,38 @@
 				<div class="card mt-4">
 						 <div class="card-header"><h2>{{ __('Delete Account') }}</h2></div>
 						 <div class="card-body">
-								 <p class="text-danger">{{ __('Once your account is deleted, all of its resources and data will be permanently deleted.') }}</p>
-								 // Delete account button/modal trigger here
+								 <p class="text-danger">{{ __('Once your account is deleted, all of your resources and data will be permanently deleted.') }}</p>
+                             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmUserDeletionModal">
+                                 {{ __('Delete Account') }}
+                             </button>
+
+                             <!-- Modal -->
+                             <div class="modal fade" id="confirmUserDeletionModal" tabindex="-1" aria-labelledby="confirmUserDeletionModalLabel" aria-hidden="true">
+                                 <div class="modal-dialog">
+                                     <div class="modal-content">
+                                         <form method="post" action="{{ route('profile.destroy') }}">
+                                             @csrf
+                                             @method('delete')
+
+                                             <div class="modal-header">
+                                                 <h5 class="modal-title" id="confirmUserDeletionModalLabel">{{ __('Confirm Account Deletion') }}</h5>
+                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                             </div>
+
+                                             <div class="modal-body">
+                                                 <p>
+                                                     {{ __('Are you sure you want to delete your account?') }}
+                                                 </p>
+                                             </div>
+
+                                             <div class="modal-footer">
+                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                                                 <button type="submit" class="btn btn-danger">{{ __('Delete Account') }}</button>
+                                             </div>
+                                         </form>
+                                     </div>
+                                 </div>
+                             </div>
 						 </div>
 				 </div>
 
@@ -136,3 +166,14 @@
 		</div>
 	</div>
 @endsection
+
+@if($errors->userDeletion->isNotEmpty())
+    @push('scripts')
+        <script>
+            $(document).ready(function() {
+                var userDeletionModal = new bootstrap.Modal(document.getElementById('confirmUserDeletionModal'));
+                userDeletionModal.show();
+            });
+        </script>
+    @endpush
+@endif

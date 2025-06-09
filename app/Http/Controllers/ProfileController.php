@@ -8,6 +8,7 @@
 	use Illuminate\Http\RedirectResponse; // <-- Import RedirectResponse
     use Illuminate\Support\Facades\Hash;
     use Illuminate\Validation\Rules\Password;
+    use Illuminate\Support\Facades\Redirect;
 
 	class ProfileController extends Controller
 	{
@@ -64,6 +65,20 @@
             ]);
 
             return back()->with('status', 'password-updated');
+        }
+
+        public function destroy(Request $request): RedirectResponse
+        {
+            $user = $request->user();
+
+            Auth::logout();
+
+            $user->delete();
+
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return Redirect::to('/');
         }
 
 	}
