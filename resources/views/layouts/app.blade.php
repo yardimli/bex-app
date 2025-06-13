@@ -4,14 +4,14 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>{{ config('app.name', 'Laravel') }}</title>
-	
+
 	<!-- CSRF Token -->
 	<meta name="csrf-token" content="{{ csrf_token() }}">
-	
+
 	<!-- Fonts -->
 	<link rel="dns-prefetch" href="//fonts.bunny.net">
 	<link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
-	
+
 	<!-- Bootstrap CSS -->
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
 	      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
@@ -19,7 +19,7 @@
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 	<!-- Custom CSS -->
 	<link href="{{ asset('css/app.css') }}" rel="stylesheet">
-	
+
 	<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
 	<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
 	<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
@@ -30,7 +30,7 @@
 <div class="main-wrapper">
 	<!-- Sidebar -->
 	@include('partials.sidebar')
-	
+
 	<!-- Main Content -->
 	<main class="main-content" id="main-content">
 		{{-- Sidebar Toggle Button (positioned via CSS) --}}
@@ -63,6 +63,7 @@
 <script src="{{ asset('js/app.js') }}"></script>
 <script src="{{ asset('js/action-items.js') }}"></script>
 <script src="{{ asset('js/my-notes.js') }}"></script>
+<script src="{{ asset('js/teams.js') }}"></script>
 
 @stack('scripts')
 

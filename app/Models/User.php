@@ -65,4 +65,17 @@
 			return $this->hasMany(Note::class)->orderBy('updated_at', 'desc'); // Order by most recently updated
 		}
 
+        public function teams()
+        {
+            return $this->belongsToMany(Team::class, 'team_members')->withTimestamps();
+        }
+
+        /**
+         * Get all of the team memberships for the user.
+         */
+        public function teamMemberships()
+        {
+            return $this->hasMany(TeamMember::class);
+        }
+
 	}

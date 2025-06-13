@@ -4,7 +4,7 @@
 	<!-- Content Header -->
 	<div class="content-header">
 		@include('partials.dropdowns.mode_selector')
-		
+
 		<div class="d-flex align-items-center"> {{-- Wrap right-side icons for alignment --}}
 			<a href="#" class="text-secondary me-3" title="Link" aria-label="Link"><i
 					class="bi bi-link-45deg fs-5 icon-color"></i></a>
@@ -12,7 +12,7 @@
 					class="bi bi-gear-fill fs-5 icon-color"></i></a>
 			<a href="#" class="text-secondary me-3" title="Toggle Theme" id="themeToggleButton" aria-label="Toggle Theme"><i
 					class="bi bi-brightness-high-fill fs-5 icon-color"></i></a> {{-- Added me-3 for spacing & icon-color --}}
-			
+
 			{{-- Start Auth Links --}}
 			@guest
 				@if (Route::has('login'))
@@ -20,7 +20,7 @@
 						<i class="bi bi-box-arrow-in-right fs-5 icon-color"></i> {{-- Login Icon --}}
 					</a>
 				@endif
-				
+
 				@if (Route::has('register'))
 					<a href="{{ route('register') }}" class="text-secondary" title="Register" aria-label="Register">
 						<i class="bi bi-person-plus-fill fs-5 icon-color"></i> {{-- Register Icon --}}
@@ -37,6 +37,7 @@
 					<ul class="dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="dropdownUser">
 						<li><a class="dropdown-item" href="{{ route('profile.edit') }}">Profile</a>
 						</li> {{-- Added Profile Link --}}
+                        <li><a class="dropdown-item" href="{{ route('teams.index') }}">Teams</a></li>
 						<li>
 							<hr class="dropdown-divider">
 						</li> {{-- Added Divider --}}
@@ -56,12 +57,12 @@
 			{{-- End Auth Links --}}
 		</div>
 	</div>
-	
+
 	<!-- Chat Area -->
 	<div class="chat-area">
 		<h2>How can Bex assist you today?</h2>
 		<!-- Chat history would go here -->
-		
+
 		<div class="message-input-wrapper mt-auto w-75">
 			<div class="action-buttons">
 				<button class="btn btn-outline-secondary" id="meetingSummaryButton"><i class="bi bi-calendar-check me-1"></i>

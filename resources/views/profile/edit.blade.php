@@ -1,4 +1,4 @@
-{{-- resources/views/profile/edit.blade.php --}}
+{{-- resources/views/profile/index.blade.php --}}
 @extends('layouts.app') {{-- Or your main app layout --}}
 
 @section('content')

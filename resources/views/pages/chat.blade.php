@@ -80,7 +80,7 @@
           padding: 10px;
           display: none; /* Hidden by default */
       }
-	
+
 	</style>
 @endpush
 
@@ -113,6 +113,7 @@
 					</a>
 					<ul class="dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="dropdownUser">
 						<li><a class="dropdown-item" href="{{ route('profile.edit') }}">Profile</a></li>
+                        <li><a class="dropdown-item" href="{{ route('teams.index') }}">Teams</a></li>
 						<li><hr class="dropdown-divider"></li>
 						<li>
 							<a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">{{ __('Logout') }}</a>
@@ -123,7 +124,7 @@
 			@endguest
 		</div>
 	</div>
-	
+
 	<!-- Chat Area -->
 	<div class="chat-area mt-3 flex-grow-1 d-flex flex-column">
 		{{-- Chat History --}}
@@ -134,18 +135,18 @@
 				@foreach ($messages as $message)
 					<div class="message-bubble {{ $message->role }}" id="message-{{ $message->id }}"  data-message-content="{!! nl2br(e($message->content)) !!}">
 						{!! nl2br(e($message->content)) !!}
-						
+
 						@if ($message->role === 'user')
 							<button class="delete-message-btn" title="Delete pair" data-message-id="{{ $message->id }}">
 								<i class="bi bi-trash3-fill"></i>
 							</button>
 						@endif
-						
+
 						{{-- Show server creation time --}}
 						<div class="message-meta">
 							{{ $message->created_at->format('H:i') }} {{-- Format as HH:MM --}}
 						</div>
-						
+
 						{{-- Add Action Buttons for Assistant --}}
 						@if ($message->role === 'assistant')
 							<div class="message-actions">
@@ -174,7 +175,7 @@
 			</div>
 			<span class="ms-2 text-muted">Bex is thinking...</span>
 		</div>
-		
+
 		{{-- Message Input Area --}}
 		<div class="message-input-wrapper mt-auto w-100 px-3 pb-3"> {{-- Use w-100 and add padding --}}
 			<div class="action-buttons">
@@ -184,12 +185,12 @@
 				<button class="btn btn-outline-secondary" id="myRecordingsButton"><i class="bi bi-mic me-1"></i> My Recordings</button>
 				<button class="btn btn-outline-secondary" id="moreActionsButton"><i class="bi bi-three-dots me-1"></i> More</button> {{-- Consider adding functionality or removing if not used --}}
 			</div>
-			
+
 			<form id="chat-input-form">
 				@csrf {{-- Include CSRF token --}}
 				{{-- Hidden input to store the current chat ID --}}
 				<input type="hidden" id="chat_header_id" name="chat_header_id" value="{{ $activeChat?->id }}">
-				
+
 				<div class="message-input">
 					<textarea class="form-control form-control-lg" id="message-input-field" name="message" placeholder="Message Bex..." rows="1" style="resize: none;" required>{{ $initialPrompt ? e($initialPrompt) : '' }}</textarea>
 					<div class="message-input-icons">

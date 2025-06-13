@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('messages_recipients', function (Blueprint $table) {
+        Schema::create('message_recipients', function (Blueprint $table) {
             $table->id();
             $table->foreignId('message_id')->constrained('messages')->onDelete('cascade');
             $table->foreignId('recipient_id')->constrained('users')->onDelete('cascade');
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('messages_recipients');
+        Schema::dropIfExists('message_recipients');
     }
 };
