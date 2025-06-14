@@ -5,7 +5,7 @@ $(document).ready(function() {
 
     function renderTeamCard(team, currentTeamId) {
         const isOwner = team.owner_id === myUserId;
-        const isActive = team.id == currentTeamId;
+        // const isActive = team.id == currentTeamId;
 
         let membersHtml = team.team_members.map(member => `
             <li>
@@ -17,18 +17,17 @@ $(document).ready(function() {
 
         return `
             <div class="col-md-6 col-lg-4">
-                <div class="card team-card ${isActive ? 'active-team' : ''}" data-team-id="${team.id}">
+                <div class="card team-card" data-team-id="${team.id}">
                     <div class="card-body">
                         <div class="d-flex justify-content-between">
                             <h5 class="card-title">${$('<div>').text(team.name).html()}</h5>
-                            ${isActive ? '<span class="badge bg-success">Active</span>' : ''}
                         </div>
                         <p class="card-text text-muted">${$('<div>').text(team.description || 'No description.').html()}</p>
                         <h6>Members</h6>
                         <ul class="member-list">${membersHtml}</ul>
                     </div>
                     <div class="card-footer bg-light d-flex justify-content-between">
-                        <button class="btn btn-sm btn-outline-primary switch-team-btn" ${isActive ? 'disabled' : ''}>
+                        <button class="btn btn-sm btn-outline-primary switch-team-btn">
                             <i class="bi bi-arrow-repeat me-1"></i> Switch to this Team
                         </button>
                         ${isOwner ? `<button class="btn btn-sm btn-primary add-member-btn" data-team-id="${team.id}" data-team-name="${$('<div>').text(team.name).html()}">
@@ -40,51 +39,25 @@ $(document).ready(function() {
         `;
     }
 
-    function loadTeams() {
-        $.ajax({
-            url: '/api/user/teams',
-            method: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                teamsList.empty();
-                if (response.teams.length > 0) {
-                    myUserId = response.user_id;
-                    response.teams.forEach(team => {
-                        teamsList.append(renderTeamCard(team, response.current_team_id));
-                    });
-                } else {
-                    teamsList.html('<div class="col-12"><div class="alert alert-info">You are not part of any teams yet. Create one to get started!</div></div>');
-                }
-            },
-            error: function() {
-                teamsList.html('<div class="col-12"><div class="alert alert-danger">Could not load your teams. Please try again later.</div></div>');
-            }
-        });
-    }
-
     // Simplified loadTeams function for the new API response
     function loadTeamsV2() {
         $.ajax({
             url: '/api/user/teams',
             method: 'GET',
             dataType: 'json',
-            success: function(teams) {
+            success: function(response) {
                 teamsList.empty();
                 // Assuming we can get user ID from a meta tag or auth object if needed
                 // For now, let's assume the owner check can be done with team.owner.id
-                if (teams.length > 0) {
-                    // We need a way to get the current user's ID and active team ID
-                    // This part needs adjustment based on how that info is passed.
-                    // For now, just rendering without active state.
-                    const currentUserId = $('meta[name="user-id"]').attr('content'); // Hypothetical
-                    const activeTeamId = $('meta[name="active-team-id"]').attr('content'); // Hypothetical
+                if (response.teams && response.teams.length > 0) {
+                    // Get the definitive user ID and active team from the server response
+                    myUserId = response.user_id;
+                    const activeTeamId = response.current_team_id;
 
-                    teams.forEach(team => {
-                        // A bit of a hack to get the current user's ID
-                        if (!myUserId && team.team_members.some(m => m.role === 'owner')) {
-                            const owner = team.team_members.find(m => m.role === 'owner');
-                            if(owner) myUserId = owner.user_id;
-                        }
+                    // The old, incorrect logic for guessing the user ID is no longer needed.
+
+                    response.teams.forEach(team => {
+                        // The renderTeamCard function will now use the correct myUserId
                         teamsList.append(renderTeamCard(team, activeTeamId));
                     });
                 } else {
@@ -98,7 +71,7 @@ $(document).ready(function() {
     }
 
     // Create Team
-    $('#saveTeamButton').on('click', function() {
+    $('#saveTeamButton').off('click').on('click', function() {
         const button = $(this);
         button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creating...');
 

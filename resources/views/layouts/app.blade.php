@@ -63,7 +63,6 @@
 <script src="{{ asset('js/app.js') }}"></script>
 <script src="{{ asset('js/action-items.js') }}"></script>
 <script src="{{ asset('js/my-notes.js') }}"></script>
-<script src="{{ asset('js/teams.js') }}"></script>
 
 @stack('scripts')
 

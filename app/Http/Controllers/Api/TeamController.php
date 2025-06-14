@@ -71,7 +71,11 @@ class TeamController extends Controller
     {
         $user = Auth::user();
         $teams = $user->teams()->with('owner', 'teamMembers.user')->get();
-        return response()->json($teams);
+        return response()->json([
+            'teams' => $teams,
+            'user_id' => $user->id,
+            'current_team_id' => session('current_team_id', $teams->first()->id ?? null)
+        ]);
     }
 
     public function switchTeam(Request $request)
