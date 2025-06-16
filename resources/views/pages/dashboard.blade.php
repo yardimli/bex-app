@@ -38,6 +38,12 @@
 						<li><a class="dropdown-item" href="{{ route('profile.edit') }}">Profile</a>
 						</li> {{-- Added Profile Link --}}
                         <li><a class="dropdown-item" href="{{ route('teams.index') }}">Teams</a></li>
+                        <li>
+                            <a class="dropdown-item d-flex justify-content-between align-items-center" href="{{ route('messages.inbox') }}">
+                                Inbox
+                                <span class="badge bg-danger rounded-pill" id="unread-messages-count" style="display: none;"></span>
+                            </a>
+                        </li>
 						<li>
 							<hr class="dropdown-divider">
 						</li> {{-- Added Divider --}}

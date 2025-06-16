@@ -114,6 +114,12 @@
 					<ul class="dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="dropdownUser">
 						<li><a class="dropdown-item" href="{{ route('profile.edit') }}">Profile</a></li>
                         <li><a class="dropdown-item" href="{{ route('teams.index') }}">Teams</a></li>
+                        <li>
+                            <a class="dropdown-item d-flex justify-content-between align-items-center" href="{{ route('messages.inbox') }}">
+                                Inbox
+                                <span class="badge bg-danger rounded-pill" id="unread-messages-count" style="display: none;"></span>
+                            </a>
+                        </li>
 						<li><hr class="dropdown-divider"></li>
 						<li>
 							<a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">{{ __('Logout') }}</a>

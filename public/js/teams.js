@@ -30,10 +30,18 @@ $(document).ready(function() {
                         <button class="btn btn-sm btn-outline-primary switch-team-btn">
                             <i class="bi bi-arrow-repeat me-1"></i> Switch to this Team
                         </button>
-                        ${isOwner ? `<button class="btn btn-sm btn-primary add-member-btn" data-team-id="${team.id}" data-team-name="${$('<div>').text(team.name).html()}">
-                            <i class="bi bi-person-plus-fill me-1"></i> Add Member
-                        </button>` : ''}
+
+                        <div class="btn-group">
+                            ${isOwner ? `<button class="btn btn-sm btn-primary add-member-btn" data-team-id="${team.id}" data-team-name="${$('<div>').text(team.name).html()}">
+                                <i class="bi bi-person-plus-fill"></i>
+                            </button>` : ''}
+                            <button class="btn btn-sm btn-outline-secondary message-team-btn" data-team-id="${team.id}">
+                                <i class="bi bi-chat-dots-fill"></i>
+                            </button>
+                        </div>
                     </div>
+
+
                 </div>
             </div>
         `;

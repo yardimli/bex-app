@@ -95,4 +95,14 @@ class TeamController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Switched to team ' . $teamId]);
     }
+
+    public function getMembers(Team $team)
+    {
+        // Security check: ensure the current user is a member of the team they are requesting members for.
+        if (!Auth::user()->teams()->where('team_id', $team->id)->exists()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        return response()->json($team->users()->get(['id', 'name']));
+    }
 }

@@ -4,18 +4,18 @@ $(document).ready(function () {
 	const currentTheme = localStorage.getItem('theme');
 	const lightIcon = 'bi-brightness-high-fill';
 	const darkIcon = 'bi-moon-stars-fill';
-	
+
 	// --- Sidebar Toggle Elements ---
 	const sidebarToggle = $('#sidebarToggle');
 	const body = $('body');
 	const sidebarBackdrop = $('.sidebar-backdrop');
 	const breakpoint = 991.98; // Bootstrap LG breakpoint
-	
+
 	const modeDropdownButton = $('#modeDropdownButton');
 	const modeDropdownMenu = modeDropdownButton.next('.dropdown-menu');
 	const selectedModelNameSpan = $('#selected-model-name');
 	const defaultModelId = 'openai/gpt-4o-mini';
-	
+
 	function applySelectedModel(modelId) {
 		const selectedItem = modeDropdownMenu.find(`.dropdown-item[data-model-id="${modelId}"]`);
 		let displayName = 'Smart Mode';
@@ -40,7 +40,7 @@ $(document).ready(function () {
 			modeDropdownButton.text(displayName);
 		}
 	}
-	
+
 	modeDropdownMenu.on('click', '.dropdown-item', function (e) {
 		e.preventDefault();
 		const selectedModelId = $(this).data('model-id');
@@ -50,14 +50,14 @@ $(document).ready(function () {
 			console.log('Model selection saved:', selectedModelId);
 		}
 	});
-	
+
 	const savedModel = localStorage.getItem('selectedLlmModel');
 	applySelectedModel(savedModel || defaultModelId);
-	
+
 	function isMobile() {
 		return $(window).width() <= breakpoint;
 	}
-	
+
 	function applySidebarState() {
 		if (isMobile()) {
 			body.removeClass('sidebar-collapsed');
@@ -75,7 +75,7 @@ $(document).ready(function () {
 			body.removeClass('sidebar-mobile-shown');
 		}
 	}
-	
+
 	sidebarToggle.on('click', function () {
 		const icon = $(this).find('i');
 		if (isMobile()) {
@@ -96,14 +96,14 @@ $(document).ready(function () {
 			}
 		}
 	});
-	
+
 	sidebarBackdrop.on('click', function () {
 		if (isMobile() && body.hasClass('sidebar-mobile-shown')) {
 			body.removeClass('sidebar-mobile-shown');
 			sidebarToggle.find('i').removeClass('bi-x').addClass('bi-list');
 		}
 	});
-	
+
 	let resizeTimer;
 	$(window).on('resize', function () {
 		clearTimeout(resizeTimer);
@@ -111,9 +111,9 @@ $(document).ready(function () {
 			applySidebarState();
 		}, 250);
 	});
-	
+
 	applySidebarState();
-	
+
 	function applyTheme(theme) {
 		if (theme === 'dark') {
 			htmlElement.addClass('dark-mode');
@@ -125,9 +125,9 @@ $(document).ready(function () {
 			localStorage.setItem('theme', 'light');
 		}
 	}
-	
+
 	applyTheme(currentTheme || 'light');
-	
+
 	$('#meetingSummaryButton').on('click', function () {
 		$('#recentMeetingsModal').modal('show');
 	});
@@ -152,14 +152,14 @@ $(document).ready(function () {
 	$('#settingsButton').on('click', function () {
 		$('#settingsModal').modal('show');
 	});
-	
+
 	themeToggleButton.on('click', function (e) {
 		e.preventDefault();
 		const newTheme = htmlElement.hasClass('dark-mode') ? 'light' : 'dark';
 		applyTheme(newTheme);
 		console.log('Theme changed to:', newTheme);
 	});
-	
+
 	function handleListItemClick(modalId, detailsSelector, placeholderText) {
 		$(modalId + ' .list-group-item').on('click', function (e) {
 			e.preventDefault();
@@ -175,12 +175,12 @@ $(document).ready(function () {
 			console.log(`Item clicked in ${modalId}: ID=${itemId}, Title=${itemTitle}`);
 		});
 	}
-	
+
 	handleListItemClick('#recentMeetingsModal', '.details-pane', 'Select a meeting to view details');
 	handleListItemClick('#myNotesModal', '.details-pane', 'Select a note to view details');
 	handleListItemClick('#myRecordingsModal', '.details-pane', 'Select a recording to play');
 	handleListItemClick('#teamFilesModal', '.details-pane', 'Select a file to view details or preview');
-	
+
 	$('#saveSettingsButton').on('click', function () {
 		const selectedDefaultModel = $('#defaultModeSelect').val();
 		const selectedThemeValue = $('#themeSelect').val().toLowerCase();
@@ -196,13 +196,13 @@ $(document).ready(function () {
 		console.log('Saved default model setting:', selectedDefaultModel);
 		$('#settingsModal').modal('hide');
 	});
-	
+
 	// --- Summarize Content Logic ---
 	// Helper function to redirect to chat with a prompt
 	function redirectToChatWithSummarizationData(data) {
 		const chatUrl = '/chat';
 		let redirectUrl;
-		
+
 		if (data.text_key) {
 			// Pass the key and a preview (or a flag to fetch full text)
 			// The chat page will use the key to get the full text from session
@@ -215,13 +215,13 @@ $(document).ready(function () {
 			alert('Error: Could not prepare summarization data.');
 			return;
 		}
-		
+
 		$('#summarizeContentModal').modal('hide');
 		setTimeout(() => {
 			window.location.href = redirectUrl;
 		}, 150);
 	}
-	
+
 	function redirectToChatWithPrompt(promptText) {
 		const chatUrl = '/chat'; // Base URL for new chats
 		const redirectUrl = chatUrl + '?prompt=' + encodeURIComponent(promptText);
@@ -231,7 +231,7 @@ $(document).ready(function () {
 			window.location.href = redirectUrl;
 		}, 150);
 	}
-	
+
 	$('#summarizeWebButton').on('click', function () {
 		const url = $('#summarizeUrlInput').val().trim();
 		if (!url) {
@@ -244,11 +244,11 @@ $(document).ready(function () {
 			alert('Please enter a valid URL.');
 			return;
 		}
-		
+
 		const button = $(this);
 		const originalButtonText = button.html();
 		button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Fetching & Processing URL...');
-		
+
 		$.ajax({
 			url: '/api/summarize/url',
 			method: 'POST',
@@ -280,7 +280,7 @@ $(document).ready(function () {
 			}
 		});
 	});
-	
+
 	$('#summarizeTextButton').on('click', function () {
 		const text = $('#summarizeTextInput').val().trim();
 		if (!text) {
@@ -294,21 +294,21 @@ $(document).ready(function () {
 		$('#summarizeContentModal').modal('hide');
 		setTimeout(() => { window.location.href = redirectUrl; }, 150);
 	});
-	
+
 	$('#summarizeFileButton').on('click', function () {
 		const fileInput = $('#summarizeFileInput');
 		const file = fileInput.prop('files')[0];
-		
+
 		if (!file) {
 			alert('Please select a file.');
 			return;
 		}
-		
+
 		// Basic client-side check, server will do more robust validation
 		const allowedTypes = ['text/plain', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
 		const allowedExtensions = ['.txt', '.pdf', '.docx'];
 		const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-		
+
 		if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
 			alert('Unsupported file type. Please upload a TXT, PDF, or DOCX file.');
 			fileInput.val('');
@@ -319,16 +319,16 @@ $(document).ready(function () {
 			fileInput.val('');
 			return;
 		}
-		
-		
+
+
 		const formData = new FormData();
 		formData.append('file', file);
 		formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
-		
+
 		const button = $(this);
 		const originalButtonText = button.html();
 		button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading & Processing File...');
-		
+
 		$.ajax({
 			url: '/api/summarize/upload',
 			method: 'POST',
@@ -360,8 +360,8 @@ $(document).ready(function () {
 		});
 	});
 	// --- End Summarize Content Logic ---
-	
-	
+
+
 	$('#modeDropdownButton + .dropdown-menu .dropdown-item').on('click', function (e) {
 		e.preventDefault();
 		// This is handled by the global applySelectedModel and its event listener
@@ -371,7 +371,7 @@ $(document).ready(function () {
 		// $(this).addClass('active').prepend('<i class="bi bi-check me-2"></i>');
 		// console.log('Mode changed to:', selectedText);
 	});
-	
+
 	const dashboardPromptForm = $('#dashboard-prompt-form');
 	const dashboardPromptInput = $('#dashboard-prompt-input');
 	if (dashboardPromptForm.length && dashboardPromptInput.length) {
@@ -386,7 +386,7 @@ $(document).ready(function () {
 		});
 		dashboardPromptInput.focus();
 	}
-	
+
 	$('.sidebar .nav').on('click', '.delete-chat-btn', function (e) {
 		e.preventDefault();
 		e.stopPropagation();
@@ -428,7 +428,7 @@ $(document).ready(function () {
 			});
 		}
 	});
-	
+
 	$('#settingsModal').on('show.bs.modal', function () {
 		const savedTheme = localStorage.getItem('theme') || 'light';
 		$('#themeSelect').val(savedTheme.charAt(0).toUpperCase() + savedTheme.slice(1));
@@ -438,4 +438,31 @@ $(document).ready(function () {
 		$('#defaultModeSelect').val(savedDefaultModel);
 		console.log('Loaded default model setting:', savedDefaultModel);
 	});
+
+
+    function updateUnreadCountInNav() {
+        const countElement = $('#unread-messages-count');
+        // Only run if the element exists (i.e., user is logged in)
+        if (countElement.length) {
+            $.ajax({
+                url: '/api/user/unread-count',
+                method: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    if (data.unread_count > 0) {
+                        countElement.text(data.unread_count).show();
+                    } else {
+                        countElement.hide();
+                    }
+                },
+                error: function(jqXHR) {
+                    console.error("Could not fetch unread message count.", jqXHR.responseText);
+                }
+            });
+        }
+    }
+
+// Call it on page load
+    updateUnreadCountInNav();
+
 });

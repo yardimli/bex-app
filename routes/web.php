@@ -10,6 +10,8 @@
 	use Illuminate\Support\Facades\Route;
 	use App\Http\Controllers\AppController;
     use App\Http\Controllers\TeamController;
+    use App\Http\Controllers\MessageController;
+    use App\Http\Controllers\Api\MessageController as ApiMessageController;
     use App\Http\Controllers\Api\TeamController as ApiTeamController;
 
 
@@ -50,6 +52,8 @@
 
         Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');
 
+        Route::get('/messages', [MessageController::class, 'index'])->name('messages.inbox');
+
 		// Chat Routes
 		Route::get('/chat/{chatHeaderId?}', [ChatController::class, 'show'])
 		->where('chatHeaderId', '[0-9]+')
@@ -84,7 +88,14 @@
             Route::get('/user/teams', [ApiTeamController::class, 'userTeams'])->name('user.teams');
             Route::post('/teams', [ApiTeamController::class, 'store'])->name('teams.store');
             Route::post('/teams/{team}/members', [ApiTeamController::class, 'addMember'])->name('teams.members.store')->where('team', '[0-9]+');
+            Route::get('/teams/{team}/members', [ApiTeamController::class, 'getMembers'])->name('teams.members.index')->where('team', '[0-g]+');
             Route::post('/user/current-team', [ApiTeamController::class, 'switchTeam'])->name('user.current-team');
+
+            // Message API Routes
+            Route::post('/teams/{team}/messages', [ApiMessageController::class, 'sendMessage'])->name('teams.messages.store')->where('team', '[0-9]+');
+            Route::get('/user/inbox', [ApiMessageController::class, 'inbox'])->name('user.inbox');
+            Route::patch('/messages/{message}/read', [ApiMessageController::class, 'markAsRead'])->name('messages.read')->where('message', '[0-9]+');
+            Route::get('/user/unread-count', [ApiMessageController::class, 'unreadCount'])->name('user.unread-count');
 
 			// Note Routes
 			Route::get('/notes', [NoteController::class, 'index'])->name('notes.index');

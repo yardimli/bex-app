@@ -52,6 +52,48 @@
 @include('partials.modals.summarize_content')
 @include('partials.modals.transcribe')
 
+<!-- Compose Message Modal -->
+<div class="modal fade" id="composeMessageModal" tabindex="-1" aria-labelledby="composeMessageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="composeMessageModalLabel">Compose New Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="composeMessageForm">
+                    <div class="mb-3">
+                        <label for="compose-team" class="form-label">Team</label>
+                        <select class="form-select" id="compose-team" required>
+                            <option value="" selected disabled>-- Select a Team --</option>
+                            {{-- Teams will be loaded here by JS --}}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="compose-recipients" class="form-label">Recipients</label>
+                        <select class="form-select" id="compose-recipients" multiple required size="5" disabled>
+                            <option>-- Select a team first --</option>
+                        </select>
+                        <small class="text-muted">Hold Ctrl/Cmd to select multiple recipients.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="compose-subject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" id="compose-subject" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="compose-body" class="form-label">Message</label>
+                        <textarea class="form-control" id="compose-body" rows="6" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="sendMessageButton">Send Message</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
@@ -63,7 +105,7 @@
 <script src="{{ asset('js/app.js') }}"></script>
 <script src="{{ asset('js/action-items.js') }}"></script>
 <script src="{{ asset('js/my-notes.js') }}"></script>
-
+<script src="{{ asset('js/message-composer.js') }}"></script>
 @stack('scripts')
 
 </body>
