@@ -12,5 +12,7 @@
 		<li><a class="dropdown-item" href="#" data-model-id="anthropic/claude-3.5-haiku" data-display-name="Claude 3.5 Haiku">Anthropic: Claude 3.5 Haiku</a></li>
 		<li><a class="dropdown-item" href="#" data-model-id="google/gemini-2.0-flash-001" data-display-name="Gemini 2 Flash">Google: Gemini 2 Flash</a></li>
 		<li><a class="dropdown-item" href="#" data-model-id="deepseek/deepseek-chat-v3-0324" data-display-name="Deepseek V3">Deepseek: V3 Chat</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="#" id="settingsButtonFromDropdown"><i class="bi bi-gear-fill me-2"></i> Model Settings</a></li>
 	</ul>
 </div>

@@ -25,6 +25,7 @@
 @endpush
 
 @section('content')
+    @include('partials.dropdowns.mode_selector')
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>My Teams</h1>
@@ -43,7 +44,6 @@
             </div>
         </div>
     </div>
-43
     <!-- Create Team Modal -->
     <div class="modal fade" id="createTeamModal" tabindex="-1" aria-labelledby="createTeamModalLabel" aria-hidden="true">
         <div class="modal-dialog">

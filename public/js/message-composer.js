@@ -15,16 +15,25 @@ $(document).ready(function() {
         resetComposeForm();
         teamSelect.html('<option>Loading teams...</option>');
 
-        $.get('/api/user/teams', function(teams) {
+        $.get('/api/user/teams', function(response) {
+            const teams = response.teams;
             teamSelect.html('<option value="" selected disabled>-- Select a Team --</option>');
-            teams.forEach(team => {
-                teamSelect.append(`<option value="${team.id}">${$('<div>').text(team.name).html()}</option>`);
-            });
+            // Access the 'teams' array inside the response object
+            if (teams && Array.isArray(teams)) { // Check if the response is an array
+                teams.forEach(team => {
+                    teamSelect.append(`<option value="${team.id}">${$('<div>').text(team.name).html()}</option>`);
+                });
+            } else {
+                console.error("Expected an array of teams, but received:", teams);
+                teamSelect.html('<option value="" selected disabled>-- Error loading teams --</option>');
+            }
+
 
             if (preselectedTeamId) {
                 teamSelect.val(preselectedTeamId).trigger('change');
             }
         });
+
 
         composeModal.show();
     }

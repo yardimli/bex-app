@@ -61,7 +61,7 @@ class MessageController extends Controller
             ->join('messages', 'message_recipients.message_id', '=', 'messages.id')
             ->orderBy('messages.created_at', 'desc');
 
-        if ($request->has('team_id')) {
+        if ($request->filled('team_id')) {
             $query->whereHas('message', function ($q) use ($request) {
                 $q->where('team_id', $request->team_id);
             });

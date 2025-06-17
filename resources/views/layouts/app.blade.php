@@ -74,7 +74,7 @@
                         <select class="form-select" id="compose-recipients" multiple required size="5" disabled>
                             <option>-- Select a team first --</option>
                         </select>
-                        <small class="text-muted">Hold Ctrl/Cmd to select multiple recipients.</small>
+                        <small class="text-muted">Hold Shift/Cmd to select multiple recipients.</small>
                     </div>
                     <div class="mb-3">
                         <label for="compose-subject" class="form-label">Subject</label>

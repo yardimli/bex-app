@@ -103,6 +103,6 @@ class TeamController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        return response()->json($team->users()->get(['id', 'name']));
+        return response()->json($team->users()->get(['users.id', 'users.name']));
     }
 }
