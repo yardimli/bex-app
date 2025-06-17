@@ -7,62 +7,9 @@ $(document).ready(function () {
 	const chatLoader = $('#chat-loader');
 	const chatTitleDisplay = $('#chat-title-display');
 	const sidebarNav = $('.sidebar .nav');
-	
+
 	let currentAudio = null; // Variable to hold the current Audio object
 	let currentReadAloudButton = null; // Variable to hold the button associated with the current audio
-	
-	// --- LLM Model Dropdown Selection Handling (Copied from app.js) ---
-	const modeDropdownButton = $('#modeDropdownButton');
-	const modeDropdownMenu = modeDropdownButton.next('.dropdown-menu');
-	const selectedModelNameSpan = $('#selected-model-name'); // Target the span inside the button
-	const defaultModelId = 'openai/gpt-4o-mini'; // Default model
-	
-	function applySelectedModel(modelId) {
-		const selectedItem = modeDropdownMenu.find(`.dropdown-item[data-model-id="${modelId}"]`);
-		let displayName = 'Smart Mode'; // Default display name
-		
-		// Remove active state and checkmark from all items
-		modeDropdownMenu.find('.dropdown-item').removeClass('active').find('i.bi-check').remove();
-		
-		if (selectedItem.length) {
-			displayName = selectedItem.data('display-name') || selectedItem.text().trim();
-			// Add active state and checkmark to the selected item
-			selectedItem.addClass('active').prepend('<i class="bi bi-check me-2"></i>');
-			console.log('Applied model:', modelId, 'Display:', displayName);
-		} else {
-			// If the saved model ID is invalid, fallback to the default visually
-			const defaultItem = modeDropdownMenu.find(`.dropdown-item[data-model-id="${defaultModelId}"]`);
-			if (defaultItem.length) {
-				displayName = defaultItem.data('display-name') || defaultItem.text().trim();
-				defaultItem.addClass('active').prepend('<i class="bi bi-check me-2"></i>');
-				console.log('Applied default model (fallback):', defaultModelId, 'Display:', displayName);
-			} else {
-				console.error("Default model item not found in dropdown!");
-			}
-		}
-		// Update button text
-		if (selectedModelNameSpan.length) {
-			selectedModelNameSpan.text(displayName);
-		} else {
-			modeDropdownButton.text(displayName); // Fallback if span not found
-		}
-	}
-	
-	// Event listener for dropdown item clicks
-	modeDropdownMenu.on('click', '.dropdown-item', function (e) {
-		e.preventDefault();
-		const selectedModelId = $(this).data('model-id');
-		if (selectedModelId) {
-			localStorage.setItem('selectedLlmModel', selectedModelId);
-			applySelectedModel(selectedModelId);
-			console.log('Model selection saved:', selectedModelId);
-		}
-	});
-	
-	// Apply saved theme on load or default
-	const savedModel = localStorage.getItem('selectedLlmModel');
-	applySelectedModel(savedModel || defaultModelId);
-	
 	function checkAndSubmitInitialPrompt() {
 		const initialMessage = messageInputField.val().trim();
 		if (initialMessage) {
@@ -70,21 +17,21 @@ $(document).ready(function () {
 			chatInputForm.submit(); // Trigger form submission
 		}
 	}
-	
+
 	function scrollToBottom() {
 		chatHistoryArea.scrollTop(chatHistoryArea[0].scrollHeight);
 	}
-	
+
 	// Function to add a message bubble to the chat
 	function addMessageBubble(role, content, messageId, canDelete = false) {
 		const escapedContentHtml = $('<div>').text(content).html().replace(/\n/g, '<br>');
 		const now = new Date();
 		const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-		
+
 		const deleteButtonHtml = (role === 'user' && canDelete)
 			? `<button class="delete-message-btn" title="Delete pair" data-message-id="${messageId}"> <i class="bi bi-trash3-fill"></i> </button>`
 			: '';
-		
+
 		// --- Add Action Buttons for Assistant ---
 		const actionButtonsHtml = (role === 'assistant')
 			? `<div class="message-actions">
@@ -98,7 +45,7 @@ $(document).ready(function () {
                </div>`
 			: '';
 		// --- End Action Buttons ---
-		
+
 		// Add data-message-content to the main bubble for easier access later
 		const bubbleHtml = `
             <div class="message-bubble ${role}" id="message-${messageId}" data-message-content="${escape(content)}"> ${/* Store escaped content */''}
@@ -107,10 +54,10 @@ $(document).ready(function () {
                 <div class="message-meta">${timeString}</div>
                 ${actionButtonsHtml} ${/* Add assistant action buttons */''}
             </div>`;
-		
+
 		chatHistoryArea.append(bubbleHtml);
 	}
-	
+
 	// Function to enable/disable input
 	function setInputEnabled(enabled) {
 		messageInputField.prop('disabled', !enabled);
@@ -122,13 +69,13 @@ $(document).ready(function () {
 			chatLoader.show();
 		}
 	}
-	
+
 	// --- Auto-resize Textarea ---
 	function autoResizeTextarea() {
 		messageInputField.css('height', 'auto'); // Reset height
 		let scrollHeight = messageInputField[0].scrollHeight;
 		messageInputField.css('height', scrollHeight + 'px');
-		
+
 		// Limit max height (e.g., 5 rows equivalent)
 		let maxHeight = parseFloat(messageInputField.css('line-height')) * 7;
 		if (scrollHeight > maxHeight) {
@@ -138,10 +85,10 @@ $(document).ready(function () {
 			messageInputField.css('overflow-y', 'hidden'); // Hide scroll if below max height
 		}
 	}
-	
+
 	messageInputField.on('input', autoResizeTextarea);
 	autoResizeTextarea(); // Initial resize
-	
+
 	// --- Handle Form Submission (Send Message) ---
 	chatInputForm.on('submit', function (e) {
 		e.preventDefault();
@@ -151,18 +98,18 @@ $(document).ready(function () {
 		const chatHeaderId = chatHeaderIdInput.val(); // Get current chat ID
 		const selectedModel = localStorage.getItem('selectedLlmModel') || defaultModelId;
 		const selectedTone = localStorage.getItem('selectedPersonalityTone') || 'professional';
-		
+
 		if (!message) return; // Don't send empty messages
-		
+
 		setInputEnabled(false); // Disable input while processing
-		
+
 		// Optimistically add user message
 		const tempUserMessageId = 'temp-user-' + Date.now();
 		addMessageBubble('user', message, tempUserMessageId, false); // Cannot delete until saved
 		scrollToBottom();
 		messageInputField.val(''); // Clear input field immediately
 		autoResizeTextarea(); // Reset textarea height
-		
+
 		$.ajax({
 			url: '/api/chat', // Use the named route if preferred: {{ route('api.chat.store') }} - needs JS variables setup
 			method: 'POST',
@@ -178,7 +125,7 @@ $(document).ready(function () {
 				if (data.success) {
 					// Remove temporary user message
 					$('#message-' + tempUserMessageId).remove();
-					
+
 					// Add confirmed user message (with delete button)
 					addMessageBubble(
 						data.user_message.role,
@@ -186,7 +133,7 @@ $(document).ready(function () {
 						data.user_message.id,
 						data.user_message.can_delete
 					);
-					
+
 					// Add assistant message
 					addMessageBubble(
 						data.assistant_message.role,
@@ -194,14 +141,14 @@ $(document).ready(function () {
 						data.assistant_message.id,
 						data.assistant_message.can_delete
 					);
-					
+
 					// Update chat header ID if it was a new chat
 					if (data.is_new_chat && data.chat_header_id) {
 						chatHeaderIdInput.val(data.chat_header_id);
 						// Update browser URL without reloading
 						const newUrl = '/chat/' + data.chat_header_id;
 						history.pushState({chatId: data.chat_header_id}, '', newUrl);
-						
+
 						// Add new chat to sidebar
 						const newTitle = data.updated_title || 'Chat ' + data.chat_header_id;
 						const newLinkHtml = `
@@ -218,7 +165,7 @@ $(document).ready(function () {
 						// Remove "no history" message if present
 						sidebarNav.find('.text-muted.small').remove();
 					}
-					
+
 					// Update title if it changed
 					if (data.updated_title) {
 						chatTitleDisplay.text(data.updated_title.substring(0, 50));
@@ -229,7 +176,7 @@ $(document).ready(function () {
 							$('#chat-link-' + data.chat_header_id).attr('title', data.updated_title);
 						}
 					}
-					
+
 					scrollToBottom();
 				} else {
 					// Handle backend error reported in success response
@@ -248,7 +195,7 @@ $(document).ready(function () {
 			}
 		});
 	});
-	
+
 	// --- Handle Enter Key in Textarea (Submit, allow Shift+Enter for newline) ---
 	messageInputField.on('keydown', function (e) {
 		if (e.key === 'Enter' && !e.shiftKey) {
@@ -256,24 +203,24 @@ $(document).ready(function () {
 			chatInputForm.submit(); // Trigger form submission
 		}
 	});
-	
-	
+
+
 	// --- Handle Delete Message Pair ---
 	// Use event delegation for dynamically added buttons
 	chatHistoryArea.on('click', '.delete-message-btn', function () {
 		const userMessageId = $(this).data('message-id');
 		const userMessageBubble = $('#message-' + userMessageId);
 		const assistantMessageBubble = userMessageBubble.next('.message-bubble.assistant'); // Find the *next* sibling that is an assistant bubble
-		
+
 		if (!userMessageId) {
 			console.error("Could not find user message ID for deletion.");
 			return;
 		}
-		
+
 		if (!confirm('Are you sure you want to delete this message and its response?')) {
 			return;
 		}
-		
+
 		$.ajax({
 			url: `/api/chat/messages/${userMessageId}`, // Use template literal for URL
 			method: 'DELETE',
@@ -312,14 +259,14 @@ $(document).ready(function () {
 			}
 		});
 	});
-	
-	
+
+
 	// --- NEW: Handle Copy Button ---
 	chatHistoryArea.on('click', '.copy-btn', function () {
 		const button = $(this);
 		// Get content from the parent bubble's data attribute
 		const messageContent = unescape(button.closest('.message-bubble').data('message-content'));
-		
+
 		navigator.clipboard.writeText(messageContent).then(() => {
 			// Success feedback
 			const originalIcon = button.html();
@@ -332,28 +279,28 @@ $(document).ready(function () {
 			alert('Failed to copy text.');
 		});
 	});
-	
+
 	// --- NEW: Handle Read Aloud Button ---
 	chatHistoryArea.on('click', '.read-aloud-btn', function () {
 		const button = $(this);
 		const messageContent = unescape(button.closest('.message-bubble').data('message-content'));
 		const messageId = button.data('message-id'); // Although not strictly needed for TTS here
-		
+
 		// If this button is already playing, stop it
 		if (currentAudio && currentReadAloudButton && currentReadAloudButton.is(button)) {
 			stopAudio();
 			return; // Exit
 		}
-		
+
 		// If another audio is playing, stop it first
 		if (currentAudio) {
 			stopAudio();
 		}
-		
+
 		// Show loading state
 		setReadAloudLoading(button, true);
 		currentReadAloudButton = button; // Store the current button
-		
+
 		$.ajax({
 			url: '/api/chat/tts', // The new API endpoint
 			method: 'POST',
@@ -385,32 +332,32 @@ $(document).ready(function () {
 			// Note: 'complete' isn't used here as success/error handle loading state removal
 		});
 	});
-	
+
 	// --- NEW: Helper functions for Audio ---
 	function playAudio(url, button) {
 		// Ensure loading state is removed before playing
 		setReadAloudLoading(button, false);
-		
+
 		currentAudio = new Audio(url);
-		
+
 		currentAudio.oncanplaythrough = () => {
 			console.log("Audio ready to play:", url);
 			currentAudio.play();
 			button.addClass('playing').attr('title', 'Pause'); // Update button state
 			button.find('i').removeClass('bi-play-circle').addClass('bi-pause-circle-fill');
 		};
-		
+
 		currentAudio.onended = () => {
 			console.log("Audio finished playing");
 			stopAudio(); // Clean up and reset button
 		};
-		
+
 		currentAudio.onerror = (e) => {
 			console.error('Error playing audio:', e);
 			alert('Error playing the generated audio.');
 			stopAudio(); // Clean up even on error
 		};
-		
+
 		// Add a timeout in case 'oncanplaythrough' never fires (network issue?)
 		let playTimeout = setTimeout(() => {
 			if (currentAudio && currentAudio.paused) { // Check if not already playing/played
@@ -422,15 +369,15 @@ $(document).ready(function () {
 				});
 			}
 		}, 5000); // 5 second timeout
-		
+
 		// Clear timeout if event fires normally
 		currentAudio.addEventListener('canplaythrough', () => clearTimeout(playTimeout), { once: true });
 		currentAudio.addEventListener('ended', () => clearTimeout(playTimeout), { once: true });
 		currentAudio.addEventListener('error', () => clearTimeout(playTimeout), { once: true });
-		
-		
+
+
 	}
-	
+
 	function stopAudio() {
 		if (currentAudio) {
 			currentAudio.pause();
@@ -442,7 +389,7 @@ $(document).ready(function () {
 			currentReadAloudButton = null;
 		}
 	}
-	
+
 	function setReadAloudLoading(button, isLoading) {
 		if (isLoading) {
 			button.prop('disabled', true).addClass('loading');
@@ -454,7 +401,7 @@ $(document).ready(function () {
 			button.find('i').show();
 		}
 	}
-	
+
 	function resetReadAloudButton(button) {
 		button.removeClass('playing').attr('title', 'Read aloud');
 		button.find('i').removeClass('bi-pause-circle-fill').addClass('bi-play-circle');
@@ -462,15 +409,15 @@ $(document).ready(function () {
 		setReadAloudLoading(button, false);
 	}
 	// --- End Audio Helper Functions ---
-	
-	
+
+
 	// Initial scroll to bottom if there are messages
 	if (chatHistoryArea.children('.message-bubble').length > 0) {
 		scrollToBottom();
 	}
-	
+
 	messageInputField.focus();
 	checkAndSubmitInitialPrompt();
 	autoResizeTextarea();
-	
+
 }); // End document ready

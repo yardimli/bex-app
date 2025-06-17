@@ -16,44 +16,45 @@ $(document).ready(function () {
 	const selectedModelNameSpan = $('#selected-model-name');
 	const defaultModelId = 'openai/gpt-4o-mini';
 
-	function applySelectedModel(modelId) {
-		const selectedItem = modeDropdownMenu.find(`.dropdown-item[data-model-id="${modelId}"]`);
-		let displayName = 'Smart Mode';
-		modeDropdownMenu.find('.dropdown-item').removeClass('active').find('i.bi-check').remove();
-		if (selectedItem.length) {
-			displayName = selectedItem.data('display-name') || selectedItem.text().trim();
-			selectedItem.addClass('active').prepend('<i class="bi bi-check me-2"></i>');
-			console.log('Applied model:', modelId, 'Display:', displayName);
-		} else {
-			const defaultItem = modeDropdownMenu.find(`.dropdown-item[data-model-id="${defaultModelId}"]`);
-			if (defaultItem.length) {
-				displayName = defaultItem.data('display-name') || defaultItem.text().trim();
-				defaultItem.addClass('active').prepend('<i class="bi bi-check me-2"></i>');
-				console.log('Applied default model (fallback):', defaultModelId, 'Display:', displayName);
-			} else {
-				console.error("Default model item not found in dropdown!");
-			}
-		}
-		if (selectedModelNameSpan.length) {
-			selectedModelNameSpan.text(displayName);
-		} else {
-			modeDropdownButton.text(displayName);
-		}
-	}
+    if (modeDropdownButton.length) {
+        function applySelectedModel(modelId) {
+            const selectedItem = modeDropdownMenu.find(`.dropdown-item[data-model-id="${modelId}"]`);
+            let displayName = 'Smart Mode';
+            modeDropdownMenu.find('.dropdown-item').removeClass('active').find('i.bi-check').remove();
+            if (selectedItem.length) {
+                displayName = selectedItem.data('display-name') || selectedItem.text().trim();
+                selectedItem.addClass('active').prepend('<i class="bi bi-check me-2"></i>');
+                console.log('Applied model:', modelId, 'Display:', displayName);
+            } else {
+                const defaultItem = modeDropdownMenu.find(`.dropdown-item[data-model-id="${defaultModelId}"]`);
+                if (defaultItem.length) {
+                    displayName = defaultItem.data('display-name') || defaultItem.text().trim();
+                    defaultItem.addClass('active').prepend('<i class="bi bi-check me-2"></i>');
+                    console.log('Applied default model (fallback):', defaultModelId, 'Display:', displayName);
+                } else {
+                    console.error("Default model item not found in dropdown!");
+                }
+            }
+            if (selectedModelNameSpan.length) {
+                selectedModelNameSpan.text(displayName);
+            } else {
+                modeDropdownButton.text(displayName);
+            }
+        }
 
-	modeDropdownMenu.on('click', '.dropdown-item', function (e) {
-		e.preventDefault();
-		const selectedModelId = $(this).data('model-id');
-		if (selectedModelId) {
-			localStorage.setItem('selectedLlmModel', selectedModelId);
-			applySelectedModel(selectedModelId);
-			console.log('Model selection saved:', selectedModelId);
-		}
-	});
+        modeDropdownMenu.on('click', '.dropdown-item', function (e) {
+            e.preventDefault();
+            const selectedModelId = $(this).data('model-id');
+            if (selectedModelId) {
+                localStorage.setItem('selectedLlmModel', selectedModelId);
+                applySelectedModel(selectedModelId);
+                console.log('Model selection saved:', selectedModelId);
+            }
+        });
 
-	const savedModel = localStorage.getItem('selectedLlmModel');
-	applySelectedModel(savedModel || defaultModelId);
-
+        const savedModel = localStorage.getItem('selectedLlmModel');
+        applySelectedModel(savedModel || defaultModelId);
+    }
 	function isMobile() {
 		return $(window).width() <= breakpoint;
 	}
