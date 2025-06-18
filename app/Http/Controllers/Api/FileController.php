@@ -136,7 +136,7 @@ class FileController extends Controller
     {
         $user = Auth::user();
         $isOwner = $file->user_id === $user->id;
-        $isSharedWithUserTeam = $file->sharedWithTeams()->whereIn('teams.id', $user->teams()->pluck('id'))->exists();
+        $isSharedWithUserTeam = $file->sharedWithTeams()->whereIn('teams.id', $user->teams()->pluck('teams.id'))->exists();
 
         if (!$isOwner && !$isSharedWithUserTeam) {
             return response()->json(['error' => 'FORBIDDEN', 'message' => 'You do not have access to this file.'], 403);
