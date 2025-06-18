@@ -85,4 +85,9 @@
             return $this->hasMany(MessageRecipient::class, 'recipient_id');
         }
 
+        public function files(): HasMany // <-- ADD THIS METHOD
+        {
+            return $this->hasMany(File::class);
+        }
+
 	}

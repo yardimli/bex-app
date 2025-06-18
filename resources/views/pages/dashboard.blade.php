@@ -35,15 +35,18 @@
 						{{-- Optionally show name: <span class="d-none d-sm-inline">{{ Str::limit(Auth::user()->name, 15) }}</span> --}}
 					</a>
 					<ul class="dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="dropdownUser">
-						<li><a class="dropdown-item" href="{{ route('profile.edit') }}">Profile</a>
-						</li> {{-- Added Profile Link --}}
-                        <li><a class="dropdown-item" href="{{ route('teams.index') }}">Teams</a></li>
                         <li>
                             <a class="dropdown-item d-flex justify-content-between align-items-center" href="{{ route('messages.inbox') }}">
                                 Inbox
                                 <span class="badge bg-danger rounded-pill" id="unread-messages-count" style="display: none;"></span>
                             </a>
                         </li>
+                       <li><a class="dropdown-item" href="{{ route('files.index') }}">My Files</a>
+                       </li>
+                        <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Profile</a>
+                        </li> {{-- Added Profile Link --}}
+                        <li><a class="dropdown-item" href="{{ route('teams.index') }}">Teams</a></li>
+                        <li>
 						<li>
 							<hr class="dropdown-divider">
 						</li> {{-- Added Divider --}}

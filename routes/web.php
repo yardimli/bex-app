@@ -11,6 +11,8 @@
 	use App\Http\Controllers\AppController;
     use App\Http\Controllers\TeamController;
     use App\Http\Controllers\MessageController;
+    use App\Http\Controllers\FileController;
+    use App\Http\Controllers\Api\FileController as ApiFileController;
     use App\Http\Controllers\Api\MessageController as ApiMessageController;
     use App\Http\Controllers\Api\TeamController as ApiTeamController;
 
@@ -53,6 +55,8 @@
         Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');
 
         Route::get('/messages', [MessageController::class, 'index'])->name('messages.inbox');
+
+        Route::get('/files', [FileController::class, 'index'])->name('files.index');
 
 		// Chat Routes
 		Route::get('/chat/{chatHeaderId?}', [ChatController::class, 'show'])
@@ -103,6 +107,15 @@
 			Route::get('/notes/{note}', [NoteController::class, 'show'])->name('notes.show')->where('note', '[0-9]+');
 			Route::put('/notes/{note}', [NoteController::class, 'update'])->name('notes.update')->where('note', '[0-9]+'); // Or PATCH
 			Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->name('notes.destroy')->where('note', '[0-9]+');
+
+            // --- File Management API Routes ---
+            Route::get('/user/files', [ApiFileController::class, 'userFiles'])->name('user.files');
+            Route::get('/teams/{team}/files', [ApiFileController::class, 'teamFiles'])->name('teams.files')->where('team', '[0-9]+');
+            Route::post('/files', [ApiFileController::class, 'upload'])->name('files.upload');
+// CHANGED: Use numeric ID for file routes
+            Route::get('/files/{file}/download', [ApiFileController::class, 'download'])->name('files.download')->where('file', '[0-9]+');
+            Route::post('/files/{file}/share', [ApiFileController::class, 'share'])->name('files.share')->where('file', '[0-9]+');
+            Route::delete('/files/{file}/teams/{team}', [ApiFileController::class, 'revokeShare'])->name('files.revoke')->where('file', '[0-9]+')->where('team', '[0-9]+');
 
 			// Summarization Helper Routes
 			Route::post('/summarize/upload', [UtilityController::class, 'processFileUploadForSummarization'])->name('summarize.upload');
