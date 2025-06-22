@@ -116,12 +116,13 @@ $(document).ready(function() {
         const button = $(this);
         button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...');
         const teamId = $('#addMemberTeamId').val();
-
         $.ajax({
             url: `/api/teams/${teamId}/members`,
             method: 'POST',
             data: $('#addMemberForm').serialize(),
-            headers: { 'X-CSRF-TOKEN': csrfToken },
+            headers: {
+                'X-CSRF-TOKEN': csrfToken
+            },
             success: function() {
                 $('#addMemberModal').modal('hide');
                 $('#addMemberForm')[0].reset();
@@ -148,26 +149,30 @@ $(document).ready(function() {
     teamsList.on('click', '.switch-team-btn', function() {
         const teamId = $(this).closest('.team-card').data('team-id');
         const button = $(this);
-        button.prop('disabled', true);
+        button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Switching...');
 
         $.ajax({
             url: '/api/user/current-team',
             method: 'POST',
-            data: { team_id: teamId },
-            headers: { 'X-CSRF-TOKEN': csrfToken },
-            success: function() {
-                // Visually update active state without full reload
-                $('.team-card').removeClass('active-team');
-                $('.switch-team-btn').prop('disabled', false);
-                button.closest('.team-card').addClass('active-team');
-                button.prop('disabled', true);
-                alert('Active team switched successfully!');
-                // Or reload the page to reflect changes everywhere
-                // window.location.reload();
+            data: {
+                team_id: teamId,
+                _token: csrfToken
+            },
+            headers: {
+                'X-CSRF-TOKEN': csrfToken
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Reload the page to reflect the change globally and ensure consistency
+                    window.location.reload();
+                } else {
+                    alert('Failed to switch team: ' + (response.error || 'Unknown error.'));
+                    button.prop('disabled', false).html('<i class="bi bi-arrow-repeat me-1"></i> Switch to this Team');
+                }
             },
             error: function() {
                 alert('Failed to switch team.');
-                button.prop('disabled', false);
+                button.prop('disabled', false).html('<i class="bi bi-arrow-repeat me-1"></i> Switch to this Team');
             }
         });
     });

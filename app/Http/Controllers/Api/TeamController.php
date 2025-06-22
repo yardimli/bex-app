@@ -81,19 +81,24 @@ class TeamController extends Controller
     public function switchTeam(Request $request)
     {
         $validated = $request->validate([
-            'team_id' => 'required|integer|exists:teams,id',
+            'team_id' => 'required|integer',
         ]);
 
         $user = Auth::user();
         $teamId = $validated['team_id'];
+
+        if ($teamId == 0) {
+            session(['current_team_id' => null]);
+            return response()->json(['success' => true, 'message' => 'Switched to Personal account.']);
+        }
 
         if (!$user->teamMemberships()->where('team_id', $teamId)->exists()) {
             return response()->json(['error' => 'You are not a member of this team.'], 403);
         }
 
         session(['current_team_id' => $teamId]);
-
-        return response()->json(['success' => true, 'message' => 'Switched to team ' . $teamId]);
+        $team = Team::find($teamId); // We know it exists from the membership check
+        return response()->json(['success' => true, 'message' => 'Switched to team ' . $team->name]);
     }
 
     public function getMembers(Team $team)

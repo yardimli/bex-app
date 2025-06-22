@@ -465,5 +465,53 @@ $(document).ready(function () {
 
 // Call it on page load
     updateUnreadCountInNav();
+    $(document).on('click', '#account-switcher-submenu .dropdown-item', function(e) {
+        e.preventDefault();
+        const teamId = $(this).data('team-id');
+        const linkItem = $(this);
+
+        // If already selected (has a checkmark), do nothing.
+        if (linkItem.find('i.bi-check').length > 0) {
+            console.log('This account is already active.');
+            return;
+        }
+
+        // Provide visual feedback that something is happening
+        const originalHtml = linkItem.html();
+        linkItem.html(`
+        <div class="d-flex align-items-center">
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Switching...
+        </div>
+    `);
+
+        $.ajax({
+            url: '/api/user/current-team',
+            method: 'POST',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                team_id: teamId
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    // Reload the page to apply the new context (team/personal) everywhere.
+                    // This is the most robust way to ensure all data is correctly scoped.
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (response.error || 'Could not switch accounts.'));
+                    linkItem.html(originalHtml); // Restore original content on failure
+                }
+            },
+            error: function(jqXHR) {
+                let errorMsg = 'An unknown error occurred while switching accounts.';
+                if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
+                    errorMsg = jqXHR.responseJSON.error;
+                }
+                alert('Error: ' + errorMsg);
+                linkItem.html(originalHtml); // Restore original content on error
+            }
+        });
+    });
 
 });

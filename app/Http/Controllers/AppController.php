@@ -12,11 +12,14 @@
 			$user = Auth::user();
 			if ($user) {
 				$chatHeaders = $user->chatHeaders()->orderBy('updated_at', 'desc')->get();
-
+                $userTeams = $user->teams()->get();
+                $currentTeamId = session('current_team_id');
 				return view('pages.dashboard', [
 					'chatHeaders' => $chatHeaders,
 					'activeChat' => null, // Pass the active chat object (or null)
 					'messages' => null,
+                    'userTeams' => $userTeams,
+                    'currentTeamId' => $currentTeamId,
 				]);
 
 			} else {

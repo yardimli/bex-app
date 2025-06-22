@@ -33,6 +33,9 @@ class ChatController extends Controller
 			return redirect()->route('login');
 		}
 
+        $userTeams = $user->teams()->get();
+        $currentTeamId = session('current_team_id');
+
 		$chatHeader = null;
 		if ($chatHeaderId) {
 			$chatHeader = ChatHeader::where('id', $chatHeaderId)
@@ -77,6 +80,8 @@ class ChatController extends Controller
 			'activeChat' => $chatHeader,
 			'messages' => $messages,
 			'initialPrompt' => $initialPrompt,
+            'userTeams' => $userTeams,
+            'currentTeamId' => $currentTeamId,
 		]);
 	}
 

@@ -25,6 +25,29 @@
 	<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
 	<link rel="manifest" href="/images/site.webmanifest">
 	@stack('styles')
+
+    <style>
+        .dropdown-submenu {
+            position: relative;
+        }
+        .dropdown-submenu .dropdown-menu {
+            top: -5px; /* Adjust vertical alignment */
+            left: 100%;
+            margin-top: 0;
+            display: none; /* Hidden by default */
+        }
+        /* Show on hover */
+        .dropdown-submenu:hover > .dropdown-menu {
+            display: block;
+        }
+        /* Add a right-arrow to indicate a submenu */
+        .dropdown-submenu > a.dropdown-item::after {
+            content: '›';
+            font-weight: bold;
+            float: right;
+            margin-left: 5px;
+        }
+    </style>
 </head>
 <body>
 <div class="main-wrapper">

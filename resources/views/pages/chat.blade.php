@@ -78,7 +78,13 @@
       #chat-loader {
           text-align: center;
           padding: 10px;
-          display: none; /* Hidden by default */
+          display: none;
+      }
+
+      .dropdown-menu-left {
+          left: auto !important;
+          right: 100% !important;
+          top: 0;
       }
 
 	</style>
@@ -120,8 +126,36 @@
                         </li>
                         <li><a class="dropdown-item" href="{{ route('files.index') }}">My Files
                         </a></li>
-                        <li><a class="dropdown-item" href="{{ route('teams.index') }}">Teams</a></li>
                         <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Profile</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {{-- MODIFIED: Changed to a hoverable submenu structure --}}
+                        <li class="dropdown-submenu">
+                            <a class="dropdown-item" href="#">Switch Account</a>
+                            <ul class="dropdown-menu dropdown-menu-left" id="account-switcher-submenu">
+                                <li>
+                                    <a class="dropdown-item d-flex justify-content-between align-items-center" href="#" data-team-id="0">
+                                        <div>
+                                            <i class="bi bi-person-fill me-2"></i>
+                                            <span>{{ Auth::user()->name }}</span>
+                                            <span class="badge bg-secondary ms-2">Personal</span>
+                                        </div>
+                                        @if(!$currentTeamId) <i class="bi bi-check"></i> @endif
+                                    </a>
+                                </li>
+                                @foreach($userTeams as $team)
+                                    <li>
+                                        <a class="dropdown-item d-flex justify-content-between align-items-center" href="#" data-team-id="{{ $team->id }}">
+                                            <div>
+                                                <i class="bi bi-people-fill me-2"></i>
+                                                <span>{{ $team->name }}</span>
+                                                <span class="badge bg-info ms-2">Team</span>
+                                            </div>
+                                            @if($currentTeamId == $team->id) <i class="bi bi-check"></i> @endif
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </li>
 						<li><hr class="dropdown-divider"></li>
 						<li>
 							<a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">{{ __('Logout') }}</a>
