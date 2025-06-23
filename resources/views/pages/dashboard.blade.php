@@ -6,6 +6,9 @@
             right: 100% !important;
             top: 0;
         }
+        .selected {
+            background-color: #e8ebf1;
+        }
     </style>
 @endpush
 @section('content')
@@ -44,6 +47,20 @@
 					</a>
 					<ul class="dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="dropdownUser">
                         <li>
+                            @if($currentTeamId && ($currentTeam = $userTeams->firstWhere('id', $currentTeamId)))
+                                <h6 class="dropdown-header text-truncate" title="{{ $currentTeam->name }}">
+                                    <i class="bi bi-people-fill me-1"></i>
+                                    {{ $currentTeam->name }}
+                                </h6>
+                            @else
+                                <h6 class="dropdown-header text-truncate" title="{{ Auth::user()->name }}">
+                                    <i class="bi bi-person-fill me-1"></i>
+                                    {{ Auth::user()->name }}
+                                </h6>
+                            @endif
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
                             <a class="dropdown-item d-flex justify-content-between align-items-center" href="{{ route('messages.inbox') }}">
                                 Inbox
                                 <span class="badge bg-danger rounded-pill" id="unread-messages-count" style="display: none;"></span>
@@ -52,29 +69,29 @@
                        <li><a class="dropdown-item" href="{{ route('files.index') }}">My Files</a>
                        </li>
                         <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Profile</a>
-                        </li> {{-- Added Profile Link --}}
+                        </li>
+                        <li><a class="dropdown-item" href="{{ route('teams.index') }}">Teams</a></li>
+                        <li><hr class="dropdown-divider"></li>
                         <li class="dropdown-submenu">
                             <a class="dropdown-item" href="#">Switch Account</a>
                             <ul class="dropdown-menu dropdown-menu-left" id="account-switcher-submenu">
-                                <li>
+                                <li @if(!$currentTeamId) class="selected" @endif>
                                     <a class="dropdown-item d-flex justify-content-between align-items-center" href="#" data-team-id="0">
-                                        <div>
+                                        <div class="d-flex align-items-center flex-grow-1">
                                             <i class="bi bi-person-fill me-2"></i>
-                                            <span>{{ Auth::user()->name }}</span>
-                                            <span class="badge bg-secondary ms-2">Personal</span>
+                                            <span class="text-truncate" style="max-width: 150px;">{{ Auth::user()->name }}</span>
+                                            <span class="badge bg-secondary  ms-auto">Personal</span>
                                         </div>
-                                        @if(!$currentTeamId) <i class="bi bi-check"></i> @endif
                                     </a>
                                 </li>
                                 @foreach($userTeams as $team)
-                                    <li>
+                                    <li @if($currentTeamId == $team->id) class="selected" @endif>
                                         <a class="dropdown-item d-flex justify-content-between align-items-center" href="#" data-team-id="{{ $team->id }}">
-                                            <div>
+                                            <div class="d-flex align-items-center flex-grow-1">
                                                 <i class="bi bi-people-fill me-2"></i>
-                                                <span>{{ $team->name }}</span>
-                                                <span class="badge bg-info ms-2">Team</span>
+                                                <span class="text-truncate" style="max-width: 150px;">{{ $team->name }}</span>
+                                                <span class="badge bg-info  ms-auto">Team</span>
                                             </div>
-                                            @if($currentTeamId == $team->id) <i class="bi bi-check"></i> @endif
                                         </a>
                                     </li>
                                 @endforeach
