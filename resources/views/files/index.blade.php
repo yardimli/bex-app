@@ -154,6 +154,36 @@
             </div>
         </div>
     </div>
+
+    <!-- Image Preview Modal -->
+    <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imagePreviewModalLabel">Image Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="image-preview-content" src="" alt="Image Preview" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF Preview Modal -->
+    <div class="modal fade" id="pdfPreviewModal" tabindex="-1" aria-labelledby="pdfPreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" style="height: 90vh;">
+            <div class="modal-content" style="height: 100%;">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="pdfPreviewModalLabel">PDF Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0" style="height: calc(100% - 56px);">
+                    <iframe id="pdf-preview-content" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')

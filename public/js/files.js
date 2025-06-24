@@ -6,7 +6,8 @@ $(document).ready(function() {
 
     const uploadFileModal = new bootstrap.Modal(document.getElementById('uploadFileModal'));
     const shareFileModal = new bootstrap.Modal(document.getElementById('shareFileModal'));
-
+    const imagePreviewModal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+    const pdfPreviewModal = new bootstrap.Modal(document.getElementById('pdfPreviewModal'));
     let userTeams = [];
 
     function getFileIcon(mimeType) {
@@ -41,39 +42,50 @@ $(document).ready(function() {
         `).join(' ');
         }
 
+        let previewButtonHtml = '';
+        if (file.mime_type.startsWith('image/') || file.mime_type === 'application/pdf') {
+            previewButtonHtml = `<button class="btn btn-sm btn-outline-info preview-btn" title="Preview" data-file-id="${file.id}" data-mime-type="${file.mime_type}"><i class="bi bi-eye-fill"></i></button>`;
+        }
+
         return `
             <div class="file-list-item" data-file-id="${file.id}">
-                <div class="file-info">
-                    <i class="bi ${getFileIcon(file.mime_type)} file-icon"></i>
-                    <div class="file-details">
-                        <strong>${$('<div>').text(file.original_filename).html()}</strong>
-                        <div class="file-meta">${formatBytes(file.size)} • Uploaded ${new Date(file.created_at).toLocaleDateString()}</div>
-                        <div class="sharing-status mt-1">${sharedWithHtml}</div>
-                    </div>
+            <div class="file-info">
+                <i class="bi ${getFileIcon(file.mime_type)} file-icon"></i>
+                <div class="file-details">
+                    <strong>${$('<div>').text(file.original_filename).html()}</strong>
+                    <div class="file-meta">${formatBytes(file.size)} • Uploaded ${new Date(file.created_at).toLocaleDateString()}</div>
+                    <div class="sharing-status mt-1">${sharedWithHtml}</div>
                 </div>
-                <div class="file-actions">
-                    <button class="btn btn-sm btn-outline-primary share-btn" title="Share"><i class="bi bi-share-fill"></i></button>
-                    <a href="/api/files/${file.id}/download" class="btn btn-sm btn-outline-secondary" title="Download"><i class="bi bi-download"></i></a>
-                </div>
-            </div>`;
+            </div>
+            <div class="file-actions">
+                ${previewButtonHtml}
+                <button class="btn btn-sm btn-outline-primary share-btn" title="Share"><i class="bi bi-share-fill"></i></button>
+                <a href="/api/files/${file.id}/download" class="btn btn-sm btn-outline-secondary" title="Download"><i class="bi bi-download"></i></a>
+            </div>
+        </div>`;
     }
 
     function renderTeamFileItem(file) {
+        let previewButtonHtml = '';
+        if (file.mime_type.startsWith('image/') || file.mime_type === 'application/pdf') {
+            previewButtonHtml = `<button class="btn btn-sm btn-outline-info preview-btn" title="Preview" data-file-id="${file.id}" data-mime-type="${file.mime_type}"><i class="bi bi-eye-fill"></i></button>`;
+        }
         return `
             <div class="file-list-item" data-file-id="${file.id}">
-                <div class="file-info">
-                    <i class="bi ${getFileIcon(file.mime_type)} file-icon"></i>
-                    <div class="file-details">
-                        <strong>${$('<div>').text(file.original_filename).html()}</strong>
-                        <div class="file-meta">
-                            ${formatBytes(file.size)} • Shared by ${$('<div>').text(file.owner.name).html()} on ${new Date(file.pivot.shared_at).toLocaleDateString()}
-                        </div>
+            <div class="file-info">
+                <i class="bi ${getFileIcon(file.mime_type)} file-icon"></i>
+                <div class="file-details">
+                    <strong>${$('<div>').text(file.original_filename).html()}</strong>
+                    <div class="file-meta">
+                        ${formatBytes(file.size)} • Shared by ${$('<div>').text(file.owner.name).html()} on ${new Date(file.pivot.shared_at).toLocaleDateString()}
                     </div>
                 </div>
-                <div class="file-actions">
-                    <a href="/api/files/${file.id}/download" class="btn btn-sm btn-outline-secondary" title="Download"><i class="bi bi-download"></i></a>
-                </div>
-            </div>`;
+            </div>
+            <div class="file-actions">
+                ${previewButtonHtml}
+                <a href="/api/files/${file.id}/download" class="btn btn-sm btn-outline-secondary" title="Download"><i class="bi bi-download"></i></a>
+            </div>
+        </div>`;
     }
 
     function showLoading(element) {
@@ -276,6 +288,29 @@ $(document).ready(function() {
         loadTeamFiles($(this).val());
     });
 
+    // Open Preview Modal
+    $(document).on('click', '.preview-btn', function() {
+        const fileId = $(this).data('file-id');
+        const mimeType = $(this).data('mime-type');
+        const previewUrl = `/api/files/${fileId}/preview`;
+
+        if (mimeType.startsWith('image/')) {
+            $('#image-preview-content').attr('src', previewUrl);
+            imagePreviewModal.show();
+        } else if (mimeType === 'application/pdf') {
+            $('#pdf-preview-content').attr('src', previewUrl);
+            pdfPreviewModal.show();
+        }
+    });
+    // Cleanup when modals are hidden to stop background loading
+    $('#imagePreviewModal').on('hidden.bs.modal', function() {
+        $('#image-preview-content').attr('src', '');
+    });
+
+    $('#pdfPreviewModal').on('hidden.bs.modal', function() {
+        $('#pdf-preview-content').attr('src', '');
+    });
+    
     // Initial Load
     loadMyFiles();
     loadUserTeams();

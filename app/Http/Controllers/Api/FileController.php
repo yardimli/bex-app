@@ -143,6 +143,7 @@ class FileController extends Controller
         }
 
         $filePath = storage_path('app/' . $file->path);
+
         if (!Storage::exists($file->path)) {
             Log::error("File not found on disk for download.", ['file_id' => $file->id, 'path' => $filePath]);
             return response()->json(['error' => 'NOT_FOUND', 'message' => 'File not found on the server.'], 404);
@@ -150,5 +151,28 @@ class FileController extends Controller
 
         // Use your 'original_filename' column
         return response()->download($filePath, $file->original_filename);
+    }
+
+    public function preview(File $file)
+    {
+        $user = Auth::user();
+        $isOwner = $file->user_id === $user->id;
+        $isSharedWithUserTeam = $file->sharedWithTeams()->whereIn('teams.id', $user->teams()->pluck('teams.id'))->exists();
+
+        if (!$isOwner && !$isSharedWithUserTeam) {
+            return response()->json(['error' => 'FORBIDDEN', 'message' => 'You do not have access to this file.'], 403);
+        }
+
+        $filePath = storage_path('app/' . $file->path);
+
+        if (!Storage::exists($file->path)) {
+            Log::error("File not found on disk for preview.", ['file_id' => $file->id, 'path' => $filePath]);
+            return response()->json(['error' => 'NOT_FOUND', 'message' => 'File not found on the server.'], 404);
+        }
+
+        // Return the file inline
+        return response()->file($filePath, [
+            'Content-Disposition' => 'inline; filename="' . $file->original_filename . '"'
+        ]);
     }
 }

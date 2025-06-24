@@ -112,8 +112,8 @@
             Route::get('/user/files', [ApiFileController::class, 'userFiles'])->name('user.files');
             Route::get('/teams/{team}/files', [ApiFileController::class, 'teamFiles'])->name('teams.files')->where('team', '[0-9]+');
             Route::post('/files', [ApiFileController::class, 'upload'])->name('files.upload');
-// CHANGED: Use numeric ID for file routes
             Route::get('/files/{file}/download', [ApiFileController::class, 'download'])->name('files.download')->where('file', '[0-9]+');
+            Route::get('/files/{file}/preview', [ApiFileController::class, 'preview'])->name('files.preview')->where('file', '[0-9]+');
             Route::post('/files/{file}/share', [ApiFileController::class, 'share'])->name('files.share')->where('file', '[0-9]+');
             Route::delete('/files/{file}/teams/{team}', [ApiFileController::class, 'revokeShare'])->name('files.revoke')->where('file', '[0-9]+')->where('team', '[0-9]+');
 
