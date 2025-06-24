@@ -176,6 +176,11 @@ $(document).ready(function() {
             success: function() {
                 uploadFileModal.hide();
                 loadMyFiles();
+                const teamIdForUpload = $('#upload-team-id').val();
+                const currentlySelectedTeamId = teamSelectFilter.val();
+                if (teamIdForUpload && teamIdForUpload === currentlySelectedTeamId) {
+                    loadTeamFiles(currentlySelectedTeamId);
+                }
             },
             error: function(jqXHR) {
                 const response = jqXHR.responseJSON;
@@ -288,6 +293,31 @@ $(document).ready(function() {
         loadTeamFiles($(this).val());
     });
 
+    $('#uploadFileModal').on('show.bs.modal', function(event) {
+        const myFilesTab = $('#my-files-tab');
+        const uploadDestination = $('#upload-destination');
+        const uploadTeamIdInput = $('#upload-team-id');
+
+        if (myFilesTab.hasClass('active')) {
+            // We are on the "My Files" tab
+            uploadDestination.text('Your Files');
+            uploadTeamIdInput.val('');
+        } else {
+            // We are on the "Team Files" tab
+            const selectedTeamId = teamSelectFilter.val();
+            const selectedTeamName = teamSelectFilter.find('option:selected').text();
+
+            if (selectedTeamId) {
+                uploadDestination.html(`Team: <strong>${$('<div>').text(selectedTeamName).html()}</strong>`);
+                uploadTeamIdInput.val(selectedTeamId);
+            } else {
+                // No team selected, default to personal but show a message
+                uploadDestination.html('Your Files <small class="text-warning">(Select a team to upload directly to it)</small>');
+                uploadTeamIdInput.val('');
+            }
+        }
+    });
+
     // Open Preview Modal
     $(document).on('click', '.preview-btn', function() {
         const fileId = $(this).data('file-id');
@@ -310,7 +340,7 @@ $(document).ready(function() {
     $('#pdfPreviewModal').on('hidden.bs.modal', function() {
         $('#pdf-preview-content').attr('src', '');
     });
-    
+
     // Initial Load
     loadMyFiles();
     loadUserTeams();

@@ -51,6 +51,7 @@ class FileController extends Controller
                     'mimes:txt,doc,docx,pdf,jpg,jpeg,png',
                     'max:' . self::MAX_FILE_SIZE_KB,
                 ],
+                'team_id' => 'nullable|integer|exists:teams,id',
             ]);
         } catch (ValidationException $e) {
             // ... (error handling is fine)
@@ -68,6 +69,14 @@ class FileController extends Controller
 
         $user = Auth::user();
         $file = $validated['file'];
+        $teamId = $validated['team_id'] ?? null;
+
+        // If a team_id is provided, verify the user is a member of that team.
+        if ($teamId) {
+            if (!$user->teams()->where('teams.id', $teamId)->exists()) {
+                return response()->json(['error' => 'FORBIDDEN', 'message' => 'You are not a member of the specified team.'], 403);
+            }
+        }
         // Use a unique ID instead of UUID for the stored name
         $storedName = uniqid() . '_' . $file->getClientOriginalName();
         $path = $file->storeAs('files/' . $user->id, $storedName);
@@ -80,6 +89,14 @@ class FileController extends Controller
             'mime_type'         => $file->getMimeType(),
             'size'              => $file->getSize(),
         ]);
+
+        // If a team was specified, share the file with it immediately.
+        if ($teamId) {
+            $newFile->sharedWithTeams()->attach($teamId, [
+                'shared_by' => $user->id,
+                'shared_at' => now()
+            ]);
+        }
 
         $newFile->load('sharedWithTeams:id,name');
         return response()->json($newFile, 201);

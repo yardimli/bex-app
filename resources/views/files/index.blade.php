@@ -110,6 +110,8 @@
                 </div>
                 <div class="modal-body">
                     <form id="uploadFileForm" enctype="multipart/form-data">
+                        <input type="hidden" id="upload-team-id" name="team_id" value="">
+                        <p class="text-muted small mb-2">Uploading to: <strong id="upload-destination">Your Files</strong></p>
                         <div class="mb-3">
                             <label for="fileInput" class="form-label">Select file (Max 10MB)</label>
                             <input class="form-control" type="file" id="fileInput" name="file" required>
