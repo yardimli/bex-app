@@ -10,6 +10,57 @@ $(document).ready(function () {
 
 	let currentAudio = null; // Variable to hold the current Audio object
 	let currentReadAloudButton = null; // Variable to hold the button associated with the current audio
+
+    const modeDropdownButton = $('#modeDropdownButton');
+    const modeDropdownMenu = modeDropdownButton.next('.dropdown-menu');
+    const selectedModelNameSpan = $('#selected-model-name'); // Target the span inside the button
+    const defaultModelId = 'openai/gpt-4o-mini'; // Default model
+
+    function applySelectedModel(modelId) {
+        const selectedItem = modeDropdownMenu.find(`.dropdown-item[data-model-id="${modelId}"]`);
+        let displayName = 'Smart Mode'; // Default display name
+
+        // Remove active state and checkmark from all items
+        modeDropdownMenu.find('.dropdown-item').removeClass('active').find('i.bi-check').remove();
+
+        if (selectedItem.length) {
+            displayName = selectedItem.data('display-name') || selectedItem.text().trim();
+            // Add active state and checkmark to the selected item
+            selectedItem.addClass('active').prepend('<i class="bi bi-check me-2"></i>');
+            console.log('Applied model:', modelId, 'Display:', displayName);
+        } else {
+            // If the saved model ID is invalid, fallback to the default visually
+            const defaultItem = modeDropdownMenu.find(`.dropdown-item[data-model-id="${defaultModelId}"]`);
+            if (defaultItem.length) {
+                displayName = defaultItem.data('display-name') || defaultItem.text().trim();
+                defaultItem.addClass('active').prepend('<i class="bi bi-check me-2"></i>');
+                console.log('Applied default model (fallback):', defaultModelId, 'Display:', displayName);
+            } else {
+                console.error("Default model item not found in dropdown!");
+            }
+        }
+        // Update button text
+        if (selectedModelNameSpan.length) {
+            selectedModelNameSpan.text(displayName);
+        } else {
+            modeDropdownButton.text(displayName); // Fallback if span not found
+        }
+    }
+
+    // Event listener for dropdown item clicks
+    modeDropdownMenu.on('click', '.dropdown-item', function (e) {
+        e.preventDefault();
+        const selectedModelId = $(this).data('model-id');
+        if (selectedModelId) {
+            localStorage.setItem('selectedLlmModel', selectedModelId);
+            applySelectedModel(selectedModelId);
+            console.log('Model selection saved:', selectedModelId);
+        }
+    });
+
+    // Apply saved theme on load or default
+    const savedModel = localStorage.getItem('selectedLlmModel');
+    applySelectedModel(savedModel || defaultModelId);
 	function checkAndSubmitInitialPrompt() {
 		const initialMessage = messageInputField.val().trim();
 		if (initialMessage) {

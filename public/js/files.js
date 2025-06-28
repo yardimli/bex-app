@@ -3,11 +3,8 @@ $(document).ready(function() {
     const teamFilesList = $('#team-files-list');
     const teamSelectFilter = $('#team-select-filter');
     const csrfToken = $('meta[name="csrf-token"]').attr('content');
-
     const uploadFileModal = new bootstrap.Modal(document.getElementById('uploadFileModal'));
     const shareFileModal = new bootstrap.Modal(document.getElementById('shareFileModal'));
-    const imagePreviewModal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
-    const pdfPreviewModal = new bootstrap.Modal(document.getElementById('pdfPreviewModal'));
     let userTeams = [];
 
     function getFileIcon(mimeType) {
@@ -32,14 +29,11 @@ $(document).ready(function() {
         let sharedWithHtml = '<span class="text-muted">Private</span>';
         if (file.shared_with_teams.length > 0) {
             sharedWithHtml = file.shared_with_teams.map(team => `
-            <span class="badge bg-secondary">
-                ${$('<div>').text(team.name).html()}
-                <button class="btn-close btn-close-white revoke-share-btn"
-                        data-team-id="${team.id}"
-                        data-team-name="${$('<div>').text(team.name).html()}"
-                        aria-label="Revoke share"></button>
-            </span>
-        `).join(' ');
+                <span class="badge bg-secondary">
+                    ${$('<div>').text(team.name).html()}
+                    <button class="btn-close btn-close-white revoke-share-btn" data-team-id="${team.id}" data-team-name="${$('<div>').text(team.name).html()}" aria-label="Revoke share"></button>
+                </span>
+            `).join(' ');
         }
 
         let previewButtonHtml = '';
@@ -49,20 +43,20 @@ $(document).ready(function() {
 
         return `
             <div class="file-list-item" data-file-id="${file.id}">
-            <div class="file-info">
-                <i class="bi ${getFileIcon(file.mime_type)} file-icon"></i>
-                <div class="file-details">
-                    <strong>${$('<div>').text(file.original_filename).html()}</strong>
-                    <div class="file-meta">${formatBytes(file.size)} • Uploaded ${new Date(file.created_at).toLocaleDateString()}</div>
-                    <div class="sharing-status mt-1">${sharedWithHtml}</div>
+                <div class="file-info">
+                    <i class="bi ${getFileIcon(file.mime_type)} file-icon"></i>
+                    <div class="file-details">
+                        <strong>${$('<div>').text(file.original_filename).html()}</strong>
+                        <div class="file-meta">${formatBytes(file.size)} • Uploaded ${new Date(file.created_at).toLocaleDateString()}</div>
+                        <div class="sharing-status mt-1">${sharedWithHtml}</div>
+                    </div>
                 </div>
-            </div>
-            <div class="file-actions">
-                ${previewButtonHtml}
-                <button class="btn btn-sm btn-outline-primary share-btn" title="Share"><i class="bi bi-share-fill"></i></button>
-                <a href="/api/files/${file.id}/download" class="btn btn-sm btn-outline-secondary" title="Download"><i class="bi bi-download"></i></a>
-            </div>
-        </div>`;
+                <div class="file-actions">
+                    ${previewButtonHtml}
+                    <button class="btn btn-sm btn-outline-primary share-btn" title="Share"><i class="bi bi-share-fill"></i></button>
+                    <a href="/api/files/${file.id}/download" class="btn btn-sm btn-outline-secondary" title="Download"><i class="bi bi-download"></i></a>
+                </div>
+            </div>`;
     }
 
     function renderTeamFileItem(file) {
@@ -72,20 +66,20 @@ $(document).ready(function() {
         }
         return `
             <div class="file-list-item" data-file-id="${file.id}">
-            <div class="file-info">
-                <i class="bi ${getFileIcon(file.mime_type)} file-icon"></i>
-                <div class="file-details">
-                    <strong>${$('<div>').text(file.original_filename).html()}</strong>
-                    <div class="file-meta">
-                        ${formatBytes(file.size)} • Shared by ${$('<div>').text(file.owner.name).html()} on ${new Date(file.pivot.shared_at).toLocaleDateString()}
+                <div class="file-info">
+                    <i class="bi ${getFileIcon(file.mime_type)} file-icon"></i>
+                    <div class="file-details">
+                        <strong>${$('<div>').text(file.original_filename).html()}</strong>
+                        <div class="file-meta">
+                            ${formatBytes(file.size)} • Shared by ${$('<div>').text(file.owner.name).html()} on ${new Date(file.pivot.shared_at).toLocaleDateString()}
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="file-actions">
-                ${previewButtonHtml}
-                <a href="/api/files/${file.id}/download" class="btn btn-sm btn-outline-secondary" title="Download"><i class="bi bi-download"></i></a>
-            </div>
-        </div>`;
+                <div class="file-actions">
+                    ${previewButtonHtml}
+                    <a href="/api/files/${file.id}/download" class="btn btn-sm btn-outline-secondary" title="Download"><i class="bi bi-download"></i></a>
+                </div>
+            </div>`;
     }
 
     function showLoading(element) {
@@ -162,7 +156,9 @@ $(document).ready(function() {
             data: formData,
             processData: false,
             contentType: false,
-            headers: { 'X-CSRF-TOKEN': csrfToken },
+            headers: {
+                'X-CSRF-TOKEN': csrfToken
+            },
             xhr: function() {
                 const xhr = new window.XMLHttpRequest();
                 xhr.upload.addEventListener('progress', function(evt) {
@@ -247,8 +243,12 @@ $(document).ready(function() {
             url: `/api/files/${fileId}/share`,
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ team_ids: teamIds }),
-            headers: { 'X-CSRF-TOKEN': csrfToken },
+            data: JSON.stringify({
+                team_ids: teamIds
+            }),
+            headers: {
+                'X-CSRF-TOKEN': csrfToken
+            },
             success: function() {
                 shareFileModal.hide();
                 loadMyFiles();
@@ -278,7 +278,9 @@ $(document).ready(function() {
         $.ajax({
             url: `/api/files/${fileId}/teams/${teamId}`,
             method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': csrfToken },
+            headers: {
+                'X-CSRF-TOKEN': csrfToken
+            },
             success: function() {
                 loadMyFiles();
             },
@@ -299,14 +301,11 @@ $(document).ready(function() {
         const uploadTeamIdInput = $('#upload-team-id');
 
         if (myFilesTab.hasClass('active')) {
-            // We are on the "My Files" tab
             uploadDestination.text('Your Files');
             uploadTeamIdInput.val('');
         } else {
-            // We are on the "Team Files" tab
             const selectedTeamId = teamSelectFilter.val();
             const selectedTeamName = teamSelectFilter.find('option:selected').text();
-
             if (selectedTeamId) {
                 uploadDestination.html(`Team: <strong>${$('<div>').text(selectedTeamName).html()}</strong>`);
                 uploadTeamIdInput.val(selectedTeamId);
@@ -318,28 +317,6 @@ $(document).ready(function() {
         }
     });
 
-    // Open Preview Modal
-    $(document).on('click', '.preview-btn', function() {
-        const fileId = $(this).data('file-id');
-        const mimeType = $(this).data('mime-type');
-        const previewUrl = `/api/files/${fileId}/preview`;
-
-        if (mimeType.startsWith('image/')) {
-            $('#image-preview-content').attr('src', previewUrl);
-            imagePreviewModal.show();
-        } else if (mimeType === 'application/pdf') {
-            $('#pdf-preview-content').attr('src', previewUrl);
-            pdfPreviewModal.show();
-        }
-    });
-    // Cleanup when modals are hidden to stop background loading
-    $('#imagePreviewModal').on('hidden.bs.modal', function() {
-        $('#image-preview-content').attr('src', '');
-    });
-
-    $('#pdfPreviewModal').on('hidden.bs.modal', function() {
-        $('#pdf-preview-content').attr('src', '');
-    });
 
     // Initial Load
     loadMyFiles();
