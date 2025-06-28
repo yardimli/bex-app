@@ -100,6 +100,7 @@
             Route::get('/user/inbox', [ApiMessageController::class, 'inbox'])->name('user.inbox');
             Route::patch('/messages/{message}/read', [ApiMessageController::class, 'markAsRead'])->name('messages.read')->where('message', '[0-9]+');
             Route::get('/user/unread-count', [ApiMessageController::class, 'unreadCount'])->name('user.unread-count');
+            Route::get('/user/sent', [ApiMessageController::class, 'sent'])->name('user.sent');
 
 			// Note Routes
 			Route::get('/notes', [NoteController::class, 'index'])->name('notes.index');

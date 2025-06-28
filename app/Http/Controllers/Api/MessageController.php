@@ -98,4 +98,21 @@ class MessageController extends Controller
         $count = Auth::user()->receivedMessages()->whereNull('read_at')->count();
         return response()->json(['unread_count' => $count]);
     }
+
+    public function sent(Request $request)
+    {
+        $user = Auth::user();
+
+        $query = $user->sentMessages()
+            ->with(['team', 'recipients.recipient']) // Eager load relationships
+            ->orderBy('created_at', 'desc');
+
+        if ($request->filled('team_id')) {
+            $query->where('team_id', $request->team_id);
+        }
+
+        $sentMessages = $query->paginate(15);
+
+        return response()->json($sentMessages);
+    }
 }

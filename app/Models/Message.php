@@ -16,6 +16,7 @@ class Message extends Model
         'body',
     ];
 
+    protected $appends = ['read_count', 'total_recipients'];
     /**
      * The user who sent the message.
      */
@@ -38,5 +39,21 @@ class Message extends Model
     public function recipients()
     {
         return $this->hasMany(MessageRecipient::class);
+    }
+
+    public function getReadCountAttribute()
+    {
+        if (!$this->relationLoaded('recipients')) {
+            $this->load('recipients');
+        }
+        return $this->recipients->whereNotNull('read_at')->count();
+    }
+
+    public function getTotalRecipientsAttribute()
+    {
+        if (!$this->relationLoaded('recipients')) {
+            $this->load('recipients');
+        }
+        return $this->recipients->count();
     }
 }

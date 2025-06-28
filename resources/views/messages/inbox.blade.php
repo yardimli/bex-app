@@ -17,21 +17,37 @@
             border-left-color: #0d6efd;
             font-weight: bold;
         }
+        .sent-item .read-status {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        html.dark-mode .sent-item .read-status {
+            color: #adb5bd;
+        }
     </style>
 @endpush
 
 @section('content')
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>Inbox</h1>
+            <h1>Messaging</h1>
             <button class="btn btn-primary" id="compose-message-btn"><i class="bi bi-pencil-square me-1"></i> Compose Message</button>
         </div>
+
+        <ul class="nav nav-tabs mb-3" id="inbox-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="inbox-tab" data-bs-toggle="tab" data-bs-target="#inbox-pane" type="button" role="tab" aria-controls="inbox-pane" aria-selected="true">Inbox</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="sent-tab" data-bs-toggle="tab" data-bs-target="#sent-pane" type="button" role="tab" aria-controls="sent-pane" aria-selected="false">Sent</button>
+            </li>
+        </ul>
 
         <!-- Filters -->
         <div class="card mb-3">
             <div class="card-body d-flex justify-content-start align-items-center">
                 <strong class="me-3">Filters:</strong>
-                <div class="form-check me-4">
+                <div class="form-check me-4" id="unread-filter-container">
                     <input class="form-check-input" type="checkbox" value="" id="unread-filter">
                     <label class="form-check-label" for="unread-filter">
                         Unread Only
@@ -48,16 +64,28 @@
             </div>
         </div>
 
-        <!-- Inbox List -->
-        <div class="list-group" id="inbox-list">
-            <div class="text-center p-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
+        <div class="tab-content" id="inbox-tab-content">
+            <!-- Inbox Pane -->
+            <div class="tab-pane fade show active" id="inbox-pane" role="tabpanel" aria-labelledby="inbox-tab">
+                <div class="list-group" id="inbox-list">
+                    <div class="text-center p-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading messages...</p>
+                    </div>
                 </div>
-                <p class="mt-2">Loading messages...</p>
+                <div id="inbox-pagination-links" class="mt-3 d-flex justify-content-center"></div>
+            </div>
+
+            <!-- Sent Pane -->
+            <div class="tab-pane fade" id="sent-pane" role="tabpanel" aria-labelledby="sent-tab">
+                <div class="list-group" id="sent-list">
+                    <!-- Sent items will be loaded here by JS -->
+                </div>
+                <div id="sent-pagination-links" class="mt-3 d-flex justify-content-center"></div>
             </div>
         </div>
-        <div id="pagination-links" class="mt-3 d-flex justify-content-center"></div>
     </div>
 
     <!-- Message Detail Modal -->
@@ -70,13 +98,12 @@
                 </div>
                 <div class="modal-body">
                     <h6 id="message-subject"></h6>
-                    <p class="text-muted small">
-                        <strong>From:</strong> <span id="message-from"></span><br>
-                        <strong>Team:</strong> <span id="message-team"></span><br>
-                        <strong>Date:</strong> <span id="message-date"></span>
-                    </p>
+                    <div id="message-meta-info">
+                        <!-- Meta info will be populated by JS -->
+                    </div>
                     <hr>
                     <div id="message-body" style="white-space: pre-wrap;"></div>
+                    <div id="recipient-status-list" class="mt-3" style="display: none;">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
