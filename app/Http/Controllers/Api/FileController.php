@@ -27,14 +27,23 @@ class FileController extends Controller
     /**
      * List files shared with a specific team.
      */
-    public function teamFiles(Team $team)
+    public function teamFiles(Request $request, Team $team)
     {
         $user = Auth::user();
         if (!$user->teams->contains($team)) {
             return response()->json(['error' => 'FORBIDDEN', 'message' => 'You are not a member of this team.'], 403);
         }
+
+        $searchTerm = $request->input('search');
+        $query = $team->sharedFiles()->with('owner:id,name');
+
+        // If a search term is provided, filter by original filename
+        if ($searchTerm) {
+            $query->where('original_filename', 'like', '%' . $searchTerm . '%');
+        }
+
         // Order by your specific pivot timestamp
-        $files = $team->sharedFiles()->with('owner:id,name')->orderBy('pivot_shared_at', 'desc')->get();
+        $files = $query->orderBy('pivot_shared_at', 'desc')->get();
         return response()->json($files);
     }
 

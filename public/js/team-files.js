@@ -8,6 +8,8 @@ $(document).ready(function() {
     const teamNameDisplay = $('#team-files-modal-team-name');
     const detailsPane = $('#team-files-modal-details-pane');
     const filterLinks = $('#team-files-modal-filters .list-group-item');
+    const searchInput = $('#team-files-modal-search');
+    let debounceTimer;
 
     // Helper function to get a file-type-specific icon
     function getFileIcon(mimeType) {
@@ -43,19 +45,22 @@ $(document).ready(function() {
             </a></div>`;
     }
 
-    // Fetches and displays files for a given team ID
-    function loadTeamFiles(teamId) {
+
+    function loadTeamFiles(teamId, searchTerm = '') {
         teamFilesList.html('<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
         detailsPane.html('Select a file to view details.');
 
-        // The API already sorts by recent, so "All Files" and "Recent" will show the same list for now.
-        $.get(`/api/teams/${teamId}/files`)
+        $.get(`/api/teams/${teamId}/files`, { search: searchTerm })
             .done(function(files) {
                 teamFilesList.empty();
                 if (files.length > 0) {
                     files.forEach(file => teamFilesList.append(renderTeamFileItem(file)));
                 } else {
-                    teamFilesList.html('<div class="list-group-item text-center text-muted p-4">No files have been shared with this team yet.</div>');
+                    if (searchTerm) {
+                        teamFilesList.html(`<div class="list-group-item text-center text-muted p-4">No files found matching "<strong>${$('<div>').text(searchTerm).html()}</strong>".</div>`);
+                    } else {
+                        teamFilesList.html('<div class="list-group-item text-center text-muted p-4">No files have been shared with this team yet.</div>');
+                    }
                 }
             })
             .fail(function() {
@@ -63,7 +68,6 @@ $(document).ready(function() {
             });
     }
 
-    // This event fires every time the modal is about to be shown
     teamFilesModal.on('show.bs.modal', function() {
         const currentTeamId = $('meta[name="current-team-id"]').attr('content');
 
@@ -73,7 +77,7 @@ $(document).ready(function() {
 
         if (currentTeamId && currentTeamId !== '0') {
             teamNameDisplay.text(teamName);
-            // Trigger the 'Recent' filter by default when opening
+            searchInput.val('');
             filterLinks.filter('[data-filter="recent"]').trigger('click');
         } else {
             teamNameDisplay.text('No Team Selected');
@@ -97,8 +101,21 @@ $(document).ready(function() {
         if (currentTeamId && currentTeamId !== '0') {
             // For now, both 'all' and 'recent' load the same default list.
             if (filter === 'all' || filter === 'recent') {
-                loadTeamFiles(currentTeamId);
+                loadTeamFiles(currentTeamId, searchInput.val());
             }
+        }
+    });
+
+    searchInput.on('keyup', function() {
+        clearTimeout(debounceTimer); // Reset the timer
+        const currentTeamId = $('meta[name="current-team-id"]').attr('content');
+        const searchValue = $(this).val();
+
+        if (currentTeamId && currentTeamId !== '0') {
+            // Wait 400ms after the user stops typing to make the API call
+            debounceTimer = setTimeout(() => {
+                loadTeamFiles(currentTeamId, searchValue);
+            }, 400);
         }
     });
 
