@@ -28,6 +28,7 @@
 @endpush
 
 @section('content')
+@include('partials.content_header')
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>Messaging</h1>
@@ -56,7 +57,7 @@
                 <div style="min-width: 250px;">
                     <select id="team-filter" class="form-select form-select-sm">
                         <option value="">All Teams</option>
-                        @foreach($teams as $team)
+                        @foreach($userTeams as $team)
                             <option value="{{ $team->id }}">{{ $team->name }}</option>
                         @endforeach
                     </select>

@@ -2,6 +2,7 @@
 @extends('layouts.app') {{-- Or your main app layout --}}
 
 @section('content')
+@include('partials.content_header')
 	<div class="container py-4">
 		<div class="row justify-content-center">
 			<div class="col-md-8">

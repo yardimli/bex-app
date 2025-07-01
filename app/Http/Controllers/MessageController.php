@@ -15,7 +15,12 @@ class MessageController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $teams = $user->teams()->get(); // For the filter dropdown
-        return view('messages.inbox', ['teams' => $teams]);
+        $userTeams = $user->teams()->get(); // For the filter dropdown
+        $currentTeamId = session('current_team_id');
+//        return view('messages.inbox', ['teams' => $teams]);
+        return view('messages.inbox', [
+            'userTeams' => $userTeams,
+            'currentTeamId' => $currentTeamId,
+        ]);
     }
 }

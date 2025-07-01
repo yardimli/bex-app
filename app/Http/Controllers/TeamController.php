@@ -9,6 +9,13 @@ class TeamController extends Controller
 {
     public function index()
     {
-        return view('teams.index');
+        $user = Auth::user();
+        $userTeams = $user->teams()->get();
+        $currentTeamId = session('current_team_id');
+
+        return view('teams.index', [
+            'userTeams' => $userTeams,
+            'currentTeamId' => $currentTeamId,
+        ]);
     }
 }

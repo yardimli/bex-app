@@ -17,9 +17,14 @@
 		 */
 		public function edit(Request $request): View // <-- Type hint return
 		{
+            $user = $request->user();
+            $userTeams = $user->teams()->get();
+            $currentTeamId = session('current_team_id');
 			// Pass the authenticated user to the view
 			return view('profile.edit', [
-				'user' => $request->user(),
+				'user' => $user,
+                'userTeams' => $userTeams,
+                'currentTeamId' => $currentTeamId,
 			]);
 		}
 
