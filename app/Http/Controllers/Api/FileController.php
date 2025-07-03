@@ -20,7 +20,7 @@ class FileController extends Controller
     public function userFiles()
     {
         $user = Auth::user();
-        $files = $user->files()->with('sharedWithTeams:id,name')->orderBy('created_at', 'desc')->get();
+        $files = $user->files()->with('owner','sharedWithTeams:id,name')->orderBy('created_at', 'desc')->get();
         return response()->json($files);
     }
 
@@ -43,7 +43,7 @@ class FileController extends Controller
         }
 
         // Order by your specific pivot timestamp
-        $files = $query->orderBy('pivot_shared_at', 'desc')->get();
+        $files = $query->with('owner')->orderBy('pivot_shared_at', 'desc')->get();
         return response()->json($files);
     }
 

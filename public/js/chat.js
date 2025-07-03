@@ -8,6 +8,14 @@ $(document).ready(function () {
 	const chatTitleDisplay = $('#chat-title-display');
 	const sidebarNav = $('.sidebar .nav');
 
+    const attachFileModal = $('#attachFileModal');
+    const confirmAttachFilesBtn = $('#confirm-attach-files-btn');
+    const filePillsContainer = $('#file-pills-container');
+    const attachedFilesInput = $('#attached-files-input'); // The hidden input
+    const attachMyFilesList = $('#attach-my-files-list');
+    const attachTeamFilesList = $('#attach-team-files-list');
+    const attachTeamSelectFilter = $('#attach-team-select-filter');
+
 	let currentAudio = null; // Variable to hold the current Audio object
 	let currentReadAloudButton = null; // Variable to hold the button associated with the current audio
 
@@ -15,7 +23,7 @@ $(document).ready(function () {
     const modeDropdownMenu = modeDropdownButton.next('.dropdown-menu');
     const selectedModelNameSpan = $('#selected-model-name'); // Target the span inside the button
     const defaultModelId = 'openai/gpt-4o-mini'; // Default model
-
+    let attachedFiles = new Map();
     function applySelectedModel(modelId) {
         const selectedItem = modeDropdownMenu.find(`.dropdown-item[data-model-id="${modelId}"]`);
         let displayName = 'Smart Mode'; // Default display name
@@ -74,10 +82,27 @@ $(document).ready(function () {
 	}
 
 	// Function to add a message bubble to the chat
-	function addMessageBubble(role, content, messageId, canDelete = false) {
+	function addMessageBubble(role, content, messageId, canDelete = false, files = []) {
 		const escapedContentHtml = $('<div>').text(content).html().replace(/\n/g, '<br>');
 		const now = new Date();
 		const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+        let filesHtml = '';
+        if (files && files.length > 0) {
+            filesHtml += '<div class="attached-files-container mb-2">';
+            files.forEach(file => {
+                const safeFileName = $('<div>').text(file.original_filename).html();
+                // Simple substring to mimic Str::limit
+                const truncatedName = safeFileName.length > 25 ? safeFileName.substring(0, 22) + '...' : safeFileName;
+                filesHtml += `
+                <a href="/api/files/${file.id}/download" class="badge text-decoration-none text-bg-light border" title="Download ${safeFileName}">
+                    <i class="bi bi-file-earmark-arrow-down me-1"></i>
+                    ${truncatedName}
+                </a>
+            `;
+            });
+            filesHtml += '</div>';
+        }
 
 		const deleteButtonHtml = (role === 'user' && canDelete)
 			? `<button class="delete-message-btn" title="Delete pair" data-message-id="${messageId}"> <i class="bi bi-trash3-fill"></i> </button>`
@@ -99,7 +124,8 @@ $(document).ready(function () {
 
 		// Add data-message-content to the main bubble for easier access later
 		const bubbleHtml = `
-            <div class="message-bubble ${role}" id="message-${messageId}" data-message-content="${escape(content)}"> ${/* Store escaped content */''}
+            <div class="message-bubble ${role}" id="message-${messageId}" data-message-content="${escape(content)}">
+                ${filesHtml}
                 ${escapedContentHtml}
                 ${deleteButtonHtml}
                 <div class="message-meta">${timeString}</div>
@@ -140,6 +166,96 @@ $(document).ready(function () {
 	messageInputField.on('input', autoResizeTextarea);
 	autoResizeTextarea(); // Initial resize
 
+    function getFileIcon(mimeType) {
+        if (!mimeType) return 'bi-file-earmark-fill text-muted';
+        if (mimeType.includes('pdf')) return 'bi-file-earmark-pdf-fill text-danger';
+        if (mimeType.includes('word')) return 'bi-file-earmark-word-fill text-primary';
+        if (mimeType.includes('image')) return 'bi-file-earmark-image-fill text-info';
+        if (mimeType.includes('text')) return 'bi-file-earmark-text-fill text-secondary';
+        return 'bi-file-earmark-fill text-muted';
+    }
+
+    function renderFileSelectItem(file) {
+        const isSelected = attachedFiles.has(file.id);
+        const safeFileName = $('<div>').text(file.original_filename).html();
+        const ownerName = file.owner ? $('<div>').text(file.owner.name).html() : 'N/A';
+
+        return `
+        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center file-list-item-selectable ${isSelected ? 'selected' : ''}" data-file-id="${file.id}" data-file-name="${safeFileName}" data-mime-type="${file.mime_type}">
+            <div class="d-flex align-items-center" style="min-width: 0;">
+                <i class="bi ${getFileIcon(file.mime_type)} me-3 fs-4"></i>
+                <div class="text-truncate">
+                    <strong class="d-block text-truncate">${safeFileName}</strong>
+                    <small class="text-muted">Owner: ${ownerName}</small>
+                </div>
+            </div>
+            <i class="bi bi-check-circle-fill fs-5 text-primary selection-check" style="display: ${isSelected ? 'block' : 'none'};"></i>
+        </a>`;
+    }
+
+    function renderFilePills() {
+        filePillsContainer.empty();
+        const fileIds = [];
+        attachedFiles.forEach((file, id) => {
+            filePillsContainer.append(`
+                <span class="badge text-bg-secondary d-inline-flex align-items-center gap-2 p-2">
+                    <i class="bi ${getFileIcon(file.mime_type)}"></i>
+                    <span>${$('<div>').text(file.name).html()}</span>
+                    <button type="button" class="btn-close btn-close-white ms-1 remove-file-pill" data-id="${id}" aria-label="Remove"></button>
+                </span>
+            `);
+            fileIds.push(id);
+        });
+        // Although we pass data via JS, updating the input is good practice
+        attachedFilesInput.val(fileIds.length > 0 ? JSON.stringify(fileIds) : '');
+    }
+
+    function loadMyFilesForAttachment() {
+        attachMyFilesList.html('<div class="text-center p-3"><div class="spinner-border spinner-border-sm"></div></div>');
+        $.get('/api/user/files', function(files) {
+            attachMyFilesList.empty();
+            if (files.length > 0) {
+                files.forEach(file => attachMyFilesList.append(renderFileSelectItem(file)));
+            } else {
+                attachMyFilesList.html('<p class="text-muted p-3 text-center">You have no files to attach.</p>');
+            }
+        });
+    }
+
+    function loadTeamFilesForAttachment(teamId) {
+        if (!teamId) {
+            attachTeamFilesList.html('<p class="text-muted p-3 text-center">Select a team to see its files.</p>');
+            return;
+        }
+        attachTeamFilesList.html('<div class="text-center p-3"><div class="spinner-border spinner-border-sm"></div></div>');
+        $.get(`/api/teams/${teamId}/files`, function(files) {
+            attachTeamFilesList.empty();
+            if (files.length > 0) {
+                files.forEach(file => attachTeamFilesList.append(renderFileSelectItem(file)));
+            } else {
+                attachTeamFilesList.html('<p class="text-muted p-3 text-center">No files have been shared with this team.</p>');
+            }
+        });
+    }
+
+    function loadUserTeamsForAttachment() {
+        $.get('/api/user/teams', function(response) {
+            attachTeamSelectFilter.empty().append('<option value="">-- Select a Team --</option>');
+            if (response.teams && response.teams.length > 0) {
+                response.teams.forEach(team => {
+                    attachTeamSelectFilter.append(`<option value="${team.id}">${$('<div>').text(team.name).html()}</option>`);
+                });
+            }
+            // Pre-select current team if available
+            const currentTeamId = $('meta[name="current-team-id"]').attr('content');
+            if (currentTeamId && currentTeamId !== '0') {
+                attachTeamSelectFilter.val(currentTeamId).trigger('change');
+            } else {
+                loadTeamFilesForAttachment(null);
+            }
+        });
+    }
+
 	// --- Handle Form Submission (Send Message) ---
 	chatInputForm.on('submit', function (e) {
 		e.preventDefault();
@@ -150,7 +266,8 @@ $(document).ready(function () {
 		const selectedModel = localStorage.getItem('selectedLlmModel') || defaultModelId;
 		const selectedTone = localStorage.getItem('selectedPersonalityTone') || 'professional';
 
-		if (!message) return; // Don't send empty messages
+        const attachedFileIds = [...attachedFiles.keys()];
+        if (!message && attachedFileIds.length === 0) return;
 
 		setInputEnabled(false); // Disable input while processing
 
@@ -169,7 +286,8 @@ $(document).ready(function () {
 				message: message,
 				chat_header_id: chatHeaderId || null, // Send null if no ID (new chat)
 				llm_model: selectedModel,
-				personality_tone: selectedTone
+				personality_tone: selectedTone,
+                attached_files: attachedFileIds
 			},
 			dataType: 'json',
 			success: function (data) {
@@ -182,7 +300,8 @@ $(document).ready(function () {
 						data.user_message.role,
 						data.user_message.content,
 						data.user_message.id,
-						data.user_message.can_delete
+						data.user_message.can_delete,
+                        data.user_message.files
 					);
 
 					// Add assistant message
@@ -243,9 +362,51 @@ $(document).ready(function () {
 			},
 			complete: function () {
 				setInputEnabled(true); // Re-enable input
+                attachedFiles.clear();
+                renderFilePills();
 			}
 		});
 	});
+
+    attachFileModal.on('show.bs.modal', function() {
+        // Reload files every time modal is opened to reflect current selections
+        loadMyFilesForAttachment();
+        loadUserTeamsForAttachment();
+    });
+
+    attachTeamSelectFilter.on('change', function() {
+        loadTeamFilesForAttachment($(this).val());
+    });
+
+    // Use event delegation for dynamically loaded file items
+    $(document).on('click', '#attachFileModal .file-list-item-selectable', function(e) {
+        e.preventDefault();
+        const item = $(this);
+        const fileId = item.data('file-id');
+        const fileName = item.data('file-name');
+        const mimeType = item.data('mime-type');
+
+        if (item.hasClass('selected')) {
+            item.removeClass('selected');
+            item.find('.selection-check').hide();
+            attachedFiles.delete(fileId);
+        } else {
+            item.addClass('selected');
+            item.find('.selection-check').show();
+            attachedFiles.set(fileId, { name: fileName, mime_type: mimeType });
+        }
+    });
+
+    confirmAttachFilesBtn.on('click', function() {
+        renderFilePills();
+        attachFileModal.modal('hide');
+    });
+
+    filePillsContainer.on('click', '.remove-file-pill', function() {
+        const fileId = $(this).data('id');
+        attachedFiles.delete(fileId);
+        renderFilePills();
+    });
 
 	// --- Handle Enter Key in Textarea (Submit, allow Shift+Enter for newline) ---
 	messageInputField.on('keydown', function (e) {

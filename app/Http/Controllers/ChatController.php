@@ -118,6 +118,47 @@ class ChatController extends Controller
         }
 		// --- End check for pending full text ---
 
+        // --- Process Attached Files ---
+        $fileContextText = '';
+        $validatedFileIds = [];
+
+        if (!empty($attachedFileIds)) {
+            // Eager load relationships to avoid N+1 queries in the loop
+            $files = \App\Models\File::with('sharedWithTeams')->find($attachedFileIds);
+            $currentTeamId = session('current_team_id');
+
+            foreach ($files as $file) {
+                // Authorization Check: User must own the file OR it must be shared with the current active team
+                $isOwner = $file->user_id === $user->id;
+                $isSharedWithTeam = $currentTeamId ? $file->sharedWithTeams->contains('id', $currentTeamId) : false;
+
+                if ($isOwner || $isSharedWithTeam) {
+                    try {
+                        $fileText = MyHelper::extractTextFromFile($file);
+                        if (!empty(trim($fileText))) {
+                            $fileContextText .= "--- Start of content from file: {$file->original_filename} ---\n";
+                            $fileContextText .= $fileText . "\n";
+                            $fileContextText .= "--- End of content from file: {$file->original_filename} ---\n\n";
+                            $validatedFileIds[] = $file->id; // Add to list of files to attach to message
+                        } else {
+                            Log::warning("Extracted text was empty for attached file_id: {$file->id}");
+                            $actualUserMessageForLlm .= "\n[System notice: The attached file '{$file->original_filename}' appears to be empty or contains no extractable text.]";
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning("Could not extract text from attached file_id: {$file->id}. Error: " . $e->getMessage());
+                        $actualUserMessageForLlm .= "\n[System notice: Could not process the attached file '{$file->original_filename}'.]";
+                    }
+                } else {
+                    Log::warning("User {$user->id} attempted to use unauthorized file_id: {$file->id} in chat.");
+                }
+            }
+        }
+
+        if (!empty($fileContextText)) {
+            $actualUserMessageForLlm = $fileContextText . $actualUserMessageForLlm;
+            Log::info("Prepended text from " . count($validatedFileIds) . " file(s) to user prompt for chat_header_id: {$chatHeaderId}");
+        }
+
 		DB::beginTransaction(); // Start transaction for atomicity
 
 		try {
@@ -262,6 +303,10 @@ class ChatController extends Controller
 				'content' => $userPrompt,
 			]);
 
+            if (!empty($validatedFileIds)) {
+                $userMessage->files()->attach($validatedFileIds);
+            }
+
 			$llmChatMessages[] = ['role' => 'user', 'content' => $actualUserMessageForLlm]; // Current user message
 
 			Log::info("LLM Chat Messages (excluding main system prompt) for chat ID {$chatHeaderId}", ['messages_preview' => array_map(function ($m) {
@@ -314,7 +359,7 @@ class ChatController extends Controller
 			if (isset($llmResult['content']) && !str_starts_with($llmResult['content'], 'Error:')) {
 				$userMessage->prompt_tokens = $promptTokens;
 				$userMessage->save();
-
+                $userMessage->load('files');
 				$assistantMessageContent = $llmResult['content'];
 				$assistantMessage = $chatHeader->messages()->create([
 					'role' => 'assistant',
@@ -368,7 +413,8 @@ class ChatController extends Controller
 					'role' => 'user',
 					'content' => $userPrompt,
 					'created_at' => $userMessage->created_at->diffForHumans(),
-					'can_delete' => true
+					'can_delete' => true,
+                    'files' => $userMessage->files,
 				],
 				'assistant_message' => [
 					'id' => $assistantMessage->id,
