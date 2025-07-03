@@ -26,6 +26,7 @@
 	use Google\Cloud\TextToSpeech\V1\TextToSpeechClient;
 	use Google\Cloud\TextToSpeech\V1\VoiceSelectionParams;
 	use Exception;
+    use App\Models\File as FileModel;
 	use PhpOffice\PhpWord\IOFactory;
 	use Spatie\PdfToText\Pdf;
 	use Symfony\Component\DomCrawler\Crawler;
@@ -33,6 +34,61 @@
 
 	class MyHelper
 	{
+
+        public static function extractTextFromFile(FileModel $file): string
+        {
+            if (!Storage::exists($file->path)) {
+                throw new \Exception("File not found on disk at path: {$file->path}");
+            }
+
+            $filePath = Storage::path($file->path);
+            $mimeType = $file->mime_type;
+            $text = '';
+
+            try {
+                if ($mimeType === 'text/plain') {
+                    $text = Storage::get($file->path);
+                } elseif ($mimeType === 'application/pdf') {
+                    // Ensure pdftotext is installed on your server
+                    $text = Pdf::getText($filePath);
+                } elseif (
+                    $mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+                    Str::endsWith($file->original_filename, '.docx') // Fallback check
+                ) {
+                    $phpWord = IOFactory::load($filePath);
+                    $sections = $phpWord->getSections();
+                    foreach ($sections as $section) {
+                        $elements = $section->getElements();
+                        foreach ($elements as $element) {
+                            // This logic can be expanded to handle tables, lists, etc.
+                            if (method_exists($element, 'getText')) {
+                                $text .= $element->getText() . "\n";
+                            } elseif ($element instanceof \PhpOffice\PhpWord\Element\TextRun) {
+                                foreach ($element->getElements() as $textElement) {
+                                    if (method_exists($textElement, 'getText')) {
+                                        $text .= $textElement->getText();
+                                    }
+                                }
+                                $text .= "\n";
+                            }
+                        }
+                    }
+                } else {
+                    // For other types like images, you might return metadata or nothing
+                    // For now, we'll treat them as unsupported for text extraction.
+                    throw new \Exception("Unsupported file type for text extraction: {$mimeType}");
+                }
+            } catch (\Exception $e) {
+                Log::error("Error extracting text from stored file: " . $e->getMessage(), [
+                    'file_id' => $file->id,
+                    'file_path' => $filePath
+                ]);
+                // Re-throw to be handled by the controller, which can inform the user.
+                throw $e;
+            }
+
+            return trim($text);
+        }
 
 		public static function validateJson($str)
 		{

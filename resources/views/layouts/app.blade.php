@@ -68,7 +68,46 @@
 @include('partials.modals.summarize_content')
 @include('partials.modals.transcribe')
 
-{{-- ADDED: Global file preview modals --}}
+<!-- Attach File Modal -->
+<div class="modal fade" id="attachFileModal" tabindex="-1" aria-labelledby="attachFileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="attachFileModalLabel">Attach Files to Chat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs" id="attachFileTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="attach-my-files-tab" data-bs-toggle="tab" data-bs-target="#attach-my-files" type="button" role="tab">My Files</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="attach-team-files-tab" data-bs-toggle="tab" data-bs-target="#attach-team-files" type="button" role="tab">Team Files</button>
+                    </li>
+                </ul>
+                <div class="tab-content pt-3" id="attachFileTabsContent">
+                    <div class="tab-pane fade show active" id="attach-my-files" role="tabpanel">
+                        <div id="attach-my-files-list">
+                            {{-- My files list will be loaded by JS --}}
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="attach-team-files" role="tabpanel">
+                        <div class="mb-3">
+                            <select id="attach-team-select-filter" class="form-select form-select-sm" style="max-width: 250px;"></select>
+                        </div>
+                        <div id="attach-team-files-list">
+                            {{-- Team files list will be loaded by JS --}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirm-attach-files-btn">Attach Selected Files</button>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- Image Preview Modal -->
 <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">

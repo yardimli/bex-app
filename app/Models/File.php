@@ -30,9 +30,13 @@ class File extends Model
     }
     public function sharedWithTeams(): BelongsToMany
     {
-        // Use your table name 'file_teams' and include the extra pivot columns
         return $this->belongsToMany(Team::class, 'file_teams')
             ->withPivot('shared_by', 'shared_at')
             ->withTimestamps();
+    }
+
+    public function chatMessages(): BelongsToMany
+    {
+        return $this->belongsToMany(ChatMessage::class, 'chat_message_file');
     }
 }

@@ -191,6 +191,17 @@
 			@else
 				@foreach ($messages as $message)
 					<div class="message-bubble {{ $message->role }}" id="message-{{ $message->id }}"  data-message-content="{!! nl2br(e($message->content)) !!}">
+
+                        @if($message->files->isNotEmpty())
+                            <div class="attached-files-container mb-2">
+                                @foreach($message->files as $file)
+                                    <a href="{{ route('api.files.download', $file) }}" class="badge text-decoration-none text-bg-light border" title="Download {{ $file->original_filename }}">
+                                        <i class="bi bi-file-earmark-arrow-down me-1"></i>
+                                        {{ Str::limit($file->original_filename, 25) }}
+                                    </a>
+                                @endforeach
+                            </div>
+                        @endif
 						{!! nl2br(e($message->content)) !!}
 
 						@if ($message->role === 'user')
@@ -247,11 +258,15 @@
 				@csrf {{-- Include CSRF token --}}
 				{{-- Hidden input to store the current chat ID --}}
 				<input type="hidden" id="chat_header_id" name="chat_header_id" value="{{ $activeChat?->id }}">
-
+                <input type="hidden" id="attached-files-input" name="attached_files">
+                <input type="hidden" name="context_key" id="context_key_input">
+                <div id="file-pills-container" class="d-flex flex-wrap gap-2 mb-2"></div>
 				<div class="message-input">
-					<textarea class="form-control form-control-lg" id="message-input-field" name="message" placeholder="Message Bex..." rows="1" style="resize: none;" required>{{ $initialPrompt ? e($initialPrompt) : '' }}</textarea>
+					<textarea class="form-control form-control-lg" id="message-input-field" name="message" placeholder="Message Bex..." rows="1" style="resize: none;" required>{{ $initialPrompt ?? '' }}</textarea>
 					<div class="message-input-icons">
-						<i class="bi bi-paperclip icon-color" title="Attach file (Not implemented)"></i>
+                        <button type="button" class="btn btn-link p-0" id="attach-file-btn" title="Attach file" data-bs-toggle="modal" data-bs-target="#attachFileModal">
+                            <i class="bi bi-paperclip icon-color"></i>
+                        </button>
 						<button type="submit" class="btn btn-link p-0 ms-0 mt-0 pt-0" style="border:0px; vertical-align: top;" id="send-message-button" title="Send">
 							<i class="bi bi-send-fill fs-6 icon-color" style="font-size:0.9rem !important;"></i>
 						</button>

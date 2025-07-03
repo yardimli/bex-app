@@ -53,24 +53,18 @@ class ChatController extends Controller
 		if (!$chatHeader) { // Only process initial prompts for new chats
 			if ($request->has('prompt')) {
 				$initialPrompt = trim($request->input('prompt'));
-			} elseif ($request->has('summarize_key') && $request->has('prompt_prefix')) {
+			} elseif ($request->has('summarize_key') && $request->has('prompt_text')) {
 				$sessionKey = $request->input('summarize_key');
-				$promptPrefix = $request->input('prompt_prefix');
+				$prompt_text = $request->input('prompt_text');
 				if (session()->has($sessionKey)) {
 					$fullText = session($sessionKey);
-					// Prepend the prefix and limit the text for the textarea
-					// The full text is available for the first LLM call if needed,
-					// but the textarea might not handle extremely long text well.
-					$initialPrompt = $promptPrefix . Str::limit($fullText, UtilityController::MAX_TEXT_FOR_CHAT_INPUT);
-
-					// We'll store the full text in a separate session variable
-					// that the `store` method can pick up for the first message.
+					$initialPrompt = $prompt_text;
 					session(['pending_full_text_for_chat' => $fullText]);
 					session()->forget($sessionKey); // Clean up original key
 				} else {
 					Log::warning("Summarize key '{$sessionKey}' not found in session.");
 					// Optionally, set an error message or a default prompt
-					$initialPrompt = $promptPrefix . "[Error: Content for summarization not found. Please try again.]";
+					$initialPrompt = $prompt_text . "[Error: Content for summarization not found. Please try again.]";
 				}
 			}
 		}
@@ -98,37 +92,30 @@ class ChatController extends Controller
 			'chat_header_id' => 'nullable|integer|exists:chat_headers,id',
 			'llm_model' => 'nullable|string|max:100',
 			'personality_tone' => 'nullable|string|in:professional,witty,motivational,friendly,poetic,sarcastic',
+            'attached_files' => 'nullable|array',
+            'attached_files.*' => 'integer|exists:files,id',
+            'context_key' => 'nullable|string|starts_with:context_text_',
 		]);
 
+
 		$user = Auth::user();
-		$userMessageContent = $request->input('message');
+        $userPrompt = $request->input('message');
 		$selectedTone = $request->input('personality_tone', 'professional');
 		$chatHeaderId = $request->input('chat_header_id');
 		$selectedModel = $request->input('llm_model');
-
+        $attachedFileIds = $request->input('attached_files', []);
+        $contextKey = $request->input('context_key');
 		$chatHeader = null;
 		$isNewChat = false;
 
-		// --- Check for pending full text for the first message of a new chat ---
-		$actualUserMessageForLlm = $userMessageContent;
-		if (empty($chatHeaderId) && session()->has('pending_full_text_for_chat')) {
-			// This is likely the first message of a summarization chat.
-			// The $userMessageContent might be a truncated version for the textarea.
-			// We use the full text from the session for the LLM.
-			$fullTextFromSession = session('pending_full_text_for_chat');
-			$promptPrefix = Str::before($userMessageContent, $fullTextFromSession); // Attempt to get prefix if any
-			if(Str::contains($userMessageContent, Str::limit($fullTextFromSession, UtilityController::MAX_TEXT_FOR_CHAT_INPUT))) {
-				// Reconstruct with full text
-				$actualUserMessageForLlm = Str::before($userMessageContent, Str::limit($fullTextFromSession, UtilityController::MAX_TEXT_FOR_CHAT_INPUT)) . $fullTextFromSession;
-			} else {
-				// Fallback if string reconstruction is tricky, just use the full text with a generic prefix.
-				// This might happen if Str::limit changed the string significantly.
-				$actualUserMessageForLlm = "Summarize the following content:\n\n" . $fullTextFromSession;
-				Log::warning("Could not accurately reconstruct prompt prefix for full text summarization. Using generic prefix.");
-			}
-			session()->forget('pending_full_text_for_chat'); // Clean up
-			Log::info("Using full text from session for initial summarization message. Original input length: " . strlen($userMessageContent) . ", Full text length: " . strlen($actualUserMessageForLlm));
-		}
+        $actualUserMessageForLlm = $userPrompt;
+        if (empty($chatHeaderId) && session()->has('pending_full_text_for_chat')) {
+            $fullTextFromSession = session('pending_full_text_for_chat');
+            $actualUserMessageForLlm = $userPrompt . "\n\n" . $fullTextFromSession;
+
+            session()->forget('pending_full_text_for_chat'); // Clean up
+            Log::info("Using full text from session for initial summarization message. Original input length: " . strlen($userPrompt) . ", Full text length: " . strlen($actualUserMessageForLlm));
+        }
 		// --- End check for pending full text ---
 
 		DB::beginTransaction(); // Start transaction for atomicity
@@ -138,7 +125,7 @@ class ChatController extends Controller
 			$extractedActionItems = null;
 			try {
 				$actionItemModel = 'openai/gpt-4o-mini';
-				$extractedActionItems = MyHelper::extractActionItems($userMessageContent, $actionItemModel);
+				$extractedActionItems = MyHelper::extractActionItems($userPrompt, $actionItemModel);
 			} catch (\Exception $e) {
 				Log::error("Exception during action item extraction call", ['error' => $e->getMessage()]);
 			}
@@ -149,7 +136,7 @@ class ChatController extends Controller
 			$createdNoteFromChat = null;
 			try {
 				$noteIntentModel = env('NOTE_INTENT_LLM', 'openai/gpt-4o-mini');
-				$noteIntentData = MyHelper::extractNoteIntents($userMessageContent, $noteIntentModel);
+				$noteIntentData = MyHelper::extractNoteIntents($userPrompt, $noteIntentModel);
 
 				if ($noteIntentData && isset($noteIntentData['intent'])) {
 					if ($noteIntentData['intent'] === 'create_note' && !empty($noteIntentData['title']) && isset($noteIntentData['content'])) {
@@ -272,10 +259,10 @@ class ChatController extends Controller
 
 			$userMessage = $chatHeader->messages()->create([
 				'role' => 'user',
-				'content' => $userMessageContent,
+				'content' => $userPrompt,
 			]);
 
-			$llmChatMessages[] = ['role' => 'user', 'content' => $userMessageContent]; // Current user message
+			$llmChatMessages[] = ['role' => 'user', 'content' => $actualUserMessageForLlm]; // Current user message
 
 			Log::info("LLM Chat Messages (excluding main system prompt) for chat ID {$chatHeaderId}", ['messages_preview' => array_map(function ($m) {
 				return Str::limit($m['content'], 50);
@@ -347,7 +334,7 @@ class ChatController extends Controller
 			$updatedTitle = null;
 			if ($isNewChat && $assistantMessage) {
 				try {
-					$titlePrompt = "Based on the following user query and assistant response, generate a very short, concise title (max 5 words) for this conversation. Only output the title text, nothing else.\n\nUser: " . Str::limit($userMessageContent, 100) . "\n\nAssistant: " . Str::limit($assistantMessageContent, 150);
+					$titlePrompt = "Based on the following user query and assistant response, generate a very short, concise title (max 5 words) for this conversation. Only output the title text, nothing else.\n\nUser: " . Str::limit($userPrompt, 100) . "\n\nAssistant: " . Str::limit($assistantMessageContent, 150);
 					$titleResult = MyHelper::llm_no_tool_call(
 						env('DEFAULT_LLM', 'openai/gpt-4o-mini'), // Use a fast model for titles
 						"You are a title generator. Only output the title text.",
@@ -358,13 +345,13 @@ class ChatController extends Controller
 						$updatedTitle = trim(Str::limit($titleResult['content'], 50));
 						$chatHeader->title = $updatedTitle;
 					} else {
-						$chatHeader->title = "Chat: " . Str::limit($userMessageContent, 30);
+						$chatHeader->title = "Chat: " . Str::limit($userPrompt, 30);
 						$updatedTitle = $chatHeader->title;
 						Log::warning("Failed to generate title for new chat", ['chat_header_id' => $chatHeaderId]);
 					}
 				} catch (\Exception $e) {
 					Log::error("Exception during title generation", ['error' => $e->getMessage(), 'chat_header_id' => $chatHeaderId]);
-					$chatHeader->title = "Chat: " . Str::limit($userMessageContent, 30);
+					$chatHeader->title = "Chat: " . Str::limit($userPrompt, 30);
 					$updatedTitle = $chatHeader->title;
 				}
 			}
@@ -379,7 +366,7 @@ class ChatController extends Controller
 				'user_message' => [
 					'id' => $userMessage->id,
 					'role' => 'user',
-					'content' => $userMessageContent,
+					'content' => $userPrompt,
 					'created_at' => $userMessage->created_at->diffForHumans(),
 					'can_delete' => true
 				],

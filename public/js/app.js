@@ -190,12 +190,12 @@ $(document).ready(function () {
         const chatUrl = '/chat';
         let redirectUrl;
 
-        if (data.text_key) {
+        if (data.context_key) {
             // Pass the key and a preview (or a flag to fetch full text)
             // The chat page will use the key to get the full text from session
-            redirectUrl = chatUrl + '?summarize_key=' + encodeURIComponent(data.text_key) + '&prompt_prefix=' + encodeURIComponent(data.prompt_prefix || '');
+            redirectUrl = chatUrl + '?summarize_key=' + encodeURIComponent(data.context_key) + '&prompt_text=' + encodeURIComponent(data.prompt_text || '');
         } else if (data.full_text_for_prompt) {
-            const promptText = (data.prompt_prefix || '') + data.full_text_for_prompt;
+            const promptText = (data.prompt_text || '') + data.full_text_for_prompt;
             redirectUrl = chatUrl + '?prompt=' + encodeURIComponent(promptText);
         } else {
             alert('Error: Could not prepare summarization data.');
@@ -246,9 +246,9 @@ $(document).ready(function () {
             success: function(response) {
                 if (response.success) {
                     redirectToChatWithSummarizationData({
-                        text_key: response.text_key, // Will be undefined if not set
+                        context_key: response.context_key, // Will be undefined if not set
                         full_text_for_prompt: response.full_text_for_prompt, // Will be undefined if not set
-                        prompt_prefix: response.prompt_prefix
+                        prompt_text: response.prompt_text
                     });
                 } else {
                     alert('Error: ' + (response.error || 'Could not process the URL.'));
@@ -331,9 +331,9 @@ $(document).ready(function () {
             success: function(response) {
                 if (response.success) {
                     redirectToChatWithSummarizationData({
-                        text_key: response.text_key,
+                        context_key: response.context_key,
                         full_text_for_prompt: response.full_text_for_prompt,
-                        prompt_prefix: response.prompt_prefix
+                        prompt_text: response.prompt_text
                     });
                 } else {
                     alert('Error: ' + (response.error || 'Could not process the file.'));
