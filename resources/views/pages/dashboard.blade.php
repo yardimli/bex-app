@@ -136,17 +136,25 @@
 				<button class="btn btn-outline-secondary" id="moreActionsButton"><i class="bi bi-three-dots me-1"></i> More
 				</button> {{-- Consider adding functionality or removing if not used --}}
 			</div>
-			<form id="dashboard-prompt-form" action="{{ route('chat.show') }}" method="GET">
-				<div class="message-input">
-					<input type="text" class="form-control form-control-lg" name="prompt" id="dashboard-prompt-input"
-					       placeholder="Message Bex...">
-					<div class="message-input-icons">
-						<i class="bi bi-paperclip icon-color"></i>
-						<i class="bi bi-globe icon-color"></i>
-						<i class="bi bi-mic-fill icon-color"></i>
-					</div>
-				</div>
-			</form>
+            <form id="dashboard-prompt-form">
+                @csrf
+                <input type="hidden" id="attached-files-input" name="attached_files">
+                <div id="file-pills-container" class="d-flex flex-wrap gap-2 mb-2">
+                    {{-- Attached file pills will be rendered here by JS --}}
+                </div>
+                <div class="message-input">
+                    <input type="text" class="form-control form-control-lg" name="prompt" id="dashboard-prompt-input" placeholder="Message Bex...">
+                    <div class="message-input-icons">
+                        <button type="button" class="btn btn-link p-0" id="attach-file-btn" title="Attach file" data-bs-toggle="modal" data-bs-target="#attachFileModal">
+                            <i class="bi bi-paperclip icon-color"></i>
+                        </button>
+                        <button type="submit" class="btn btn-link p-0 ms-2" id="dashboard-send-button" title="Send">
+                            <i class="bi bi-send-fill fs-5 icon-color" style="font-size:0.9rem !important; margin-left: 0px !important;"></i>
+                        </button>
+                        <i class="bi bi-mic-fill icon-color ms-2" title="Voice input (Not implemented)"></i>
+                    </div>
+                </div>
+            </form>
 		</div>
 	</div>
 @endsection

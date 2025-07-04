@@ -1,3 +1,34 @@
+window.BexApp = {
+    attachedFiles: new Map(),
+
+    getFileIcon: function(mimeType) {
+        if (!mimeType) return 'bi-file-earmark-fill text-muted';
+        if (mimeType.includes('pdf')) return 'bi-file-earmark-pdf-fill text-danger';
+        if (mimeType.includes('word')) return 'bi-file-earmark-word-fill text-primary';
+        if (mimeType.includes('image')) return 'bi-file-earmark-image-fill text-info';
+        if (mimeType.includes('text')) return 'bi-file-earmark-text-fill text-secondary';
+        return 'bi-file-earmark-fill text-muted';
+    },
+
+    renderFilePills: function() {
+        const container = $('#file-pills-container');
+        if (!container.length) return;
+
+        container.empty();
+        const fileIds = [];
+        this.attachedFiles.forEach((file, id) => {
+            container.append(`
+                <span class="badge text-bg-secondary d-inline-flex align-items-center gap-2 p-2">
+                    <i class="bi ${this.getFileIcon(file.mime_type)}"></i>
+                    <span>${$('<div>').text(file.name).html()}</span>
+                    <button type="button" class="btn-close btn-close-white ms-1 remove-file-pill" data-id="${id}" aria-label="Remove"></button>
+                </span>
+            `);
+            fileIds.push(id);
+        });
+        $('#attached-files-input').val(fileIds.length > 0 ? JSON.stringify(fileIds) : '');
+    }
+};
 $(document).ready(function () {
     const themeToggleButton = $('#themeToggleButton');
     const htmlElement = $('html');
@@ -368,15 +399,6 @@ $(document).ready(function () {
     const dashboardPromptForm = $('#dashboard-prompt-form');
     const dashboardPromptInput = $('#dashboard-prompt-input');
     if (dashboardPromptForm.length && dashboardPromptInput.length) {
-        dashboardPromptForm.on('submit', function (e) {
-            e.preventDefault();
-            const promptText = dashboardPromptInput.val().trim();
-            if (promptText) {
-                const chatUrl = $(this).attr('action');
-                const redirectUrl = chatUrl + '?prompt=' + encodeURIComponent(promptText);
-                window.location.href = redirectUrl;
-            }
-        });
         dashboardPromptInput.focus();
     }
 
@@ -512,6 +534,171 @@ $(document).ready(function () {
             }
         });
     });
+
+    // --- START: Global File Attachment Logic (for Chat & Dashboard) ---
+    const attachFileModal = $('#attachFileModal');
+    if (attachFileModal.length) {
+        const confirmAttachFilesBtn = $('#confirm-attach-files-btn');
+        const attachMyFilesList = $('#attach-my-files-list');
+        const attachTeamFilesList = $('#attach-team-files-list');
+        const attachTeamSelectFilter = $('#attach-team-select-filter');
+
+        function renderFileSelectItem(file) {
+            const isSelected = window.BexApp.attachedFiles.has(file.id);
+            const safeFileName = $('<div>').text(file.original_filename).html();
+            const ownerName = file.owner ? $('<div>').text(file.owner.name).html() : 'N/A';
+            return `
+            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center file-list-item-selectable ${isSelected ? 'selected' : ''}" data-file-id="${file.id}" data-file-name="${safeFileName}" data-mime-type="${file.mime_type}">
+                <div class="d-flex align-items-center" style="min-width: 0;">
+                    <i class="bi ${window.BexApp.getFileIcon(file.mime_type)} me-3 fs-4"></i>
+                    <div class="text-truncate">
+                        <strong class="d-block text-truncate">${safeFileName}</strong>
+                        <small class="text-muted">Owner: ${ownerName}</small>
+                    </div>
+                </div>
+                <i class="bi bi-check-circle-fill fs-5 text-primary selection-check" style="display: ${isSelected ? 'block' : 'none'};"></i>
+            </a>`;
+        }
+
+        function loadMyFilesForAttachment() {
+            attachMyFilesList.html('<div class="text-center p-3"><div class="spinner-border spinner-border-sm"></div></div>');
+            $.get('/api/user/files', function(files) {
+                attachMyFilesList.empty();
+                if (files.length > 0) {
+                    files.forEach(file => attachMyFilesList.append(renderFileSelectItem(file)));
+                } else {
+                    attachMyFilesList.html('<p class="text-muted p-3 text-center">You have no files to attach.</p>');
+                }
+            });
+        }
+
+        function loadTeamFilesForAttachment(teamId) {
+            if (!teamId) {
+                attachTeamFilesList.html('<p class="text-muted p-3 text-center">Select a team to see its files.</p>');
+                return;
+            }
+            attachTeamFilesList.html('<div class="text-center p-3"><div class="spinner-border spinner-border-sm"></div></div>');
+            $.get(`/api/teams/${teamId}/files`, function(files) {
+                attachTeamFilesList.empty();
+                if (files.length > 0) {
+                    files.forEach(file => attachTeamFilesList.append(renderFileSelectItem(file)));
+                } else {
+                    attachTeamFilesList.html('<p class="text-muted p-3 text-center">No files have been shared with this team.</p>');
+                }
+            });
+        }
+
+        function loadUserTeamsForAttachment() {
+            $.get('/api/user/teams', function(response) {
+                attachTeamSelectFilter.empty().append('<option value="">-- Select a Team --</option>');
+                if (response.teams && response.teams.length > 0) {
+                    response.teams.forEach(team => {
+                        attachTeamSelectFilter.append(`<option value="${team.id}">${$('<div>').text(team.name).html()}</option>`);
+                    });
+                }
+                const currentTeamId = $('meta[name="current-team-id"]').attr('content');
+                if (currentTeamId && currentTeamId !== '0') {
+                    attachTeamSelectFilter.val(currentTeamId).trigger('change');
+                } else {
+                    loadTeamFilesForAttachment(null);
+                }
+            });
+        }
+
+        attachFileModal.on('show.bs.modal', function() {
+            loadMyFilesForAttachment();
+            loadUserTeamsForAttachment();
+        });
+
+        attachTeamSelectFilter.on('change', function() {
+            loadTeamFilesForAttachment($(this).val());
+        });
+
+        $(document).on('click', '#attachFileModal .file-list-item-selectable', function(e) {
+            e.preventDefault();
+            const item = $(this);
+            const fileId = item.data('file-id');
+            const fileName = item.data('file-name');
+            const mimeType = item.data('mime-type');
+            if (item.hasClass('selected')) {
+                item.removeClass('selected');
+                item.find('.selection-check').hide();
+                window.BexApp.attachedFiles.delete(fileId);
+            } else {
+                item.addClass('selected');
+                item.find('.selection-check').show();
+                window.BexApp.attachedFiles.set(fileId, { name: fileName, mime_type: mimeType });
+            }
+        });
+
+        confirmAttachFilesBtn.on('click', function() {
+            window.BexApp.renderFilePills();
+            attachFileModal.modal('hide');
+        });
+
+        $(document).on('click', '#file-pills-container .remove-file-pill', function() {
+            const fileId = $(this).data('id');
+            window.BexApp.attachedFiles.delete(fileId);
+            window.BexApp.renderFilePills();
+        });
+
+        // --- Dashboard Form Submission Logic ---
+        const dashboardPromptForm = $('#dashboard-prompt-form');
+        if (dashboardPromptForm.length) {
+            dashboardPromptForm.on('submit', function (e) {
+                e.preventDefault();
+                const dashboardPromptInput = $('#dashboard-prompt-input');
+                const promptText = dashboardPromptInput.val().trim();
+                const attachedFileIds = [...window.BexApp.attachedFiles.keys()];
+
+                if (!promptText && attachedFileIds.length === 0) {
+                    return;
+                }
+
+                const sendButton = $('#dashboard-send-button');
+                const originalButtonHtml = sendButton.html();
+                sendButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+                dashboardPromptInput.prop('disabled', true);
+
+                const selectedModel = localStorage.getItem('selectedLlmModel') || 'openai/gpt-4o-mini';
+                const selectedTone = localStorage.getItem('selectedPersonalityTone') || 'professional';
+
+                $.ajax({
+                    url: '/api/chat',
+                    method: 'POST',
+                    data: {
+                        _token: $('meta[name="csrf-token"]').attr('content'),
+                        message: promptText,
+                        chat_header_id: null,
+                        llm_model: selectedModel,
+                        personality_tone: selectedTone,
+                        attached_files: attachedFileIds
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.success && data.chat_header_id) {
+                            window.location.href = '/chat/' + data.chat_header_id;
+                        } else {
+                            alert(data.error || 'An error occurred while starting the chat.');
+                            sendButton.prop('disabled', false).html(originalButtonHtml);
+                            dashboardPromptInput.prop('disabled', false);
+                        }
+                    },
+                    error: function (jqXHR) {
+                        let errorMsg = 'Could not start chat. Please try again.';
+                        if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
+                            errorMsg = jqXHR.responseJSON.error;
+                        }
+                        alert(errorMsg);
+                        sendButton.prop('disabled', false).html(originalButtonHtml);
+                        dashboardPromptInput.prop('disabled', false);
+                    }
+                });
+            });
+        }
+    }
+// --- END: Global File Attachment Logic ---
+
 
     // --- ADDED: Global File Preview Logic ---
     // This logic is used by both the main File Management page and the Team Workspace modal.
