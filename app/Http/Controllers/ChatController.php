@@ -125,12 +125,12 @@ class ChatController extends Controller
         if (!empty($attachedFileIds)) {
             // Eager load relationships to avoid N+1 queries in the loop
             $files = \App\Models\File::with('sharedWithTeams')->find($attachedFileIds);
-            $currentTeamId = session('current_team_id');
-
+//            $currentTeamId = session('current_team_id');
+            $userTeamIds = $user->teams()->pluck('teams.id');
             foreach ($files as $file) {
                 // Authorization Check: User must own the file OR it must be shared with the current active team
                 $isOwner = $file->user_id === $user->id;
-                $isSharedWithTeam = $currentTeamId ? $file->sharedWithTeams->contains('id', $currentTeamId) : false;
+                $isSharedWithTeam = $file->sharedWithTeams->pluck('id')->intersect($userTeamIds)->isNotEmpty();
 
                 if ($isOwner || $isSharedWithTeam) {
                     try {

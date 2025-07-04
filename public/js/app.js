@@ -307,7 +307,7 @@ $(document).ready(function () {
             return;
         }
 
-        if (file.size > 1 * 1024 * 1024) { // 10MB limit
+        if (file.size > 10 * 1024 * 1024) { // 10MB limit
             alert('File is too large. Maximum size is 10MB.');
             fileInput.val('');
             return;
