@@ -3,20 +3,8 @@
 @section('content')
 	{{-- MODIFIED: Added a full-height flex container to manage the layout, padding, and spacing. --}}
 	<div class="p-4 flex flex-col h-full gap-4">
-		{{-- MODIFIED: Replaced header with a DaisyUI navbar component. Spacing is now handled by the parent flex container's 'gap'. --}}
-		<div class="navbar bg-base-100 rounded-box shadow-sm">
-			<div class="navbar-start">
-				{{-- Hamburger menu button for mobile to open the drawer --}}
-				<label for="my-drawer-2" class="btn btn-ghost btn-circle lg:hidden">
-					<i class="bi bi-list text-xl"></i>
-				</label>
-				@include('partials.dropdowns.mode_selector')
-			</div>
-			<div class="navbar-end">
-				{{-- Include the new reusable partial for icons and user menu --}}
-				@include('partials.header_icons_and_user_menu')
-			</div>
-		</div>
+		{{-- MODIFIED: Replaced inline header with a reusable partial. --}}
+		@include('partials.page_header')
 		
 		{{-- Item 2: Main Chat Area (grows to fill space and is a flex container for its children) --}}
 		<div class="bg-base-100 rounded-box shadow-sm flex-grow flex flex-col p-4 min-h-0">

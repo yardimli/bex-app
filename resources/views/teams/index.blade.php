@@ -3,22 +3,28 @@
 @extends('layouts.app')
 
 @section('content')
-    {{-- MODIFIED: Converted to Tailwind/DaisyUI layout --}}
-    <div class="container mx-auto p-4">
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-2xl font-bold">My Teams</h1>
-            {{-- MODIFIED: Changed data-bs-* to onclick for DaisyUI modal --}}
-            <button class="btn btn-primary" onclick="createTeamModal.showModal()">
-                <i class="bi bi-plus-circle me-1"></i> Create New Team
-            </button>
-        </div>
+    {{-- MODIFIED: Added a full-height flex container to manage the layout. --}}
+    <div class="p-4 flex flex-col h-full gap-4">
+        {{-- MODIFIED: Included the shared page header. --}}
+        @include('partials.page_header')
         
-        {{-- MODIFIED: Replaced Bootstrap row with CSS Grid --}}
-        <div id="teams-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            <!-- Teams will be loaded here by JavaScript -->
-            <div class="col-span-full text-center p-5">
-                <span class="loading loading-spinner loading-lg text-primary"></span>
-                <p class="mt-2">Loading your teams...</p>
+        {{-- MODIFIED: Wrapped original content in a flex-grow container for proper layout and scrolling. --}}
+        <div class="bg-base-100 rounded-box shadow-sm flex-grow p-4 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-2xl font-bold">My Teams</h1>
+                {{-- MODIFIED: Changed data-bs-* to onclick for DaisyUI modal --}}
+                <button class="btn btn-primary" onclick="createTeamModal.showModal()">
+                    <i class="bi bi-plus-circle me-1"></i> Create New Team
+                </button>
+            </div>
+            
+            {{-- MODIFIED: Replaced Bootstrap row with CSS Grid --}}
+            <div id="teams-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Teams will be loaded here by JavaScript -->
+                <div class="col-span-full text-center p-5">
+                    <span class="loading loading-spinner loading-lg text-primary"></span>
+                    <p class="mt-2">Loading your teams...</p>
+                </div>
             </div>
         </div>
     </div>

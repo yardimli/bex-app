@@ -3,41 +3,43 @@
 @extends('layouts.app')
 
 @section('content')
-    {{-- MODIFIED: Replaced Bootstrap container with Tailwind container and flexbox for layout --}}
-    <div class="container mx-auto p-4">
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-2xl font-bold">File Management</h1>
-            {{-- MODIFIED: Added id to button for JS hook, changed data-bs-* to onclick for DaisyUI modal --}}
-            <button class="btn btn-primary" id="openUploadModalBtn">
-                <i class="bi bi-upload me-2"></i>Upload New File
-            </button>
-        </div>
+    {{-- MODIFIED: Added a full-height flex container to manage the layout. --}}
+    <div class="p-4 flex flex-col h-full gap-4">
+        {{-- MODIFIED: Included the shared page header. --}}
+        @include('partials.page_header')
         
-        {{-- MODIFIED: Replaced Bootstrap card and nav-tabs with DaisyUI card and tabs --}}
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body p-0">
-                <div role="tablist" class="tabs tabs-lifted tabs-lg">
-                    {{-- My Files Tab --}}
-                    <input type="radio" name="file_tabs" role="tab" class="tab" id="my-files-tab-radio" aria-label="My Files" checked />
-                    <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-0">
-                        <div id="my-files-list">
-                            {{-- My files will be loaded here by JS --}}
-                        </div>
+        {{-- MODIFIED: Wrapped original content in a flex-grow container for proper layout and scrolling. --}}
+        <div class="bg-base-100 rounded-box shadow-sm flex-grow p-4 flex flex-col min-h-0">
+            <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                <h1 class="text-2xl font-bold">File Management</h1>
+                {{-- MODIFIED: Added id to button for JS hook, changed data-bs-* to onclick for DaisyUI modal --}}
+                <button class="btn btn-primary" id="openUploadModalBtn">
+                    <i class="bi bi-upload me-2"></i>Upload New File
+                </button>
+            </div>
+            
+            {{-- MODIFIED: Removed extra card and card-body wrappers to avoid double-boxing. --}}
+            <div role="tablist" class="tabs tabs-lifted tabs-lg">
+                {{-- My Files Tab --}}
+                <input type="radio" name="file_tabs" role="tab" class="tab" id="my-files-tab-radio" aria-label="My Files" checked />
+                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-0 overflow-y-auto">
+                    <div id="my-files-list">
+                        {{-- My files will be loaded here by JS --}}
                     </div>
-                    
-                    {{-- Team Files Tab --}}
-                    <input type="radio" name="file_tabs" role="tab" class="tab" id="team-files-tab-radio" aria-label="Team Files" />
-                    <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box">
-                        <div class="p-3 border-b border-base-300">
-                            <label for="team-select-filter" class="label">
-                                <span class="label-text">Select a Team:</span>
-                            </label>
-                            {{-- MODIFIED: form-select to select select-bordered --}}
-                            <select id="team-select-filter" class="select select-bordered w-full max-w-xs"></select>
-                        </div>
-                        <div id="team-files-list">
-                            {{-- Team files will be loaded here by JS --}}
-                        </div>
+                </div>
+                
+                {{-- Team Files Tab --}}
+                <input type="radio" name="file_tabs" role="tab" class="tab" id="team-files-tab-radio" aria-label="Team Files" />
+                <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box overflow-y-auto">
+                    <div class="p-3 border-b border-base-300">
+                        <label for="team-select-filter" class="label">
+                            <span class="label-text">Select a Team:</span>
+                        </label>
+                        {{-- MODIFIED: form-select to select select-bordered --}}
+                        <select id="team-select-filter" class="select select-bordered w-full max-w-xs"></select>
+                    </div>
+                    <div id="team-files-list">
+                        {{-- Team files will be loaded here by JS --}}
                     </div>
                 </div>
             </div>
