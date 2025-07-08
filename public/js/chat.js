@@ -60,18 +60,30 @@ $(document).ready(function () {
                </button>`
 			: '';
 		
-		// MODIFIED: Action buttons for assistant messages with DaisyUI classes
-		const actionButtonsHtml = (role === 'assistant')
-			? `<div class="chat-footer opacity-50">
-                   <button class="btn btn-ghost btn-xs copy-btn" title="Copy text" data-message-id="${messageId}">
-                       <i class="bi bi-clipboard"></i>
-                   </button>
-                   <button class="btn btn-ghost btn-xs read-aloud-btn" title="Read aloud" data-message-id="${messageId}">
-                       <i class="bi bi-play-circle"></i>
-                       <span class="loading loading-spinner loading-xs" style="display: none;"></span>
-                   </button>
-               </div>`
-			: '';
+		// MODIFIED: Combined footer logic to prevent action buttons and timestamp from overlapping.
+		let footerHtml;
+		if (role === 'assistant') {
+			// For assistant, create a footer with action buttons and timestamp, using flexbox for layout.
+			footerHtml = `
+                <div class="chat-footer opacity-50 flex items-center justify-between mt-1 w-full">
+                    <time class="text-xs">${timeString}</time>
+                    <div class="flex items-center gap-1">
+                        <button class="btn btn-ghost btn-xs copy-btn" title="Copy text" data-message-id="${messageId}">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                        <button class="btn btn-ghost btn-xs read-aloud-btn" title="Read aloud" data-message-id="${messageId}">
+                            <i class="bi bi-play-circle"></i>
+                            <span class="loading loading-spinner loading-xs" style="display: none;"></span>
+                        </button>
+                    </div>
+                </div>`;
+		} else {
+			// For user, the footer just contains the timestamp.
+			footerHtml = `
+                <div class="chat-footer opacity-50">
+                    <time class="text-xs">${timeString}</time>
+                </div>`;
+		}
 		
 		// MODIFIED: The entire bubble structure uses the DaisyUI 'chat' component
 		const bubbleHtml = `
@@ -81,10 +93,7 @@ $(document).ready(function () {
                     ${escapedContentHtml}
                     ${deleteButtonHtml}
                 </div>
-                <div class="chat-footer opacity-50">
-                    <time class="text-xs">${timeString}</time>
-                </div>
-                ${actionButtonsHtml}
+                ${footerHtml}
             </div>`;
 		
 		chatHistoryArea.append(bubbleHtml);

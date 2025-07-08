@@ -44,9 +44,7 @@
 							</div>
 							<div class="chat-footer opacity-50">
 								<time class="text-xs">{{ $message->created_at->format('H:i') }}</time>
-							</div>
-							@if ($message->role === 'assistant')
-								<div class="chat-footer opacity-50">
+								@if ($message->role === 'assistant')
 									<button class="btn btn-ghost btn-xs copy-btn" title="Copy text" data-message-id="{{ $message->id }}">
 										<i class="bi bi-clipboard"></i></button>
 									<button class="btn btn-ghost btn-xs read-aloud-btn" title="Read aloud"
@@ -54,8 +52,8 @@
 										<i class="bi bi-play-circle"></i>
 										<span class="loading loading-spinner loading-xs" style="display: none;"></span>
 									</button>
-								</div>
-							@endif
+								@endif
+							</div>
 						</div>
 					@endforeach
 				@endif
