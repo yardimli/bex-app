@@ -3,8 +3,10 @@
 @extends('layouts.app')
 
 @section('content')
-    {{-- MODIFIED: Replaced Bootstrap grid with a full-height flex container to center the login card. --}}
-    <div class="flex items-center justify-center flex-grow">
+    <div class="p-4 flex flex-col h-full gap-4">
+        {{-- MODIFIED: Included the shared page header. --}}
+        @include('partials.page_header')
+
         {{-- MODIFIED: Replaced Bootstrap card with DaisyUI card component for a modern look. --}}
         <div class="card bg-base-100 shadow-xl w-full max-w-lg mx-4">
             <div class="card-body">
