@@ -1,4 +1,4 @@
-// resources/views/auth/login.blade.php:
+{{--// resources/views/auth/login.blade.php:--}}
 
 @extends('layouts.app')
 
