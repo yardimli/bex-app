@@ -1,4 +1,4 @@
-// resources/views/partials/sidebar.blade.php:
+{{--resources/views/partials/sidebar.blade.php:--}}
 
 {{-- MODIFIED: Rewritten with DaisyUI menu and Tailwind utility classes --}}
 <aside class="bg-base-100 w-80 p-4 h-full flex flex-col">
