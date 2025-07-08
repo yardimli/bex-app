@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles that are difficult to achieve with utility classes alone */
+.chat-history {
+    /* Adjust height based on your layout's header/input area */
+    height: calc(100vh - 240px);
+}
+
+@media (max-width: 640px) {
+    .chat-history {
+        height: calc(100vh - 220px); /* Adjust for smaller screens */
+    }
+}
+
+/* Style for completed action items */
+#actionItemsList .item-done .label-text {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+/* Custom scrollbar styling (optional but nice for dark mode) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    @apply bg-base-200;
+}
+::-webkit-scrollbar-thumb {
+    @apply bg-base-300 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+    @apply bg-neutral;
+}

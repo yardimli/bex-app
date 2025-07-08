@@ -1,180 +1,152 @@
-{{-- resources/views/profile/index.blade.php --}}
-@extends('layouts.app') {{-- Or your main app layout --}}
+{{-- resources/views/profile/edit.blade.php --}}
+@extends('layouts.app')
 
 @section('content')
-@include('partials.content_header')
-	<div class="container py-4">
-		<div class="row justify-content-center">
-			<div class="col-md-8">
-				<div class="card">
-					<div class="card-header"><h2>{{ __('Profile Information') }}</h2></div>
-
+	<div class="container mx-auto p-4">
+		<div class="flex justify-center">
+			<div class="w-full lg:w-8/12 space-y-6">
+				
+				{{-- MODIFIED: Profile Information Card with DaisyUI/Tailwind classes --}}
+				<div class="card bg-base-100 shadow-xl">
 					<div class="card-body">
-						<p class="text-muted">{{ __("Update your account's profile information and email address.") }}</p>
-
+						<h2 class="card-title">{{ __('Profile Information') }}</h2>
+						<p class="text-base-content/70">{{ __("Update your account's profile information and email address.") }}</p>
+						
 						@if (session('status') === 'profile-updated')
-							<div class="alert alert-success" role="alert">
-								{{ __('Profile successfully updated.') }}
+							<div role="alert" class="alert alert-success mt-4">
+								<i class="bi bi-check-circle-fill"></i>
+								<span>{{ __('Profile successfully updated.') }}</span>
 							</div>
 						@endif
-
-						<form method="post" action="{{ route('profile.update') }}" class="mt-4 space-y-6">
+						
+						<form method="post" action="{{ route('profile.update') }}" class="mt-4 space-y-4">
 							@csrf
-							@method('patch') {{-- Use PATCH method for updates --}}
-
+							@method('patch')
+							
 							{{-- Name Field --}}
-							<div class="mb-3 row">
-								<label for="name" class="col-md-4 col-form-label text-md-end">{{ __('Name') }}</label>
-								<div class="col-md-6">
-									<input id="name" name="name" type="text" class="form-control @error('name') is-invalid @enderror" value="{{ old('name', $user->name) }}" required autofocus autocomplete="name">
-									@error('name')
-									<span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-									@enderror
-								</div>
+							<div class="form-control">
+								<label class="label" for="name"><span class="label-text">{{ __('Name') }}</span></label>
+								<input id="name" name="name" type="text" class="input input-bordered @error('name') input-error @enderror" value="{{ old('name', $user->name) }}" required autofocus autocomplete="name">
+								@error('name')
+								<label class="label"><span class="label-text-alt text-error">{{ $message }}</span></label>
+								@enderror
 							</div>
-
+							
 							{{-- Email Field --}}
-							<div class="mb-3 row">
-								<label for="email" class="col-md-4 col-form-label text-md-end">{{ __('Email') }}</label>
-								<div class="col-md-6">
-									<input id="email" name="email" type="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email', $user->email) }}" required autocomplete="username">
-									@error('email')
-									<span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-									@enderror
-
-									{{-- Optional: Add message about email verification if applicable --}}
-									{{-- @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail()) --}}
-									{{-- Add verification resend logic here if needed --}}
-									{{-- @endif --}}
-								</div>
+							<div class="form-control">
+								<label class="label" for="email"><span class="label-text">{{ __('Email') }}</span></label>
+								<input id="email" name="email" type="email" class="input input-bordered @error('email') input-error @enderror" value="{{ old('email', $user->email) }}" required autocomplete="username">
+								@error('email')
+								<label class="label"><span class="label-text-alt text-error">{{ $message }}</span></label>
+								@enderror
 							</div>
-
-							{{-- Save Button --}}
-							<div class="mb-0 row">
-								<div class="col-md-6 offset-md-4">
-									<button type="submit" class="btn btn-primary">
-										{{ __('Save') }}
-									</button>
-								</div>
+							
+							<div class="card-actions justify-start">
+								<button type="submit" class="btn btn-primary">{{ __('Save') }}</button>
 							</div>
 						</form>
 					</div>
 				</div>
-
-				{{-- Optional: Add separate cards/sections for Password Update and Delete Account --}}
-				<div class="card mt-4">
-						<div class="card-header"><h2>{{ __('Update Password') }}</h2></div>
-						 <div class="card-body">
-								<p class="text-muted">{{ __('Ensure your account is using a long, random password to stay secure.') }}</p>
-                             @if (session('status') === 'password-updated')
-                                 <div class="alert alert-success" role="alert">
-                                     {{ __('Password successfully updated.') }}
-                                 </div>
-                             @endif
-                             <form method="post" action="{{ route('password.update') }}" class="mt-4">
-                                 @csrf
-                                 @method('put')
-
-                                 {{-- Current Password Field --}}
-                                 <div class="mb-3 row">
-                                     <label for="current_password" class="col-md-4 col-form-label text-md-end">{{ __('Current Password') }}</label>
-                                     <div class="col-md-6">
-                                         <input id="current_password" name="current_password" type="password" class="form-control @error('current_password') is-invalid @enderror" autocomplete="current-password" required>
-                                         @error('current_password')
-                                         <span class="invalid-feedback" role="alert">
-                            <strong>{{ $message }}</strong>
-                        </span>
-                                         @enderror
-                                     </div>
-                                 </div>
-
-                                 {{-- New Password Field --}}
-                                 <div class="mb-3 row">
-                                     <label for="password" class="col-md-4 col-form-label text-md-end">{{ __('New Password') }}</label>
-                                     <div class="col-md-6">
-                                         <input id="password" name="password" type="password" class="form-control @error('password') is-invalid @enderror" autocomplete="new-password" required>
-                                         @error('password')
-                                         <span class="invalid-feedback" role="alert">
-                            <strong>{{ $message }}</strong>
-                        </span>
-                                         @enderror
-                                     </div>
-                                 </div>
-
-                                 {{-- Confirm New Password Field --}}
-                                 <div class="mb-3 row">
-                                     <label for="password_confirmation" class="col-md-4 col-form-label text-md-end">{{ __('Confirm Password') }}</label>
-                                     <div class="col-md-6">
-                                         <input id="password_confirmation" name="password_confirmation" type="password" class="form-control" autocomplete="new-password" required>
-                                     </div>
-                                 </div>
-
-                                 {{-- Save Button --}}
-                                 <div class="mb-0 row">
-                                     <div class="col-md-6 offset-md-4">
-                                         <button type="submit" class="btn btn-primary">
-                                             {{ __('Save') }}
-                                         </button>
-                                     </div>
-                                 </div>
-                             </form>
-						</div>
+				
+				{{-- MODIFIED: Update Password Card with DaisyUI/Tailwind classes --}}
+				<div class="card bg-base-100 shadow-xl">
+					<div class="card-body">
+						<h2 class="card-title">{{ __('Update Password') }}</h2>
+						<p class="text-base-content/70">{{ __('Ensure your account is using a long, random password to stay secure.') }}</p>
+						@if (session('status') === 'password-updated')
+							<div role="alert" class="alert alert-success mt-4">
+								<i class="bi bi-check-circle-fill"></i>
+								<span>{{ __('Password successfully updated.') }}</span>
+							</div>
+						@endif
+						<form method="post" action="{{ route('password.update') }}" class="mt-4 space-y-4">
+							@csrf
+							@method('put')
+							
+							<div class="form-control">
+								<label class="label" for="current_password"><span class="label-text">{{ __('Current Password') }}</span></label>
+								<input id="current_password" name="current_password" type="password" class="input input-bordered @error('current_password', 'updatePassword') input-error @enderror" autocomplete="current-password" required>
+								@error('current_password', 'updatePassword')
+								<label class="label"><span class="label-text-alt text-error">{{ $message }}</span></label>
+								@enderror
+							</div>
+							
+							<div class="form-control">
+								<label class="label" for="password"><span class="label-text">{{ __('New Password') }}</span></label>
+								<input id="password" name="password" type="password" class="input input-bordered @error('password', 'updatePassword') input-error @enderror" autocomplete="new-password" required>
+								@error('password', 'updatePassword')
+								<label class="label"><span class="label-text-alt text-error">{{ $message }}</span></label>
+								@enderror
+							</div>
+							
+							<div class="form-control">
+								<label class="label" for="password_confirmation"><span class="label-text">{{ __('Confirm Password') }}</span></label>
+								<input id="password_confirmation" name="password_confirmation" type="password" class="input input-bordered" autocomplete="new-password" required>
+							</div>
+							
+							<div class="card-actions justify-start">
+								<button type="submit" class="btn btn-primary">{{ __('Save') }}</button>
+							</div>
+						</form>
+					</div>
 				</div>
-
-				<div class="card mt-4">
-						 <div class="card-header"><h2>{{ __('Delete Account') }}</h2></div>
-						 <div class="card-body">
-								 <p class="text-danger">{{ __('Once your account is deleted, all of your resources and data will be permanently deleted.') }}</p>
-                             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmUserDeletionModal">
-                                 {{ __('Delete Account') }}
-                             </button>
-
-                             <!-- Modal -->
-                             <div class="modal fade" id="confirmUserDeletionModal" tabindex="-1" aria-labelledby="confirmUserDeletionModalLabel" aria-hidden="true">
-                                 <div class="modal-dialog">
-                                     <div class="modal-content">
-                                         <form method="post" action="{{ route('profile.destroy') }}">
-                                             @csrf
-                                             @method('delete')
-
-                                             <div class="modal-header">
-                                                 <h5 class="modal-title" id="confirmUserDeletionModalLabel">{{ __('Confirm Account Deletion') }}</h5>
-                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                             </div>
-
-                                             <div class="modal-body">
-                                                 <p>
-                                                     {{ __('Are you sure you want to delete your account?') }}
-                                                 </p>
-                                             </div>
-
-                                             <div class="modal-footer">
-                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
-                                                 <button type="submit" class="btn btn-danger">{{ __('Delete Account') }}</button>
-                                             </div>
-                                         </form>
-                                     </div>
-                                 </div>
-                             </div>
-						 </div>
-				 </div>
-
+				
+				{{-- MODIFIED: Delete Account Card with DaisyUI/Tailwind classes --}}
+				<div class="card bg-base-100 shadow-xl">
+					<div class="card-body">
+						<h2 class="card-title">{{ __('Delete Account') }}</h2>
+						<p class="text-error">{{ __('Once your account is deleted, all of your resources and data will be permanently deleted.') }}</p>
+						{{-- MODIFIED: Button to open DaisyUI modal --}}
+						<div class="card-actions justify-start mt-4">
+							<button type="button" class="btn btn-error" onclick="confirmUserDeletionModal.showModal()">
+								{{ __('Delete Account') }}
+							</button>
+						</div>
+					</div>
+				</div>
+			
 			</div>
 		</div>
 	</div>
+	
+	<!-- MODIFIED: Delete confirmation modal converted to DaisyUI <dialog> -->
+	<dialog id="confirmUserDeletionModal" class="modal">
+		<div class="modal-box">
+			<form method="post" action="{{ route('profile.destroy') }}">
+				@csrf
+				@method('delete')
+				
+				<h3 class="font-bold text-lg">{{ __('Confirm Account Deletion') }}</h3>
+				<p class="py-4">{{ __('Are you sure you want to delete your account? This action cannot be undone.') }}</p>
+				
+				<div class="form-control">
+					<label class="label" for="password_delete"><span class="label-text">{{ __('Please enter your password to confirm.') }}</span></label>
+					<input id="password_delete" name="password" type="password" class="input input-bordered @error('password', 'userDeletion') input-error @enderror" required>
+					@error('password', 'userDeletion')
+					<label class="label"><span class="label-text-alt text-error">{{ $message }}</span></label>
+					@enderror
+				</div>
+				
+				<div class="modal-action">
+					<button type="button" class="btn" onclick="confirmUserDeletionModal.close()">{{ __('Cancel') }}</button>
+					<button type="submit" class="btn btn-error">{{ __('Delete Account') }}</button>
+				</div>
+			</form>
+		</div>
+		<form method="dialog" class="modal-backdrop"><button>close</button></form>
+	</dialog>
 @endsection
 
-@if($errors->userDeletion->isNotEmpty())
-    @push('scripts')
-        <script>
-            $(document).ready(function() {
-                var userDeletionModal = new bootstrap.Modal(document.getElementById('confirmUserDeletionModal'));
-                userDeletionModal.show();
-            });
-        </script>
-    @endpush
-@endif
+@push('scripts')
+	{{-- MODIFIED: Script to open modal on validation error --}}
+	@if($errors->userDeletion->isNotEmpty())
+		<script>
+			document.addEventListener('DOMContentLoaded', function() {
+				const modal = document.getElementById('confirmUserDeletionModal');
+				if (modal) {
+					modal.showModal();
+				}
+			});
+		</script>
+	@endif
+@endpush

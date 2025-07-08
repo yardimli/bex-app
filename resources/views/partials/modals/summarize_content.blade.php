@@ -1,54 +1,43 @@
-<div class="modal fade" id="summarizeContentModal" tabindex="-1" aria-labelledby="summarizeContentModalLabel" aria-hidden="true">
-	<div class="modal-dialog modal-lg modal-dialog-centered">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title" id="summarizeContentModalLabel">Summarize Content</h5>
-				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-			</div>
-			<div class="modal-body">
-				<!-- Nav tabs -->
-				<ul class="nav nav-tabs nav-fill" id="summarizeTab" role="tablist">
-					<li class="nav-item" role="presentation">
-						<button class="nav-link active" id="summarize-web-tab" data-bs-toggle="tab" data-bs-target="#summarize-web-pane" type="button" role="tab" aria-controls="summarize-web-pane" aria-selected="true">Web Page</button>
-					</li>
-					<li class="nav-item" role="presentation">
-						<button class="nav-link" id="summarize-file-tab" data-bs-toggle="tab" data-bs-target="#summarize-file-pane" type="button" role="tab" aria-controls="summarize-file-pane" aria-selected="false">File</button>
-					</li>
-					<li class="nav-item" role="presentation">
-						<button class="nav-link" id="summarize-text-tab" data-bs-toggle="tab" data-bs-target="#summarize-text-pane" type="button" role="tab" aria-controls="summarize-text-pane" aria-selected="false">Text</button>
-					</li>
-				</ul>
+{{-- MODIFIED: Converted from Bootstrap modal to DaisyUI dialog --}}
+<dialog id="summarizeContentModal" class="modal modal-bottom sm:modal-middle">
+	<div class="modal-box w-11/12 max-w-3xl">
+		<h3 class="font-bold text-lg">Summarize Content</h3>
+		
+		<div class="py-4">
+			{{-- MODIFIED: Replaced nav-tabs with DaisyUI tabs --}}
+			<div role="tablist" class="tabs tabs-lifted">
+				<input type="radio" name="summarize_tabs" role="tab" class="tab" aria-label="Web Page" checked />
+				<div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6">
+					<div class="form-control w-full">
+						<label class="label" for="summarizeUrlInput"><span class="label-text">Enter URL to summarize</span></label>
+						<input type="url" id="summarizeUrlInput" class="input input-bordered w-full" placeholder="https://example.com">
+					</div>
+					<button type="button" class="btn btn-primary w-full mt-4" id="summarizeWebButton"><i class="bi bi-globe me-2"></i>Summarize Web Page</button>
+				</div>
 				
-				<!-- Tab panes -->
-				<div class="tab-content pt-3" id="summarizeTabContent">
-					<div class="tab-pane fade show active" id="summarize-web-pane" role="tabpanel" aria-labelledby="summarize-web-tab" tabindex="0">
-						<div class="mb-3">
-							<label for="summarizeUrlInput" class="form-label">Enter URL to summarize</label>
-							<input type="url" class="form-control" id="summarizeUrlInput" placeholder="https://example.com">
-						</div>
-						<button type="button" class="btn btn-dark w-100" id="summarizeWebButton"><i class="bi bi-globe me-2"></i>Summarize Web Page</button>
+				<input type="radio" name="summarize_tabs" role="tab" class="tab" aria-label="File" />
+				<div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6">
+					<div class="form-control w-full">
+						<label class="label" for="summarizeFileInput"><span class="label-text">Upload a file (PDF, DOCX, TXT)</span></label>
+						<input type="file" id="summarizeFileInput" class="file-input file-input-bordered w-full">
 					</div>
-					<div class="tab-pane fade" id="summarize-file-pane" role="tabpanel" aria-labelledby="summarize-file-tab" tabindex="0">
-						<div class="mb-3">
-							<label for="summarizeFileInput" class="form-label">Upload a file (PDF, DOCX, TXT)</label>
-							<input class="form-control" type="file" id="summarizeFileInput">
-						</div>
-						<button type="button" class="btn btn-dark w-100" id="summarizeFileButton"><i class="bi bi-file-earmark-arrow-up me-2"></i>Summarize File</button>
+					<button type="button" class="btn btn-primary w-full mt-4" id="summarizeFileButton"><i class="bi bi-file-earmark-arrow-up me-2"></i>Summarize File</button>
+				</div>
+				
+				<input type="radio" name="summarize_tabs" role="tab" class="tab" aria-label="Text" />
+				<div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6">
+					<div class="form-control w-full">
+						<label class="label" for="summarizeTextInput"><span class="label-text">Paste text to summarize</span></label>
+						<textarea id="summarizeTextInput" class="textarea textarea-bordered h-32" placeholder="Paste text here..."></textarea>
 					</div>
-					<div class="tab-pane fade" id="summarize-text-pane" role="tabpanel" aria-labelledby="summarize-text-tab" tabindex="0">
-						<div class="mb-3">
-							<label for="summarizeTextInput" class="form-label">Paste text to summarize</label>
-							<textarea class="form-control" id="summarizeTextInput" rows="6"></textarea>
-						</div>
-						<button type="button" class="btn btn-dark w-100" id="summarizeTextButton"><i class="bi bi-textarea-t me-2"></i>Summarize Text</button>
-					</div>
+					<button type="button" class="btn btn-primary w-full mt-4" id="summarizeTextButton"><i class="bi bi-textarea-t me-2"></i>Summarize Text</button>
 				</div>
 			</div>
-			<!-- Optional Footer for results?
-			 <div class="modal-footer">
-					<div id="summaryResultArea" class="w-100"></div>
-			</div>
-			 -->
 		</div>
+		
+		<form method="dialog">
+			<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+		</form>
 	</div>
-</div>
+	<form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>

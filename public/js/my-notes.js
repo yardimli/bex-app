@@ -1,5 +1,8 @@
+// public/js/my-notes.js:
+
 $(document).ready(function () {
-	const notesModal = $('#myNotesModal');
+	// MODIFIED: Get dialog element
+	const notesModal = document.getElementById('myNotesModal');
 	const notesList = $('#notesList');
 	const noteForm = $('#noteForm');
 	const noteIdInput = $('#noteId');
@@ -33,25 +36,31 @@ $(document).ready(function () {
 		noteEditorTitle.text('New Note');
 		deleteNoteButton.hide();
 		noteTitleInput.focus();
-		notesList.find('.list-group-item.active').removeClass('active');
+		notesList.find('a.active').removeClass('active');
 		showForm();
 	}
 	
 	function renderNoteItem(note) {
 		const safeTitle = $('<div>').text(note.title).html();
+		// MODIFIED: Replaced list-group classes with DaisyUI menu structure
 		return `
-            <a href="#" class="list-group-item list-group-item-action" data-id="${note.id}">
-                <div class="d-flex w-100 justify-content-between">
-                    <h6 class="mb-1 text-truncate" style="max-width: 80%;">${safeTitle}</h6>
-                    <small class="text-muted">${new Date(note.updated_at).toLocaleDateString()}</small>
-                </div>
-                ${note.content ? '<p class="mb-1 small text-muted text-truncate">' + $('<div>').text(note.content).html().substring(0, 50) + '...</p>' : ''}
-            </a>`;
+            <li>
+                <a href="#" data-id="${note.id}">
+                    <div class="flex-grow">
+                        <div class="flex justify-between w-full">
+                            <h6 class="font-semibold text-truncate" style="max-width: 80%;">${safeTitle}</h6>
+                            <small class="text-base-content/60">${new Date(note.updated_at).toLocaleDateString()}</small>
+                        </div>
+                        ${note.content ? '<p class="text-sm text-base-content/60 text-truncate">' + $('<div>').text(note.content).html().substring(0, 50) + '...</p>' : ''}
+                    </div>
+                </a>
+            </li>
+        `;
 	}
 	
 	function loadNotes() {
-		notesLoadingMsg.text('Loading notes...').show();
-		notesList.empty(); // Clear previous items
+		notesLoadingMsg.show().find('a').text('Loading notes...');
+		notesList.empty().append(notesLoadingMsg);
 		showPlaceholder();
 		
 		$.ajax({
@@ -59,19 +68,18 @@ $(document).ready(function () {
 			method: 'GET',
 			dataType: 'json',
 			success: function (notes) {
-				notesLoadingMsg.hide();
+				notesList.empty(); // Clear loading message
 				if (notes.length > 0) {
 					notes.forEach(note => {
 						notesList.append(renderNoteItem(note));
 					});
 				} else {
-					notesList.html('<p class="text-muted p-2">No notes found. Create one!</p>');
+					notesList.html('<li><a class="text-base-content/60">No notes found. Create one!</a></li>');
 				}
 				if (notes.length === 0 || !currentEditNoteId) {
-					resetForm(); // Start with new note form if no notes or no active edit
+					resetForm();
 				} else {
-					// If there was an active edit, try to re-select it
-					const activeItem = notesList.find(`.list-group-item[data-id="${currentEditNoteId}"]`);
+					const activeItem = notesList.find(`a[data-id="${currentEditNoteId}"]`);
 					if (activeItem.length) {
 						activeItem.trigger('click');
 					} else {
@@ -80,28 +88,31 @@ $(document).ready(function () {
 				}
 			},
 			error: function (jqXHR) {
-				notesLoadingMsg.text('Could not load notes.').show();
+				notesList.html(`<li><a class="text-error">Could not load notes.</a></li>`);
 				console.error("Error loading notes:", jqXHR.responseText);
 			}
 		});
 	}
 	
-	notesModal.on('show.bs.modal', function () {
-		if (notesList.length) { // Check if user is logged in (elements exist)
+	// MODIFIED: Changed from Bootstrap event to a click handler on the trigger button
+	$('#myNotesButton').on('click', function() {
+		if (notesList.length) {
 			loadNotes();
 		}
+		// MODIFIED: Use the native showModal() method
+		notesModal.showModal();
 	});
 	
 	newNoteButton.on('click', function () {
 		resetForm();
 	});
 	
-	notesList.on('click', '.list-group-item', function (e) {
+	notesList.on('click', 'a', function (e) {
 		e.preventDefault();
 		const listItem = $(this);
 		const noteId = listItem.data('id');
 		
-		notesList.find('.list-group-item.active').removeClass('active');
+		notesList.find('a.active').removeClass('active');
 		listItem.addClass('active');
 		
 		currentEditNoteId = noteId;
@@ -109,8 +120,8 @@ $(document).ready(function () {
 		deleteNoteButton.show();
 		showForm();
 		
-		// Fetch full note details to populate form
-		saveNoteButton.prop('disabled', true).html('Loading...');
+		// MODIFIED: Use DaisyUI spinner
+		saveNoteButton.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span> Loading...');
 		$.ajax({
 			url: `/api/notes/${noteId}`,
 			method: 'GET',
@@ -123,7 +134,7 @@ $(document).ready(function () {
 			error: function (jqXHR) {
 				alert('Could not load note details.');
 				console.error("Error loading note:", jqXHR.responseText);
-				resetForm(); // Go back to new note state
+				resetForm();
 			},
 			complete: function () {
 				saveNoteButton.prop('disabled', false).html('<i class="bi bi-save"></i> Save Note');
@@ -133,31 +144,17 @@ $(document).ready(function () {
 	
 	noteForm.on('submit', function (e) {
 		e.preventDefault();
-		console.log('Note form submission triggered.'); // Log 1: Handler starts
-		
 		const title = noteTitleInput.val().trim();
 		const content = noteContentInput.val().trim();
 		const noteId = noteIdInput.val();
 		
-		console.log('Note ID:', noteId); // Log 2: Note ID
-		console.log('Title input raw value:', noteTitleInput.val()); // Log 3: Raw title
-		console.log('Title to save:', title); // Log 4: Trimmed title
-		console.log('Content to save:', content); // Log 5: Content
-		
 		if (!title) {
-			console.error('Title is empty. Aborting save.'); // Log 6: Title validation failed
 			alert('Please enter a title for the note.');
 			noteTitleInput.focus();
 			return;
 		}
 		
-		console.log('Title is valid. Proceeding with AJAX.'); // Log 7: Title validation passed
-		
-		const ajaxData = {
-			title: title,
-			content: content,
-			_token: csrfToken // Ensure csrfToken is defined and has a value
-		};
+		const ajaxData = { title: title, content: content, _token: csrfToken };
 		let ajaxUrl = '/api/notes';
 		let ajaxMethod = 'POST';
 		
@@ -166,32 +163,24 @@ $(document).ready(function () {
 			ajaxMethod = 'PUT';
 		}
 		
-		console.log('AJAX URL:', ajaxUrl); // Log 8: AJAX details
-		console.log('AJAX Method:', ajaxMethod);
-		console.log('AJAX Data:', ajaxData);
-		
-		saveNoteButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
+		// MODIFIED: Use DaisyUI spinner
+		saveNoteButton.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span> Saving...');
 		
 		$.ajax({
 			url: ajaxUrl,
 			method: ajaxMethod,
 			data: JSON.stringify(ajaxData),
 			contentType: 'application/json',
-			headers: {
-				'X-CSRF-TOKEN': csrfToken
-			},
+			headers: { 'X-CSRF-TOKEN': csrfToken },
 			dataType: 'json',
 			success: function (savedNote) {
-				console.log('Note saved successfully:', savedNote); // Log 9: AJAX success
 				currentEditNoteId = savedNote.id;
-				loadNotes(); // Reload list to show changes/new item
+				loadNotes();
 			},
 			error: function (jqXHR) {
-				console.error('Error saving note via AJAX:', jqXHR.responseText); // Log 10: AJAX error
 				alert('Could not save note. Error: ' + (jqXHR.responseJSON?.message || 'Please try again.'));
 			},
 			complete: function () {
-				console.log('AJAX call complete.'); // Log 11: AJAX complete
 				saveNoteButton.prop('disabled', false).html('<i class="bi bi-save"></i> Save Note');
 			}
 		});
@@ -203,7 +192,8 @@ $(document).ready(function () {
 		
 		const noteTitle = noteTitleInput.val() || "this note";
 		if (confirm(`Are you sure you want to delete "${noteTitle}"?`)) {
-			deleteNoteButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...');
+			// MODIFIED: Use DaisyUI spinner
+			deleteNoteButton.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span> Deleting...');
 			$.ajax({
 				url: `/api/notes/${noteId}`,
 				method: 'DELETE',
@@ -211,8 +201,8 @@ $(document).ready(function () {
 				dataType: 'json',
 				success: function (response) {
 					if (response.success) {
-						currentEditNoteId = null; // Clear current edit
-						loadNotes(); // Reload list
+						currentEditNoteId = null;
+						loadNotes();
 					} else {
 						alert(response.message || 'Could not delete note.');
 					}

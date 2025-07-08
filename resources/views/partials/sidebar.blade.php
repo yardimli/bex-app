@@ -1,48 +1,45 @@
-<aside class="sidebar" id="sidebar">
+{{-- MODIFIED: Rewritten with DaisyUI menu and Tailwind utility classes --}}
+<aside class="bg-base-100 w-80 p-4 h-full flex flex-col">
 	<div class="mb-4">
-		<a href="{{ route('dashboard') }}"><img src="/images/logo-bex_02-logo-bex-color.png" alt="Bex Logo" style="height: 40px;"></a>
+		<a href="{{ route('dashboard') }}"><img src="/images/logo-bex_02-logo-bex-color.png" alt="Bex Logo" class="h-10"></a>
 	</div>
 	
-	{{-- New Chat Button --}}
-	<a href="{{ route('chat.show') }}" class="btn btn-success w-100 mb-3">
+	<a href="{{ route('chat.show') }}" class="btn btn-success w-full mb-3">
 		<i class="bi bi-plus-lg me-1"></i> New Chat
 	</a>
 	
-	{{-- Search (optional functionality) --}}
-	 <div class="input-group mb-3">
-			<span class="input-group-text"><i class="bi bi-search"></i></span>
-			<input type="text" class="form-control" placeholder="Search Chats">
-	</div>
+	<label class="input input-bordered flex items-center gap-2 mb-3">
+		<i class="bi bi-search"></i>
+		<input type="text" class="grow" placeholder="Search Chats" />
+	</label>
 	
-	<h6>History</h6>
-	<nav class="nav d-flex flex-column mb-3 overflow-auto" style="max-height: calc(100vh - 350px); flex-wrap: nowrap;">
+	<h2 class="menu-title">History</h2>
+	<ul class="menu p-0 [&_li>*]:rounded-md mb-3 overflow-y-auto" style="max-height: calc(100vh - 350px);">
 		@if(isset($chatHeaders) && $chatHeaders->isNotEmpty())
 			@foreach ($chatHeaders as $header)
-				<a class="nav-link py-1 ps-3 pe-2 d-flex justify-content-between align-items-center @if(isset($activeChat) && $activeChat->id == $header->id) active fw-bold @endif"
-				   href="{{ route('chat.show', ['chatHeaderId' => $header->id]) }}"
-				   id="chat-link-{{ $header->id }}"
-				   title="{{ $header->title }}">
-                    <span class="text-truncate" style="max-width: 180px;">
-	                    {{ Str::limit($header->title, 25) }}
-                    </span>
-					<i class="bi bi-trash text-danger small delete-chat-btn" data-chat-id="{{ $header->id }}"></i>
-				</a>
+				<li>
+					<a href="{{ route('chat.show', ['chatHeaderId' => $header->id]) }}"
+					   id="chat-link-{{ $header->id }}"
+					   title="{{ $header->title }}"
+					   class="justify-between @if(isset($activeChat) && $activeChat->id == $header->id) active @endif">
+						<span class="truncate">{{ Str::limit($header->title, 25) }}</span>
+						<button class="btn btn-ghost btn-xs btn-circle delete-chat-btn" data-chat-id="{{ $header->id }}">
+							<i class="bi bi-trash text-error"></i>
+						</button>
+					</a>
+				</li>
 			@endforeach
 		@else
-			<span class="nav-link text-muted small py-1 ps-3">No chat history yet.</span>
+			<li><span class="text-base-content/60">No chat history yet.</span></li>
 		@endif
-	</nav>
+	</ul>
 	
-	<h6>Features</h6>
-	<button class="btn btn-outline-secondary w-100 mb-2" id="transcribeButton">
-		<i class="bi bi-mic-fill me-2"></i> Transcribe
-	</button>
-	<button class="btn btn-outline-secondary w-100 mb-2" id="summarizeButton">
-		<i class="bi bi-file-text-fill me-2"></i> Summarize
-	</button>
-	<button class="btn btn-outline-secondary w-100" id="teamWorkspaceButton">
-		<i class="bi bi-people-fill me-2"></i> Your Team Workspace
-	</button>
+	<h2 class="menu-title">Features</h2>
+	<ul class="menu p-0 [&_li>*]:rounded-md">
+		<li><button class="btn btn-outline w-full mb-2 justify-start" id="transcribeButton"><i class="bi bi-mic-fill me-2"></i> Transcribe</button></li>
+		<li><button class="btn btn-outline w-full mb-2 justify-start" id="summarizeButton"><i class="bi bi-file-text-fill me-2"></i> Summarize</button></li>
+		<li><button class="btn btn-outline w-full justify-start" id="teamWorkspaceButton"><i class="bi bi-people-fill me-2"></i> Your Team Workspace</button></li>
+	</ul>
 	
 	<div class="mt-auto"> <!-- Footer elements if any --> </div>
 </aside>

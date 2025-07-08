@@ -1,5 +1,8 @@
+// public/js/action-items.js:
+
 $(document).ready(function() {
-	const modal = $('#actionItemsModal');
+	// MODIFIED: Get the dialog element directly.
+	const modal = document.getElementById('actionItemsModal');
 	const list = $('#actionItemsList'); // Target for the dynamic list
 	const input = $('#newActionItemInput');
 	const addButton = $('#addActionItemButton');
@@ -8,21 +11,24 @@ $(document).ready(function() {
 	// --- Function to render a single action item ---
 	function renderActionItem(item) {
 		const isChecked = item.is_done ? 'checked' : '';
-		const itemClass = item.is_done ? 'item-done' : '';
-		const dueDateHtml = item.due_date ? `<br><small class="text-muted ms-4">Due: ${item.due_date}</small>` : ''; // Basic format
-		// Sanitize content before inserting
+		// MODIFIED: Use a class for styling done items, Tailwind classes for opacity/line-through
+		const itemClass = item.is_done ? 'item-done opacity-60' : '';
+		const dueDateHtml = item.due_date ? `<br><small class="text-base-content/70 ms-4">Due: ${item.due_date}</small>` : '';
 		const safeContent = $('<div>').text(item.content).html();
 		
+		// MODIFIED: Replaced Bootstrap list-group and form-check with DaisyUI/Tailwind structure
 		return `
-            <li class="list-group-item d-flex justify-content-between align-items-center ${itemClass}" data-id="${item.id}">
-                <div>
-                    <input class="form-check-input me-2 action-item-checkbox" type="checkbox" value="" id="action-${item.id}" ${isChecked}>
-                    <label class="form-check-label" for="action-${item.id}">
-                        ${safeContent}
+            <li class="flex justify-between items-center p-3 bg-base-200 rounded-lg ${itemClass}" data-id="${item.id}">
+                <div class="flex-grow">
+                    <label class="label cursor-pointer justify-start gap-4">
+                        <input type="checkbox" class="checkbox checkbox-primary action-item-checkbox" id="action-${item.id}" ${isChecked} />
+                        <span class="label-text ${item.is_done ? 'line-through' : ''}">
+                            ${safeContent}
+                        </span>
                     </label>
                     ${dueDateHtml}
                 </div>
-                <button class="btn btn-sm btn-outline-danger ms-2 delete-action-item-btn" title="Delete item">
+                <button class="btn btn-ghost btn-sm btn-circle text-error delete-action-item-btn" title="Delete item">
                     <i class="bi bi-trash"></i>
                 </button>
             </li>
@@ -34,32 +40,36 @@ $(document).ready(function() {
 		list.html('<li>Loading action items...</li>'); // Show loading state
 		
 		$.ajax({
-			url: '/api/action-items', // Make sure this route is correct
+			url: '/api/action-items',
 			method: 'GET',
 			dataType: 'json',
 			success: function(items) {
-				list.empty(); // Clear previous items/loading message
+				list.empty();
 				if (items.length > 0) {
 					items.forEach(item => {
 						list.append(renderActionItem(item));
 					});
 				} else {
-					list.html('<li class="list-group-item text-muted">No action items found.</li>');
+					// MODIFIED: Use DaisyUI/Tailwind classes
+					list.html('<li class="p-4 text-center text-base-content/70">No action items found.</li>');
 				}
 			},
 			error: function(jqXHR, textStatus, errorThrown) {
 				console.error("Error loading action items:", textStatus, errorThrown, jqXHR.responseText);
-				list.html('<li class="list-group-item text-danger">Could not load action items. Please try again later.</li>');
+				// MODIFIED: Use DaisyUI/Tailwind classes
+				list.html('<li class="p-4 text-center text-error">Could not load action items. Please try again later.</li>');
 			}
 		});
 	}
 	
-	// --- Load items when modal is shown ---
-	modal.on('show.bs.modal', function() {
-		// Check if the list element exists (i.e., user is logged in)
+	// --- Load items when the modal is triggered to be shown ---
+	// MODIFIED: Changed from Bootstrap event to a click handler on the trigger button
+	$('#actionItemsButton').on('click', function() {
 		if (list.length) {
 			loadActionItems();
 		}
+		// MODIFIED: Use the native showModal() method for the <dialog> element
+		modal.showModal();
 	});
 	
 	// --- Add new item ---
@@ -70,61 +80,60 @@ $(document).ready(function() {
 			return;
 		}
 		
-		addButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...');
-		
+		// MODIFIED: Use DaisyUI spinner
+		addButton.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span> Adding...');
 		
 		$.ajax({
 			url: '/api/action-items',
 			method: 'POST',
-			data: JSON.stringify({ // Send as JSON
+			data: JSON.stringify({
 				content: content,
-				_token: csrfToken // Include CSRF token if using web routes directly without API setup
+				_token: csrfToken
 			}),
-			contentType: 'application/json', // Set content type
-			headers: { // Alternatively send token via header
+			contentType: 'application/json',
+			headers: {
 				'X-CSRF-TOKEN': csrfToken
 			},
 			dataType: 'json',
 			success: function(newItem) {
-				// Remove "No items" message if it exists
-				if (list.find('.text-muted').length > 0 && list.children().length === 1) {
+				if (list.find('.text-base-content\\/70').length > 0 && list.children().length === 1) {
 					list.empty();
 				}
 				list.append(renderActionItem(newItem));
-				input.val(''); // Clear input
+				input.val('');
 			},
 			error: function(jqXHR, textStatus, errorThrown) {
 				console.error("Error adding action item:", textStatus, errorThrown, jqXHR.responseText);
 				alert('Could not add action item. Error: ' + (jqXHR.responseJSON?.message || 'Please try again.'));
 			},
 			complete: function() {
-				addButton.prop('disabled', false).html('<i class="bi bi-plus-lg me-1"></i> Add'); // Restore button
+				// MODIFIED: Restore button text
+				addButton.prop('disabled', false).html('<i class="bi bi-plus-lg me-1"></i> Add');
 			}
 		});
 	});
 	
-	// Allow adding with Enter key
 	input.on('keypress', function(e) {
-		if (e.which === 13) { // Enter key pressed
-			e.preventDefault(); // Prevent form submission (if it's in a form)
-			addButton.click(); // Trigger the add button click
+		if (e.which === 13) {
+			e.preventDefault();
+			addButton.click();
 		}
 	});
-	
 	
 	// --- Toggle item done status (using event delegation) ---
 	list.on('change', '.action-item-checkbox', function() {
 		const checkbox = $(this);
-		const listItem = checkbox.closest('.list-group-item');
+		const listItem = checkbox.closest('li');
 		const itemId = listItem.data('id');
 		const isDone = checkbox.is(':checked');
 		
 		// Optimistic UI update
-		listItem.toggleClass('item-done', isDone);
+		listItem.toggleClass('opacity-60', isDone);
+		listItem.find('.label-text').toggleClass('line-through', isDone);
 		
 		$.ajax({
 			url: `/api/action-items/${itemId}`,
-			method: 'PATCH', // Use PATCH
+			method: 'PATCH',
 			data: JSON.stringify({
 				is_done: isDone,
 				_token: csrfToken
@@ -136,14 +145,14 @@ $(document).ready(function() {
 			dataType: 'json',
 			success: function(updatedItem) {
 				console.log('Item status updated:', updatedItem);
-				// Update potentially changed data if needed, though toggleClass is usually enough
 			},
 			error: function(jqXHR, textStatus, errorThrown) {
 				console.error("Error updating action item:", textStatus, errorThrown, jqXHR.responseText);
 				alert('Could not update item status.');
 				// Revert optimistic update on error
 				checkbox.prop('checked', !isDone);
-				listItem.toggleClass('item-done', !isDone);
+				listItem.toggleClass('opacity-60', !isDone);
+				listItem.find('.label-text').toggleClass('line-through', !isDone);
 			}
 		});
 	});
@@ -151,12 +160,11 @@ $(document).ready(function() {
 	// --- Delete item (using event delegation) ---
 	list.on('click', '.delete-action-item-btn', function() {
 		const button = $(this);
-		const listItem = button.closest('.list-group-item');
+		const listItem = button.closest('li');
 		const itemId = listItem.data('id');
-		const itemContent = listItem.find('.form-check-label').text().trim();
+		const itemContent = listItem.find('.label-text').text().trim();
 		
 		if (confirm(`Are you sure you want to delete this item?\n\n"${itemContent}"`)) {
-			// Add temporary visual feedback
 			listItem.css('opacity', '0.5');
 			
 			$.ajax({
@@ -170,23 +178,21 @@ $(document).ready(function() {
 					if (response.success) {
 						listItem.fadeOut(300, function() {
 							$(this).remove();
-							// Check if list is now empty
 							if (list.children().length === 0) {
-								list.html('<li class="list-group-item text-muted">No action items found.</li>');
+								list.html('<li class="p-4 text-center text-base-content/70">No action items found.</li>');
 							}
 						});
 					} else {
 						alert(response.message || 'Could not delete item.');
-						listItem.css('opacity', '1'); // Restore opacity
+						listItem.css('opacity', '1');
 					}
 				},
 				error: function(jqXHR, textStatus, errorThrown) {
 					console.error("Error deleting action item:", textStatus, errorThrown, jqXHR.responseText);
 					alert('Could not delete item. Please try again.');
-					listItem.css('opacity', '1'); // Restore opacity
+					listItem.css('opacity', '1');
 				}
 			});
 		}
 	});
-	
 });

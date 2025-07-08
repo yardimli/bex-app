@@ -1,95 +1,91 @@
+// public/js/teams.js:
+
 $(document).ready(function() {
     const teamsList = $('#teams-list');
     const csrfToken = $('meta[name="csrf-token"]').attr('content');
-    let myUserId = null; // Will be set after first load
-
+    // MODIFIED: Get dialog elements
+    const createTeamModal = document.getElementById('createTeamModal');
+    const addMemberModal = document.getElementById('addMemberModal');
+    let myUserId = null;
+    
+    // MODIFIED: renderTeamCard rewritten for DaisyUI card component
     function renderTeamCard(team, currentTeamId) {
         const isOwner = team.owner_id === myUserId;
-        // const isActive = team.id == currentTeamId;
-
+        const isActive = team.id == currentTeamId;
+        
         let membersHtml = team.team_members.map(member => `
-            <li>
+            <li class="flex items-center">
                 <i class="bi bi-person-fill me-2"></i>
                 ${$('<div>').text(member.user.name).html()}
-                ${member.role === 'owner' ? '<span class="badge bg-primary ms-2">Owner</span>' : ''}
+                ${member.role === 'owner' ? '<span class="badge badge-primary badge-sm ml-2">Owner</span>' : ''}
             </li>
         `).join('');
-
+        
         return `
-            <div class="col-md-6 col-lg-4">
-                <div class="card team-card" data-team-id="${team.id}">
+            <div class="col-span-1">
+                <div class="card bg-base-100 shadow-xl h-full ${isActive ? 'ring-2 ring-primary' : ''}" data-team-id="${team.id}">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <h5 class="card-title">${$('<div>').text(team.name).html()}</h5>
-                        </div>
-                        <p class="card-text text-muted">${$('<div>').text(team.description || 'No description.').html()}</p>
-                        <h6>Members</h6>
-                        <ul class="member-list">${membersHtml}</ul>
+                        <h2 class="card-title">${$('<div>').text(team.name).html()}</h2>
+                        <p class="text-base-content/70">${$('<div>').text(team.description || 'No description.').html()}</p>
+                        <h3 class="font-semibold mt-2">Members</h3>
+                        <ul class="list-none p-0 space-y-2 text-sm">${membersHtml}</ul>
                     </div>
-                    <div class="card-footer bg-light d-flex justify-content-between">
-                        <button class="btn btn-sm btn-outline-primary switch-team-btn">
-                            <i class="bi bi-arrow-repeat me-1"></i> Switch to this Team
+                    <div class="card-actions justify-between items-center p-4 bg-base-200">
+                        <button class="btn btn-sm btn-outline btn-primary switch-team-btn ${isActive ? 'btn-disabled' : ''}">
+                            <i class="bi bi-arrow-repeat me-1"></i> ${isActive ? 'Current Team' : 'Switch to Team'}
                         </button>
-
-                        <div class="btn-group">
-                            ${isOwner ? `<button class="btn btn-sm btn-primary add-member-btn" data-team-id="${team.id}" data-team-name="${$('<div>').text(team.name).html()}">
+                        <div class="join">
+                            ${isOwner ? `<button class="btn btn-sm btn-primary join-item add-member-btn" data-team-id="${team.id}" data-team-name="${$('<div>').text(team.name).html()}">
                                 <i class="bi bi-person-plus-fill"></i>
                             </button>` : ''}
-                            <button class="btn btn-sm btn-outline-secondary message-team-btn" data-team-id="${team.id}">
+                            <button class="btn btn-sm btn-outline btn-secondary join-item message-team-btn" data-team-id="${team.id}">
                                 <i class="bi bi-chat-dots-fill"></i>
                             </button>
                         </div>
                     </div>
-
-
                 </div>
             </div>
         `;
     }
-
-    // Simplified loadTeams function for the new API response
+    
     function loadTeamsV2() {
+        // MODIFIED: DaisyUI loading spinner
+        teamsList.html('<div class="col-span-full text-center p-5"><span class="loading loading-spinner loading-lg text-primary"></span><p class="mt-2">Loading your teams...</p></div>');
         $.ajax({
             url: '/api/user/teams',
             method: 'GET',
             dataType: 'json',
             success: function(response) {
                 teamsList.empty();
-                // Assuming we can get user ID from a meta tag or auth object if needed
-                // For now, let's assume the owner check can be done with team.owner.id
                 if (response.teams && response.teams.length > 0) {
-                    // Get the definitive user ID and active team from the server response
                     myUserId = response.user_id;
                     const activeTeamId = response.current_team_id;
-
-                    // The old, incorrect logic for guessing the user ID is no longer needed.
-
+                    
                     response.teams.forEach(team => {
-                        // The renderTeamCard function will now use the correct myUserId
                         teamsList.append(renderTeamCard(team, activeTeamId));
                     });
                 } else {
-                    teamsList.html('<div class="col-12"><div class="alert alert-info">You are not part of any teams yet. Create one to get started!</div></div>');
+                    teamsList.html('<div class="col-span-full"><div class="alert alert-info">You are not part of any teams yet. Create one to get started!</div></div>');
                 }
             },
             error: function() {
-                teamsList.html('<div class="col-12"><div class="alert alert-danger">Could not load your teams. Please try again later.</div></div>');
+                teamsList.html('<div class="col-span-full"><div class="alert alert-error">Could not load your teams. Please try again later.</div></div>');
             }
         });
     }
-
+    
     // Create Team
     $('#saveTeamButton').off('click').on('click', function() {
         const button = $(this);
-        button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creating...');
-
+        button.prop('disabled', true).html('<span class="loading loading-spinner loading-xs"></span> Creating...');
+        
         $.ajax({
             url: '/api/teams',
             method: 'POST',
             data: $('#createTeamForm').serialize(),
             headers: { 'X-CSRF-TOKEN': csrfToken },
             success: function() {
-                $('#createTeamModal').modal('hide');
+                createTeamModal.close(); // MODIFIED: Use .close()
                 $('#createTeamForm')[0].reset();
                 loadTeamsV2();
             },
@@ -101,30 +97,28 @@ $(document).ready(function() {
             }
         });
     });
-
+    
     // Open Add Member Modal
     teamsList.on('click', '.add-member-btn', function() {
         const teamId = $(this).data('team-id');
         const teamName = $(this).data('team-name');
         $('#addMemberTeamId').val(teamId);
         $('#addMemberTeamName').text(teamName);
-        $('#addMemberModal').modal('show');
+        addMemberModal.showModal(); // MODIFIED: Use .showModal()
     });
-
+    
     // Add Member
     $('#confirmAddMemberButton').on('click', function() {
         const button = $(this);
-        button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...');
+        button.prop('disabled', true).html('<span class="loading loading-spinner loading-xs"></span> Adding...');
         const teamId = $('#addMemberTeamId').val();
         $.ajax({
             url: `/api/teams/${teamId}/members`,
             method: 'POST',
             data: $('#addMemberForm').serialize(),
-            headers: {
-                'X-CSRF-TOKEN': csrfToken
-            },
+            headers: { 'X-CSRF-TOKEN': csrfToken },
             success: function() {
-                $('#addMemberModal').modal('hide');
+                addMemberModal.close(); // MODIFIED: Use .close()
                 $('#addMemberForm')[0].reset();
                 loadTeamsV2();
             },
@@ -144,38 +138,32 @@ $(document).ready(function() {
             }
         });
     });
-
+    
     // Switch Team
     teamsList.on('click', '.switch-team-btn', function() {
-        const teamId = $(this).closest('.team-card').data('team-id');
+        const teamId = $(this).closest('.card').data('team-id');
         const button = $(this);
-        button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Switching...');
-
+        button.prop('disabled', true).html('<span class="loading loading-spinner loading-xs"></span> Switching...');
+        
         $.ajax({
             url: '/api/user/current-team',
             method: 'POST',
-            data: {
-                team_id: teamId,
-                _token: csrfToken
-            },
-            headers: {
-                'X-CSRF-TOKEN': csrfToken
-            },
+            data: { team_id: teamId, _token: csrfToken },
+            headers: { 'X-CSRF-TOKEN': csrfToken },
             success: function(response) {
                 if (response.success) {
-                    // Reload the page to reflect the change globally and ensure consistency
                     window.location.reload();
                 } else {
                     alert('Failed to switch team: ' + (response.error || 'Unknown error.'));
-                    button.prop('disabled', false).html('<i class="bi bi-arrow-repeat me-1"></i> Switch to this Team');
+                    button.prop('disabled', false).html('<i class="bi bi-arrow-repeat me-1"></i> Switch to Team');
                 }
             },
             error: function() {
                 alert('Failed to switch team.');
-                button.prop('disabled', false).html('<i class="bi bi-arrow-repeat me-1"></i> Switch to this Team');
+                button.prop('disabled', false).html('<i class="bi bi-arrow-repeat me-1"></i> Switch to Team');
             }
         });
     });
-
+    
     loadTeamsV2();
 });

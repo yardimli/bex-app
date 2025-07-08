@@ -1,3 +1,5 @@
+// public/js/chat.js:
+
 $(document).ready(function () {
 	const chatHistoryArea = $('#chat-history-area');
 	const chatInputForm = $('#chat-input-form');
@@ -6,127 +8,92 @@ $(document).ready(function () {
 	const chatHeaderIdInput = $('#chat_header_id');
 	const chatLoader = $('#chat-loader');
 	const chatTitleDisplay = $('#chat-title-display');
-	const sidebarNav = $('.sidebar .nav');
-
+	const sidebarMenu = $('.sidebar .menu'); // MODIFIED: Target the DaisyUI menu UL
+	
 	let currentAudio = null; // Variable to hold the current Audio object
 	let currentReadAloudButton = null; // Variable to hold the button associated with the current audio
-
-    const modeDropdownButton = $('#modeDropdownButton');
-    const modeDropdownMenu = modeDropdownButton.next('.dropdown-menu');
-    const selectedModelNameSpan = $('#selected-model-name'); // Target the span inside the button
-    const defaultModelId = 'openai/gpt-4o-mini'; // Default model
-    function applySelectedModel(modelId) {
-        const selectedItem = modeDropdownMenu.find(`.dropdown-item[data-model-id="${modelId}"]`);
-        let displayName = 'Smart Mode'; // Default display name
-
-        // Remove active state and checkmark from all items
-        modeDropdownMenu.find('.dropdown-item').removeClass('active').find('i.bi-check').remove();
-
-        if (selectedItem.length) {
-            displayName = selectedItem.data('display-name') || selectedItem.text().trim();
-            // Add active state and checkmark to the selected item
-            selectedItem.addClass('active').prepend('<i class="bi bi-check me-2"></i>');
-            console.log('Applied model:', modelId, 'Display:', displayName);
-        } else {
-            // If the saved model ID is invalid, fallback to the default visually
-            const defaultItem = modeDropdownMenu.find(`.dropdown-item[data-model-id="${defaultModelId}"]`);
-            if (defaultItem.length) {
-                displayName = defaultItem.data('display-name') || defaultItem.text().trim();
-                defaultItem.addClass('active').prepend('<i class="bi bi-check me-2"></i>');
-                console.log('Applied default model (fallback):', defaultModelId, 'Display:', displayName);
-            } else {
-                console.error("Default model item not found in dropdown!");
-            }
-        }
-        // Update button text
-        if (selectedModelNameSpan.length) {
-            selectedModelNameSpan.text(displayName);
-        } else {
-            modeDropdownButton.text(displayName); // Fallback if span not found
-        }
-    }
-
-    // Event listener for dropdown item clicks
-    modeDropdownMenu.on('click', '.dropdown-item', function (e) {
-        e.preventDefault();
-        const selectedModelId = $(this).data('model-id');
-        if (selectedModelId) {
-            localStorage.setItem('selectedLlmModel', selectedModelId);
-            applySelectedModel(selectedModelId);
-            console.log('Model selection saved:', selectedModelId);
-        }
-    });
-
-    // Apply saved theme on load or default
-    const savedModel = localStorage.getItem('selectedLlmModel');
-    applySelectedModel(savedModel || defaultModelId);
-	function checkAndSubmitInitialPrompt() {
-		const initialMessage = messageInputField.val().trim();
-		if (initialMessage) {
-			console.log('Initial prompt detected, submitting...');
-			chatInputForm.submit(); // Trigger form submission
-		}
-	}
-
+	
+	// NOTE: The model selector dropdown logic has been moved to the global app.js
+	// to be shared across pages (like Dashboard and Chat).
+	
+	/**
+	 * Scrolls the chat history to the bottom.
+	 */
 	function scrollToBottom() {
 		chatHistoryArea.scrollTop(chatHistoryArea[0].scrollHeight);
 	}
-
-	// Function to add a message bubble to the chat
+	
+	/**
+	 * Adds a message bubble to the chat interface using DaisyUI chat components.
+	 * @param {string} role - 'user' or 'assistant'.
+	 * @param {string} content - The message text.
+	 * @param {string} messageId - The unique ID for the message element.
+	 * @param {boolean} [canDelete=false] - If the message can be deleted.
+	 * @param {Array} [files=[]] - An array of attached file objects.
+	 */
 	function addMessageBubble(role, content, messageId, canDelete = false, files = []) {
+		const isUser = role === 'user';
 		const escapedContentHtml = $('<div>').text(content).html().replace(/\n/g, '<br>');
 		const now = new Date();
 		const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-
-        let filesHtml = '';
-        if (files && files.length > 0) {
-            filesHtml += '<div class="attached-files-container mb-2">';
-            files.forEach(file => {
-                const safeFileName = $('<div>').text(file.original_filename).html();
-                // Simple substring to mimic Str::limit
-                const truncatedName = safeFileName.length > 25 ? safeFileName.substring(0, 22) + '...' : safeFileName;
-                filesHtml += `
-                <a href="/api/files/${file.id}/download" class="badge text-decoration-none text-bg-light border" title="Download ${safeFileName}">
+		
+		// MODIFIED: Generate HTML for attached files using DaisyUI badges
+		let filesHtml = '';
+		if (files && files.length > 0) {
+			filesHtml += '<div class="flex flex-wrap gap-2 mb-2">';
+			files.forEach(file => {
+				const safeFileName = $('<div>').text(file.original_filename).html();
+				const truncatedName = safeFileName.length > 25 ? safeFileName.substring(0, 22) + '...' : safeFileName;
+				filesHtml += `
+                <a href="/api/files/${file.id}/download" class="badge badge-outline" title="Download ${safeFileName}">
                     <i class="bi bi-file-earmark-arrow-down me-1"></i>
                     ${truncatedName}
-                </a>
-            `;
-            });
-            filesHtml += '</div>';
-        }
-
-		const deleteButtonHtml = (role === 'user' && canDelete)
-			? `<button class="delete-message-btn" title="Delete pair" data-message-id="${messageId}"> <i class="bi bi-trash3-fill"></i> </button>`
+                </a>`;
+			});
+			filesHtml += '</div>';
+		}
+		
+		// MODIFIED: Delete button with DaisyUI and Tailwind classes
+		const deleteButtonHtml = (isUser && canDelete)
+			? `<button class="btn btn-ghost btn-xs btn-circle absolute top-0 right-0 opacity-50 hover:opacity-100 delete-message-btn" title="Delete pair" data-message-id="${messageId}">
+                   <i class="bi bi-trash3-fill"></i>
+               </button>`
 			: '';
-
-		// --- Add Action Buttons for Assistant ---
+		
+		// MODIFIED: Action buttons for assistant messages with DaisyUI classes
 		const actionButtonsHtml = (role === 'assistant')
-			? `<div class="message-actions">
-                   <button class="btn btn-sm btn-outline-secondary copy-btn" title="Copy text" data-message-id="${messageId}">
+			? `<div class="chat-footer opacity-50">
+                   <button class="btn btn-ghost btn-xs copy-btn" title="Copy text" data-message-id="${messageId}">
                        <i class="bi bi-clipboard"></i>
                    </button>
-                   <button class="btn btn-sm btn-outline-secondary read-aloud-btn" title="Read aloud" data-message-id="${messageId}">
+                   <button class="btn btn-ghost btn-xs read-aloud-btn" title="Read aloud" data-message-id="${messageId}">
                        <i class="bi bi-play-circle"></i>
-                       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
+                       <span class="loading loading-spinner loading-xs" style="display: none;"></span>
                    </button>
                </div>`
 			: '';
-		// --- End Action Buttons ---
-
-		// Add data-message-content to the main bubble for easier access later
+		
+		// MODIFIED: The entire bubble structure uses the DaisyUI 'chat' component
 		const bubbleHtml = `
-            <div class="message-bubble ${role}" id="message-${messageId}" data-message-content="${escape(content)}">
-                ${filesHtml}
-                ${escapedContentHtml}
-                ${deleteButtonHtml}
-                <div class="message-meta">${timeString}</div>
-                ${actionButtonsHtml} ${/* Add assistant action buttons */''}
+            <div class="chat ${isUser ? 'chat-end' : 'chat-start'}" id="message-${messageId}" data-message-content="${escape(content)}">
+                <div class="chat-bubble ${isUser ? 'chat-bubble-primary' : ''} relative">
+                    ${filesHtml}
+                    ${escapedContentHtml}
+                    ${deleteButtonHtml}
+                </div>
+                <div class="chat-footer opacity-50">
+                    <time class="text-xs">${timeString}</time>
+                </div>
+                ${actionButtonsHtml}
             </div>`;
-
+		
 		chatHistoryArea.append(bubbleHtml);
 	}
-
-	// Function to enable/disable input
+	
+	/**
+	 * Enables or disables the chat input field and send button.
+	 * @param {boolean} enabled - True to enable, false to disable.
+	 */
 	function setInputEnabled(enabled) {
 		messageInputField.prop('disabled', !enabled);
 		sendMessageButton.prop('disabled', !enabled);
@@ -137,138 +104,136 @@ $(document).ready(function () {
 			chatLoader.show();
 		}
 	}
-
-	// --- Auto-resize Textarea ---
+	
+	/**
+	 * Auto-resizes the textarea height based on its content.
+	 */
 	function autoResizeTextarea() {
 		messageInputField.css('height', 'auto'); // Reset height
 		let scrollHeight = messageInputField[0].scrollHeight;
 		messageInputField.css('height', scrollHeight + 'px');
-
-		// Limit max height (e.g., 5 rows equivalent)
+		
+		// Limit max height (e.g., 7 rows equivalent)
 		let maxHeight = parseFloat(messageInputField.css('line-height')) * 7;
 		if (scrollHeight > maxHeight) {
 			messageInputField.css('height', maxHeight + 'px');
-			messageInputField.css('overflow-y', 'auto'); // Add scroll if max height reached
+			messageInputField.css('overflow-y', 'auto');
 		} else {
-			messageInputField.css('overflow-y', 'hidden'); // Hide scroll if below max height
+			messageInputField.css('overflow-y', 'hidden');
 		}
 	}
-
+	
 	messageInputField.on('input', autoResizeTextarea);
 	autoResizeTextarea(); // Initial resize
-
+	
 	// --- Handle Form Submission (Send Message) ---
 	chatInputForm.on('submit', function (e) {
 		e.preventDefault();
 		$('#empty-conversation').remove();
-
+		
 		const message = messageInputField.val().trim();
-		const chatHeaderId = chatHeaderIdInput.val(); // Get current chat ID
-		const selectedModel = localStorage.getItem('selectedLlmModel') || defaultModelId;
+		const chatHeaderId = chatHeaderIdInput.val();
+		const selectedModel = localStorage.getItem('selectedLlmModel') || 'openai/gpt-4o-mini';
 		const selectedTone = localStorage.getItem('selectedPersonalityTone') || 'professional';
-
-        const attachedFileIds = [...window.BexApp.attachedFiles.keys()];
-        if (!message && attachedFileIds.length === 0) return;
-
-		setInputEnabled(false); // Disable input while processing
-
+		const attachedFileIds = [...window.BexApp.attachedFiles.keys()];
+		
+		if (!message && attachedFileIds.length === 0) {
+			return;
+		};
+		
+		setInputEnabled(false);
+		
 		// Optimistically add user message
 		const tempUserMessageId = 'temp-user-' + Date.now();
-		addMessageBubble('user', message, tempUserMessageId, false); // Cannot delete until saved
+		addMessageBubble('user', message, tempUserMessageId, false);
 		scrollToBottom();
-		messageInputField.val(''); // Clear input field immediately
-		autoResizeTextarea(); // Reset textarea height
-
+		messageInputField.val('');
+		autoResizeTextarea();
+		
 		$.ajax({
-			url: '/api/chat', // Use the named route if preferred: {{ route('api.chat.store') }} - needs JS variables setup
+			url: '/api/chat',
 			method: 'POST',
 			data: {
-				_token: $('meta[name="csrf-token"]').attr('content'), // CSRF token
+				_token: $('meta[name="csrf-token"]').attr('content'),
 				message: message,
-				chat_header_id: chatHeaderId || null, // Send null if no ID (new chat)
+				chat_header_id: chatHeaderId || null,
 				llm_model: selectedModel,
 				personality_tone: selectedTone,
-                attached_files: attachedFileIds
+				attached_files: attachedFileIds
 			},
 			dataType: 'json',
 			success: function (data) {
 				if (data.success) {
-					// Remove temporary user message
+					// Replace temporary user message with confirmed one
 					$('#message-' + tempUserMessageId).remove();
-
-					// Add confirmed user message (with delete button)
-					addMessageBubble(
-						data.user_message.role,
-						data.user_message.content,
-						data.user_message.id,
-						data.user_message.can_delete,
-                        data.user_message.files
-					);
-
+					addMessageBubble(data.user_message.role, data.user_message.content, data.user_message.id, data.user_message.can_delete, data.user_message.files);
+					
 					// Add assistant message
-					addMessageBubble(
-						data.assistant_message.role,
-						data.assistant_message.content,
-						data.assistant_message.id,
-						data.assistant_message.can_delete
-					);
-
-					// Update chat header ID if it was a new chat
+					addMessageBubble(data.assistant_message.role, data.assistant_message.content, data.assistant_message.id, data.assistant_message.can_delete);
+					
+					// Update chat header ID and URL if it was a new chat
 					if (data.is_new_chat && data.chat_header_id) {
 						chatHeaderIdInput.val(data.chat_header_id);
-						// Update browser URL without reloading
 						const newUrl = '/chat/' + data.chat_header_id;
 						history.pushState({chatId: data.chat_header_id}, '', newUrl);
-
-						// Add new chat to sidebar
+						
+						// Add new chat to sidebar menu
 						const newTitle = data.updated_title || 'Chat ' + data.chat_header_id;
+						// MODIFIED: Create new menu item for DaisyUI menu
 						const newLinkHtml = `
-                         <a class="nav-link py-1 ps-3 pe-2 d-flex justify-content-between align-items-center active fw-bold"
-                            href="${newUrl}"
-                            id="chat-link-${data.chat_header_id}"
-                            title="${newTitle}">
-                             <span class="text-truncate" style="max-width: 180px;">${newTitle.substring(0, 25)}</span>
-                         </a>`;
+                         <li>
+                            <a href="${newUrl}"
+                               id="chat-link-${data.chat_header_id}"
+                               title="${newTitle}"
+                               class="active justify-between">
+                                <span class="truncate">${newTitle.substring(0, 25)}</span>
+                                <button class="btn btn-ghost btn-xs btn-circle delete-chat-btn" data-chat-id="${data.chat_header_id}">
+                                    <i class="bi bi-trash text-error"></i>
+                                </button>
+                            </a>
+                         </li>`;
 						// Remove 'active' from other links
-						sidebarNav.find('a').removeClass('active fw-bold');
+						sidebarMenu.find('a').removeClass('active');
 						// Prepend the new link
-						sidebarNav.prepend(newLinkHtml);
+						sidebarMenu.prepend(newLinkHtml);
 						// Remove "no history" message if present
-						sidebarNav.find('.text-muted.small').remove();
+						sidebarMenu.find('.text-base-content\\/60').parent().remove();
 					}
-
+					
 					// Update title if it changed
 					if (data.updated_title) {
 						chatTitleDisplay.text(data.updated_title.substring(0, 50));
-						// Update the title in the sidebar link as well
 						const sidebarLink = $('#chat-link-' + data.chat_header_id).find('span');
 						if (sidebarLink.length) {
 							sidebarLink.text(data.updated_title.substring(0, 25));
 							$('#chat-link-' + data.chat_header_id).attr('title', data.updated_title);
 						}
 					}
-
+					
 					scrollToBottom();
 				} else {
-					// Handle backend error reported in success response
+					// Handle backend error
 					console.error("Error from server:", data.error);
-					$('#message-' + tempUserMessageId).addClass('bg-danger text-white').append('<br><small>Failed to send</small>');
+					// MODIFIED: Use DaisyUI error class for visual feedback
+					$('#message-' + tempUserMessageId).find('.chat-bubble').addClass('chat-bubble-error');
 					alert(data.error || 'An error occurred.');
 				}
 			},
 			error: function (jqXHR, textStatus, errorThrown) {
 				console.error("AJAX Error:", textStatus, errorThrown);
-				$('#message-' + tempUserMessageId).addClass('bg-danger text-white').append('<br><small>Failed to send</small>');
+				// MODIFIED: Use DaisyUI error class for visual feedback
+				$('#message-' + tempUserMessageId).find('.chat-bubble').addClass('chat-bubble-error');
 				alert('Could not send message. Please check your connection and try again.');
 			},
 			complete: function () {
-				setInputEnabled(true); // Re-enable input
-                window.BexApp.attachedFiles.clear();
-                window.BexApp.renderFilePills();
+				setInputEnabled(true);
+				// Clear attached files after sending
+				window.BexApp.attachedFiles.clear();
+				window.BexApp.renderFilePills();
 			}
 		});
 	});
-
+	
 	// --- Handle Enter Key in Textarea (Submit, allow Shift+Enter for newline) ---
 	messageInputField.on('keydown', function (e) {
 		if (e.key === 'Enter' && !e.shiftKey) {
@@ -276,50 +241,38 @@ $(document).ready(function () {
 			chatInputForm.submit(); // Trigger form submission
 		}
 	});
-
-
+	
+	
 	// --- Handle Delete Message Pair ---
-	// Use event delegation for dynamically added buttons
 	chatHistoryArea.on('click', '.delete-message-btn', function () {
+		// MODIFIED: Use robust selectors for the new chat structure
+		const userMessageBubble = $(this).closest('.chat');
 		const userMessageId = $(this).data('message-id');
-		const userMessageBubble = $('#message-' + userMessageId);
-		const assistantMessageBubble = userMessageBubble.next('.message-bubble.assistant'); // Find the *next* sibling that is an assistant bubble
-
+		// Find the next assistant message bubble that follows the user bubble
+		const assistantMessageBubble = userMessageBubble.nextAll('.chat-start').first();
+		
 		if (!userMessageId) {
 			console.error("Could not find user message ID for deletion.");
 			return;
 		}
-
+		
 		if (!confirm('Are you sure you want to delete this message and its response?')) {
 			return;
 		}
-
+		
 		$.ajax({
-			url: `/api/chat/messages/${userMessageId}`, // Use template literal for URL
+			url: `/api/chat/messages/${userMessageId}`,
 			method: 'DELETE',
 			data: {
-				_token: $('meta[name="csrf-token"]').attr('content'), // CSRF token
+				_token: $('meta[name="csrf-token"]').attr('content'),
 			},
 			dataType: 'json',
 			success: function (data) {
 				if (data.success) {
-					// Remove user message bubble
-					userMessageBubble.fadeOut(300, function () {
-						$(this).remove();
-					});
-					// Remove assistant message bubble if found and deleted
+					userMessageBubble.fadeOut(300, function () { $(this).remove(); });
+					// Ensure we're removing the correct assistant bubble
 					if (data.deleted_assistant_id && assistantMessageBubble.attr('id') === 'message-' + data.deleted_assistant_id) {
-						assistantMessageBubble.fadeOut(300, function () {
-							$(this).remove();
-						});
-					} else {
-						console.warn("Could not visually confirm the correct assistant message for removal, but backend reported success.");
-						// Attempt removal by ID anyway if the sibling logic failed but backend gave an ID
-						if (data.deleted_assistant_id) {
-							$('#message-' + data.deleted_assistant_id).fadeOut(300, function () {
-								$(this).remove();
-							});
-						}
+						assistantMessageBubble.fadeOut(300, function () { $(this).remove(); });
 					}
 				} else {
 					alert(data.error || 'Could not delete messages.');
@@ -332,129 +285,89 @@ $(document).ready(function () {
 			}
 		});
 	});
-
-
-	// --- NEW: Handle Copy Button ---
+	
+	
+	// --- Handle Copy Button ---
 	chatHistoryArea.on('click', '.copy-btn', function () {
 		const button = $(this);
-		// Get content from the parent bubble's data attribute
-		const messageContent = unescape(button.closest('.message-bubble').data('message-content'));
-
+		const messageContent = unescape(button.closest('.chat').data('message-content'));
+		
 		navigator.clipboard.writeText(messageContent).then(() => {
-			// Success feedback
 			const originalIcon = button.html();
-			button.html('<i class="bi bi-check-lg"></i>'); // Show checkmark
+			button.html('<i class="bi bi-check-lg text-success"></i>'); // Show checkmark
 			setTimeout(() => {
-				button.html(originalIcon); // Restore original icon
-			}, 1500); // Restore after 1.5 seconds
+				button.html(originalIcon);
+			}, 1500);
 		}).catch(err => {
 			console.error('Failed to copy text: ', err);
 			alert('Failed to copy text.');
 		});
 	});
-
-	// --- NEW: Handle Read Aloud Button ---
+	
+	// --- Handle Read Aloud Button ---
+	// NOTE: The core logic for audio playback is unchanged.
 	chatHistoryArea.on('click', '.read-aloud-btn', function () {
 		const button = $(this);
-		const messageContent = unescape(button.closest('.message-bubble').data('message-content'));
-		const messageId = button.data('message-id'); // Although not strictly needed for TTS here
-
-		// If this button is already playing, stop it
+		const messageContent = unescape(button.closest('.chat').data('message-content'));
+		
 		if (currentAudio && currentReadAloudButton && currentReadAloudButton.is(button)) {
 			stopAudio();
-			return; // Exit
+			return;
 		}
-
-		// If another audio is playing, stop it first
+		
 		if (currentAudio) {
 			stopAudio();
 		}
-
-		// Show loading state
+		
 		setReadAloudLoading(button, true);
-		currentReadAloudButton = button; // Store the current button
-
+		currentReadAloudButton = button;
+		
 		$.ajax({
-			url: '/api/chat/tts', // The new API endpoint
+			url: '/api/chat/tts',
 			method: 'POST',
 			data: {
 				_token: $('meta[name="csrf-token"]').attr('content'),
 				message_text: messageContent,
-				// You could add voice preference here if needed later
-				// voice: 'alloy'
 			},
 			dataType: 'json',
 			success: function (data) {
 				if (data.success && data.fileUrl) {
 					playAudio(data.fileUrl, button);
 				} else {
-					console.error('TTS generation failed:', data.error);
-					alert(data.error || 'Could not generate audio for this message.');
-					setReadAloudLoading(button, false); // Remove loading state on error
-					resetReadAloudButton(button); // Reset just in case
+					alert(data.error || 'Could not generate audio.');
+					setReadAloudLoading(button, false);
 					currentReadAloudButton = null;
 				}
 			},
-			error: function (jqXHR, textStatus, errorThrown) {
-				console.error('AJAX Error during TTS:', textStatus, errorThrown);
+			error: function () {
 				alert('Could not request audio generation. Please try again.');
-				setReadAloudLoading(button, false); // Remove loading state on error
-				resetReadAloudButton(button); // Reset just in case
+				setReadAloudLoading(button, false);
 				currentReadAloudButton = null;
 			}
-			// Note: 'complete' isn't used here as success/error handle loading state removal
 		});
 	});
-
-	// --- NEW: Helper functions for Audio ---
+	
+	// --- Helper functions for Audio ---
 	function playAudio(url, button) {
-		// Ensure loading state is removed before playing
 		setReadAloudLoading(button, false);
-
 		currentAudio = new Audio(url);
-
+		
 		currentAudio.oncanplaythrough = () => {
-			console.log("Audio ready to play:", url);
 			currentAudio.play();
-			button.addClass('playing').attr('title', 'Pause'); // Update button state
 			button.find('i').removeClass('bi-play-circle').addClass('bi-pause-circle-fill');
 		};
-
 		currentAudio.onended = () => {
-			console.log("Audio finished playing");
-			stopAudio(); // Clean up and reset button
+			stopAudio();
 		};
-
-		currentAudio.onerror = (e) => {
-			console.error('Error playing audio:', e);
+		currentAudio.onerror = () => {
 			alert('Error playing the generated audio.');
-			stopAudio(); // Clean up even on error
+			stopAudio();
 		};
-
-		// Add a timeout in case 'oncanplaythrough' never fires (network issue?)
-		let playTimeout = setTimeout(() => {
-			if (currentAudio && currentAudio.paused) { // Check if not already playing/played
-				console.warn("Audio 'canplaythrough' event timed out. Attempting play anyway.");
-				currentAudio.play().catch(e => { // Need catch here too
-					console.error('Force play attempt failed:', e);
-					alert('Could not start audio playback.');
-					stopAudio();
-				});
-			}
-		}, 5000); // 5 second timeout
-
-		// Clear timeout if event fires normally
-		currentAudio.addEventListener('canplaythrough', () => clearTimeout(playTimeout), { once: true });
-		currentAudio.addEventListener('ended', () => clearTimeout(playTimeout), { once: true });
-		currentAudio.addEventListener('error', () => clearTimeout(playTimeout), { once: true });
-
-
 	}
-
+	
 	function stopAudio() {
 		if (currentAudio) {
 			currentAudio.pause();
-			currentAudio.currentTime = 0; // Reset playback position
 			currentAudio = null;
 		}
 		if (currentReadAloudButton) {
@@ -462,35 +375,34 @@ $(document).ready(function () {
 			currentReadAloudButton = null;
 		}
 	}
-
+	
 	function setReadAloudLoading(button, isLoading) {
+		const spinner = button.find('.loading-spinner');
+		const icon = button.find('i');
 		if (isLoading) {
-			button.prop('disabled', true).addClass('loading');
-			button.find('.spinner-border').show();
-			button.find('i').hide();
+			button.prop('disabled', true);
+			spinner.show();
+			icon.hide();
 		} else {
-			button.prop('disabled', false).removeClass('loading');
-			button.find('.spinner-border').hide();
-			button.find('i').show();
+			button.prop('disabled', false);
+			spinner.hide();
+			icon.show();
 		}
 	}
-
+	
 	function resetReadAloudButton(button) {
-		button.removeClass('playing').attr('title', 'Read aloud');
 		button.find('i').removeClass('bi-pause-circle-fill').addClass('bi-play-circle');
-		// Ensure loading state is also removed
 		setReadAloudLoading(button, false);
 	}
 	// --- End Audio Helper Functions ---
-
-
-	// Initial scroll to bottom if there are messages
-	if (chatHistoryArea.children('.message-bubble').length > 0) {
+	
+	
+	// --- Initial Page Load ---
+	if (chatHistoryArea.children('.chat').length > 0) {
 		scrollToBottom();
 	}
-
+	
 	messageInputField.focus();
-	checkAndSubmitInitialPrompt();
 	autoResizeTextarea();
-
+	
 }); // End document ready

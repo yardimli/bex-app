@@ -1,120 +1,100 @@
+{{-- resources/views/messages/inbox.blade.php --}}
+
 @extends('layouts.app')
 
-@push('styles')
-    <style>
-        .inbox-item {
-            cursor: pointer;
-            border-left: 4px solid transparent;
-            transition: background-color 0.2s ease-in-out;
-        }
-        .inbox-item:hover {
-            background-color: #f8f9fa;
-        }
-        html.dark-mode .inbox-item:hover {
-            background-color: #343a40;
-        }
-        .inbox-item.unread {
-            border-left-color: #0d6efd;
-            font-weight: bold;
-        }
-        .sent-item .read-status {
-            font-size: 0.8rem;
-            color: #6c757d;
-        }
-        html.dark-mode .sent-item .read-status {
-            color: #adb5bd;
-        }
-    </style>
-@endpush
-
 @section('content')
-@include('partials.content_header')
-    <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>Messaging</h1>
+    {{-- MODIFIED: Converted to Tailwind/DaisyUI layout --}}
+    <div class="container mx-auto p-4">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-2xl font-bold">Messaging</h1>
             <button class="btn btn-primary" id="compose-message-btn"><i class="bi bi-pencil-square me-1"></i> Compose Message</button>
         </div>
-
-        <ul class="nav nav-tabs mb-3" id="inbox-tabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="inbox-tab" data-bs-toggle="tab" data-bs-target="#inbox-pane" type="button" role="tab" aria-controls="inbox-pane" aria-selected="true">Inbox</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="sent-tab" data-bs-toggle="tab" data-bs-target="#sent-pane" type="button" role="tab" aria-controls="sent-pane" aria-selected="false">Sent</button>
-            </li>
-        </ul>
-
-        <!-- Filters -->
-        <div class="card mb-3">
-            <div class="card-body d-flex justify-content-start align-items-center">
-                <strong class="me-3">Filters:</strong>
-                <div class="form-check me-4" id="unread-filter-container">
-                    <input class="form-check-input" type="checkbox" value="" id="unread-filter">
-                    <label class="form-check-label" for="unread-filter">
-                        Unread Only
-                    </label>
-                </div>
-                <div style="min-width: 250px;">
-                    <select id="team-filter" class="form-select form-select-sm">
-                        <option value="">All Teams</option>
-                        @foreach($userTeams as $team)
-                            <option value="{{ $team->id }}">{{ $team->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
+        
+        {{-- MODIFIED: Converted nav-tabs to DaisyUI tabs --}}
+        <div role="tablist" class="tabs tabs-lifted tabs-lg mb-4">
+            <input type="radio" name="inbox_tabs" role="tab" class="tab" id="inbox-tab-radio" aria-label="Inbox" checked />
+            <input type="radio" name="inbox_tabs" role="tab" class="tab" id="sent-tab-radio" aria-label="Sent" />
+        </div>
+        
+        <!-- MODIFIED: Filters converted from card to a styled div -->
+        <div class="p-4 bg-base-200 rounded-box flex flex-wrap items-center gap-4 mb-4">
+            <strong class="me-3">Filters:</strong>
+            <div class="form-control" id="unread-filter-container">
+                <label class="label cursor-pointer gap-2">
+                    <span class="label-text">Unread Only</span>
+                    <input type="checkbox" id="unread-filter" class="checkbox checkbox-sm" />
+                </label>
+            </div>
+            <div class="form-control" style="min-width: 250px;">
+                <select id="team-filter" class="select select-bordered select-sm">
+                    <option value="">All Teams</option>
+                    @foreach($userTeams as $team)
+                        <option value="{{ $team->id }}">{{ $team->name }}</option>
+                    @endforeach
+                </select>
             </div>
         </div>
-
-        <div class="tab-content" id="inbox-tab-content">
+        
+        {{-- MODIFIED: Tab content structure for DaisyUI tabs --}}
+        <div class="tab-content-container">
             <!-- Inbox Pane -->
-            <div class="tab-pane fade show active" id="inbox-pane" role="tabpanel" aria-labelledby="inbox-tab">
-                <div class="list-group" id="inbox-list">
-                    <div class="text-center p-5">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="mt-2">Loading messages...</p>
-                    </div>
+            <div id="inbox-pane" class="space-y-2">
+                <div id="inbox-list">
+                    {{-- Initial loading state --}}
+                    <div class="text-center p-5"><span class="loading loading-spinner loading-lg"></span></div>
                 </div>
-                <div id="inbox-pagination-links" class="mt-3 d-flex justify-content-center"></div>
+                <div id="inbox-pagination-links" class="mt-4 flex justify-center"></div>
             </div>
-
-            <!-- Sent Pane -->
-            <div class="tab-pane fade" id="sent-pane" role="tabpanel" aria-labelledby="sent-tab">
-                <div class="list-group" id="sent-list">
-                    <!-- Sent items will be loaded here by JS -->
+            
+            <!-- Sent Pane (initially hidden by JS logic) -->
+            <div id="sent-pane" class="space-y-2" style="display: none;">
+                <div id="sent-list">
+                    {{-- Sent items will be loaded here by JS --}}
                 </div>
-                <div id="sent-pagination-links" class="mt-3 d-flex justify-content-center"></div>
+                <div id="sent-pagination-links" class="mt-4 flex justify-center"></div>
             </div>
         </div>
     </div>
-
-    <!-- Message Detail Modal -->
-    <div class="modal fade" id="messageDetailModal" tabindex="-1" aria-labelledby="messageDetailModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="messageDetailModalLabel">Message Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <h6 id="message-subject"></h6>
-                    <div id="message-meta-info">
-                        <!-- Meta info will be populated by JS -->
-                    </div>
-                    <hr>
-                    <div id="message-body" style="white-space: pre-wrap;"></div>
-                    <div id="recipient-status-list" class="mt-3" style="display: none;">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    {{-- <button type="button" class="btn btn-primary">Reply</button> --}}
-                </div>
+    
+    <!-- MODIFIED: Message Detail Modal converted to DaisyUI <dialog> -->
+    <dialog id="messageDetailModal" class="modal">
+        <div class="modal-box w-11/12 max-w-3xl">
+            <h3 class="font-bold text-lg" id="message-subject"></h3>
+            <div id="message-meta-info" class="py-2">
+                <!-- Meta info will be populated by JS -->
+            </div>
+            <hr class="border-base-300">
+            <div id="message-body" class="py-4 whitespace-pre-wrap break-words"></div>
+            <div id="recipient-status-list" class="mt-3" style="display: none;"></div>
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn">Close</button>
+                </form>
             </div>
         </div>
-    </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
 @endsection
 
 @push('scripts')
+    {{-- MODIFIED: JS to handle tab visibility based on radio buttons --}}
+    <script>
+        $(document).ready(function() {
+            const inboxPane = $('#inbox-pane');
+            const sentPane = $('#sent-pane');
+            
+            function togglePanes() {
+                if ($('#inbox-tab-radio').is(':checked')) {
+                    inboxPane.show();
+                    sentPane.hide();
+                } else {
+                    inboxPane.hide();
+                    sentPane.show();
+                }
+            }
+            $('input[name="inbox_tabs"]').on('change', togglePanes);
+            togglePanes(); // Initial check
+        });
+    </script>
     <script src="{{ asset('js/inbox.js') }}"></script>
 @endpush

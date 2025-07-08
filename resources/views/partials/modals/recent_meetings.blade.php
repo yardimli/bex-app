@@ -1,36 +1,28 @@
-<div class="modal fade" id="recentMeetingsModal" tabindex="-1" aria-labelledby="recentMeetingsModalLabel" aria-hidden="true">
-	<div class="modal-dialog modal-lg modal-dialog-centered">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title" id="recentMeetingsModalLabel">Recent Meetings</h5>
-				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-			</div>
-			<div class="modal-body">
-				<div class="row">
-					<div class="col-md-5">
-						<div class="list-group">
-							<a href="#" class="list-group-item list-group-item-action" data-id="q4-financial">
-								<strong>Q4 Financial Review</strong><br><small class="text-muted">2024-12-03</small>
-							</a>
-							<a href="#" class="list-group-item list-group-item-action" data-id="omega-kickoff">
-								<strong>Project Omega Kickoff</strong><br><small class="text-muted">2024-12-02</small>
-							</a>
-							<a href="#" class="list-group-item list-group-item-action" data-id="hr-policy">
-								<strong>HR Policy Update</strong><br><small class="text-muted">2024-12-01</small>
-							</a>
-							<!-- Add more meetings as needed -->
-						</div>
-					</div>
-					<div class="col-md-7 details-pane">
-						Select a meeting to view details
-					</div>
+{{-- MODIFIED: Converted from Bootstrap modal to DaisyUI dialog --}}
+<dialog id="recentMeetingsModal" class="modal modal-bottom sm:modal-middle">
+	<div class="modal-box w-11/12 max-w-4xl">
+		<h3 class="font-bold text-lg">Recent Meetings</h3>
+		
+		<div class="py-4">
+			{{-- MODIFIED: Replaced row/col with flexbox --}}
+			<div class="flex flex-col md:flex-row gap-4">
+				<div class="md:w-2/5">
+					{{-- MODIFIED: Replaced list-group with DaisyUI menu --}}
+					<ul class="menu bg-base-200 rounded-box">
+						<li><a data-id="q4-financial"><strong>Q4 Financial Review</strong><span class="text-xs text-base-content/60">2024-12-03</span></a></li>
+						<li><a data-id="omega-kickoff"><strong>Project Omega Kickoff</strong><span class="text-xs text-base-content/60">2024-12-02</span></a></li>
+						<li><a data-id="hr-policy"><strong>HR Policy Update</strong><span class="text-xs text-base-content/60">2024-12-01</span></a></li>
+					</ul>
+				</div>
+				<div class="md:w-3/5 flex items-center justify-center bg-base-200 rounded-box min-h-48">
+					<span class="text-base-content/60">Select a meeting to view details</span>
 				</div>
 			</div>
-			<!-- Optional Footer
-			<div class="modal-footer">
-					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-			</div>
-			-->
 		</div>
+		
+		<form method="dialog">
+			<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+		</form>
 	</div>
-</div>
+	<form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>

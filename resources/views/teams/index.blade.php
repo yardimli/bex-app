@@ -1,101 +1,72 @@
+{{-- resources/views/teams/index.blade.php --}}
+
 @extends('layouts.app')
 
-@push('styles')
-    <style>
-        .team-card {
-            transition: box-shadow .3s;
-        }
-        .team-card.active-team {
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.5);
-            border-color: #0d6efd;
-        }
-        .member-list {
-            list-style-type: none;
-            padding-left: 0;
-        }
-        .member-list li {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-        .member-list .badge {
-            font-size: 0.75em;
-        }
-    </style>
-@endpush
-
 @section('content')
-@include('partials.content_header')
-    <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>My Teams</h1>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTeamModal">
+    {{-- MODIFIED: Converted to Tailwind/DaisyUI layout --}}
+    <div class="container mx-auto p-4">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-2xl font-bold">My Teams</h1>
+            {{-- MODIFIED: Changed data-bs-* to onclick for DaisyUI modal --}}
+            <button class="btn btn-primary" onclick="createTeamModal.showModal()">
                 <i class="bi bi-plus-circle me-1"></i> Create New Team
             </button>
         </div>
-
-        <div id="teams-list" class="row g-4">
+        
+        {{-- MODIFIED: Replaced Bootstrap row with CSS Grid --}}
+        <div id="teams-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             <!-- Teams will be loaded here by JavaScript -->
-            <div class="col-12 text-center p-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
+            <div class="col-span-full text-center p-5">
+                <span class="loading loading-spinner loading-lg text-primary"></span>
                 <p class="mt-2">Loading your teams...</p>
             </div>
         </div>
     </div>
-    <!-- Create Team Modal -->
-    <div class="modal fade" id="createTeamModal" tabindex="-1" aria-labelledby="createTeamModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="createTeamModalLabel">Create a New Team</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    
+    <!-- MODIFIED: Create Team Modal converted to DaisyUI <dialog> -->
+    <dialog id="createTeamModal" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg">Create a New Team</h3>
+            <form id="createTeamForm" class="py-4 space-y-4">
+                <div class="form-control">
+                    <label class="label" for="teamName"><span class="label-text">Team Name</span></label>
+                    <input type="text" id="teamName" name="name" required maxlength="255" class="input input-bordered w-full" />
                 </div>
-                <div class="modal-body">
-                    <form id="createTeamForm">
-                        <div class="mb-3">
-                            <label for="teamName" class="form-label">Team Name</label>
-                            <input type="text" class="form-control" id="teamName" name="name" required maxlength="255">
-                        </div>
-                        <div class="mb-3">
-                            <label for="teamDescription" class="form-label">Description (Optional)</label>
-                            <textarea class="form-control" id="teamDescription" name="description" rows="3" maxlength="1000"></textarea>
-                        </div>
-                    </form>
+                <div class="form-control">
+                    <label class="label" for="teamDescription"><span class="label-text">Description (Optional)</span></label>
+                    <textarea id="teamDescription" name="description" rows="3" maxlength="1000" class="textarea textarea-bordered w-full"></textarea>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="saveTeamButton">Create Team</button>
-                </div>
+            </form>
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn">Cancel</button>
+                </form>
+                <button type="button" class="btn btn-primary" id="saveTeamButton">Create Team</button>
             </div>
         </div>
-    </div>
-
-    <!-- Add Member Modal -->
-    <div class="modal fade" id="addMemberModal" tabindex="-1" aria-labelledby="addMemberModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addMemberModalLabel">Add Member to <span id="addMemberTeamName"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
+    
+    <!-- MODIFIED: Add Member Modal converted to DaisyUI <dialog> -->
+    <dialog id="addMemberModal" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg">Add Member to <span id="addMemberTeamName"></span></h3>
+            <form id="addMemberForm" class="py-4">
+                <input type="hidden" id="addMemberTeamId" name="team_id">
+                <div class="form-control">
+                    <label class="label" for="memberEmail"><span class="label-text">User's Email Address</span></label>
+                    <input type="email" id="memberEmail" name="email" required class="input input-bordered w-full" />
                 </div>
-                <div class="modal-body">
-                    <form id="addMemberForm">
-                        <input type="hidden" id="addMemberTeamId" name="team_id">
-                        <div class="mb-3">
-                            <label for="memberEmail" class="form-label">User's Email Address</label>
-                            <input type="email" class="form-control" id="memberEmail" name="email" required>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="confirmAddMemberButton">Add Member</button>
-                </div>
+            </form>
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn">Cancel</button>
+                </form>
+                <button type="button" class="btn btn-primary" id="confirmAddMemberButton">Add Member</button>
             </div>
         </div>
-    </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
 @endsection
 
 @push('scripts')
