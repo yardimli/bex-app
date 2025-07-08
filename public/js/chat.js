@@ -8,7 +8,7 @@ $(document).ready(function () {
 	const chatHeaderIdInput = $('#chat_header_id');
 	const chatLoader = $('#chat-loader');
 	const chatTitleDisplay = $('#chat-title-display');
-	const sidebarMenu = $('.sidebar .menu'); // MODIFIED: Target the DaisyUI menu UL
+	const sidebarMenu = $('#chat-history-list'); // MODIFIED: Target the specific chat history UL by its new ID for robustness.
 	
 	let currentAudio = null; // Variable to hold the current Audio object
 	let currentReadAloudButton = null; // Variable to hold the button associated with the current audio

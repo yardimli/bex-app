@@ -1,3 +1,5 @@
+// resources/views/partials/sidebar.blade.php:
+
 {{-- MODIFIED: Rewritten with DaisyUI menu and Tailwind utility classes --}}
 <aside class="bg-base-100 w-80 p-4 h-full flex flex-col">
 	<div class="mb-4">
@@ -14,7 +16,8 @@
 	</label>
 	
 	<h2 class="menu-title">History</h2>
-	<ul class="menu p-0 [&_li>*]:rounded-md mb-3 overflow-y-auto" style="max-height: calc(100vh - 350px);">
+	{{-- MODIFIED: Added id="chat-history-list" for easier JS targeting and "flex-nowrap" to prevent multi-column layout. --}}
+	<ul id="chat-history-list" class="menu flex-nowrap p-0 [&_li>*]:rounded-md mb-3 overflow-y-auto" style="max-height: calc(100vh - 350px);">
 		@if(isset($chatHeaders) && $chatHeaders->isNotEmpty())
 			@foreach ($chatHeaders as $header)
 				<li>

@@ -19,15 +19,6 @@
 	<!-- Bootstrap Icons -->
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 	
-	<!-- Custom CSS (includes dark mode) -->
-	<link href="{{ asset('css/app.css') }}" rel="stylesheet">
-	
-	<!-- Scripts required for Vite/Laravel Mix (if used) and dark mode JS -->
-	{{-- @vite(['resources/sass/app.scss', 'resources/js/ui.js']) --}}
-	{{-- NOTE: If you are using Vite, uncomment the line above and potentially remove the app.css/ui.js links below.
-					 If you are NOT using Vite (just manually linking), keep the lines below.
-					 Make sure your build process compiles app.css and ui.js to the public directory. --}}
-
 </head>
 <body>
 {{-- The main-wrapper and sidebar are intentionally omitted here --}}
