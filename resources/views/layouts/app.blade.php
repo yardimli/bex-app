@@ -49,6 +49,8 @@
 @include('partials.modals.settings')
 @include('partials.modals.summarize_content')
 @include('partials.modals.transcribe')
+@include('partials.modals.compose_message')
+
 
 <!-- Attach File Modal -->
 <dialog id="attachFileModal" class="modal modal-bottom sm:modal-middle">
