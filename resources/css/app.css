@@ -4,15 +4,15 @@
 
 /* Custom styles that are difficult to achieve with utility classes alone */
 .chat-history {
-    /* Adjust height based on your layout's header/input area */
-    height: calc(100vh - 240px);
+    /* MODIFIED: Removed the fixed height calculation. Flexbox will now control the height dynamically. */
+    /* MODIFIED: Added overflow-y to enable scrolling within this element only when content exceeds its size. */
+    overflow-y: auto;
+    /* MODIFIED: Added min-height to prevent flexbox overflow issues, ensuring it can shrink correctly. */
+    min-height: 0;
+    height: calc(100vh - 220px);
 }
 
-@media (max-width: 640px) {
-    .chat-history {
-        height: calc(100vh - 220px); /* Adjust for smaller screens */
-    }
-}
+/* MODIFIED: Removed the media query as the new flex layout is inherently responsive. */
 
 /* Style for completed action items */
 #actionItemsList .item-done .label-text {

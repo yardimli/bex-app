@@ -28,7 +28,8 @@
     <input id="my-drawer-2" type="checkbox" class="drawer-toggle" />
     <div class="drawer-content flex flex-col items-center justify-center">
         <!-- Page content here -->
-        <main class="w-full h-screen flex flex-col p-4">
+        {{-- MODIFIED: Removed padding from the main layout to allow child templates to control their own full-height layout. --}}
+        <main class="w-full h-screen flex flex-col">
             @yield('content')
         </main>
     </div>

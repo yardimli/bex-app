@@ -73,8 +73,6 @@ $(document).ready(function () {
 		const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 		const theme = savedTheme || systemTheme;
 		
-		// Set the data-theme attribute on the HTML element. This is crucial for the initial page load
-		// to prevent a flash of the wrong theme.
 		htmlElement.attr('data-theme', theme);
 		// Sync the checkbox's state with the determined theme on page load.
 		if (themeControllerCheckbox.length) {
@@ -83,18 +81,13 @@ $(document).ready(function () {
 	}
 	
 	// Initialize theme on page load.
-	// MODIFIED: Re-enabled the theme initialization to persist user preference across page loads.
 	initializeTheme();
 	
-	// The theme-controller checkbox is used as the UI toggle.
-	// We listen to its change event to persist the new theme preference.
+	// The theme-controller checkbox handles the data-theme attribute change automatically.
+	// We just need to listen to its change to save the new preference to localStorage.
 	if (themeControllerCheckbox.length) {
 		themeControllerCheckbox.on('change', function () {
 			const theme = $(this).is(':checked') ? 'dark' : 'light';
-			// MODIFIED: Explicitly set the data-theme attribute here. While DaisyUI's
-			// theme-controller can do this automatically, being explicit makes the
-			// behavior more reliable and consistent with the initialization and settings save logic.
-			htmlElement.attr('data-theme', theme);
 			localStorage.setItem('theme', theme);
 		});
 	}
@@ -126,50 +119,81 @@ $(document).ready(function () {
 	}
 	
 	// --- Model Selector Dropdown Logic ---
-	const modeDropdownButton = $('#modeDropdownButton');
-	const modeDropdownMenu = modeDropdownButton.next('.dropdown-content'); // MODIFIED: DaisyUI class
+	// MODIFIED: Corrected selectors and refactored logic to handle model selection and UI updates properly.
+	const modeDropdownMenu = $('#mode-dropdown-menu');
 	const selectedModelNameSpan = $('#selected-model-name');
 	
-	if (modeDropdownButton.length) {
-		function applySelectedModel(modelId) {
-			const selectedItem = modeDropdownMenu.find(`li[data-model-id="${modelId}"] a`);
-			let displayName = 'Smart Mode';
-			modeDropdownMenu.find('li').removeClass('bordered'); // MODIFIED: DaisyUI active state
-			
-			if (selectedItem.length) {
-				displayName = selectedItem.data('display-name') || selectedItem.text().trim();
-				selectedItem.closest('li').addClass('bordered'); // MODIFIED: Apply to parent li
-			} else {
-				const defaultItem = modeDropdownMenu.find(`li[data-model-id="${defaultModelId}"] a`);
-				if (defaultItem.length) {
-					displayName = defaultItem.data('display-name') || defaultItem.text().trim();
-					defaultItem.closest('li').addClass('bordered');
-				} else {
-					console.error("Default model item not found in dropdown!");
-				}
-			}
-			// Update the button text.
+	if (modeDropdownMenu.length) {
+		/**
+		 * Updates the dropdown's appearance (button text and active item).
+		 * @param {jQuery} selectedLi - The jQuery object for the selected list item.
+		 * @param {string} displayName - The text to display on the button.
+		 */
+		function updateDropdownSelection(selectedLi, displayName) {
 			if (selectedModelNameSpan.length) {
 				selectedModelNameSpan.text(displayName);
-			} else {
-				modeDropdownButton.find('.btn-text').text(displayName);
+			}
+			modeDropdownMenu.find('li').removeClass('bordered');
+			if (selectedLi && selectedLi.length) {
+				selectedLi.addClass('bordered');
 			}
 		}
 		
+		/**
+		 * Applies a model selection to the UI, typically on page load or after settings change.
+		 * It finds the first matching item in the dropdown for a given model ID.
+		 * @param {string} modelId - The ID of the model to apply.
+		 */
+		function applyModelToDropdown(modelId) {
+			// Find the first list item that matches the model ID.
+			const selectedLi = modeDropdownMenu.find(`li[data-model-id="${modelId}"]`).first();
+			let displayName = 'Smart Mode'; // Default display name.
+			
+			if (selectedLi.length) {
+				const link = selectedLi.find('a');
+				// Use the specific display name from the found item, or its text.
+				displayName = link.data('display-name') || link.text().trim();
+				updateDropdownSelection(selectedLi, displayName);
+			} else {
+				// If the saved model isn't in the list, fall back to the hardcoded default.
+				const defaultLi = modeDropdownMenu.find(`li[data-model-id="${defaultModelId}"]`).first();
+				if (defaultLi.length) {
+					const link = defaultLi.find('a');
+					displayName = link.data('display-name') || link.text().trim();
+					updateDropdownSelection(defaultLi, displayName);
+				} else {
+					// If even the default is not found, just update the text.
+					updateDropdownSelection(null, displayName);
+					console.error("Default model item not found in dropdown!");
+				}
+			}
+		}
+		
+		// Event listener for when a user clicks an item in the dropdown.
 		modeDropdownMenu.on('click', 'a', function (e) {
 			e.preventDefault();
-			const liParent = $(this).closest('li');
+			const clickedLink = $(this);
+			const liParent = clickedLink.closest('li');
 			const selectedModelId = liParent.data('model-id');
+			
 			if (selectedModelId) {
+				// Save the selected model ID to local storage.
 				localStorage.setItem('selectedLlmModel', selectedModelId);
-				applySelectedModel(selectedModelId);
-				// Close dropdown by removing focus.
+				
+				// Get the display name directly from the clicked item.
+				const displayName = clickedLink.data('display-name') || clickedLink.text().trim();
+				
+				// Update the UI to reflect the clicked item.
+				updateDropdownSelection(liParent, displayName);
+				
+				// Close the dropdown by removing focus from the active element.
 				if (document.activeElement) document.activeElement.blur();
 			}
 		});
 		
+		// On page load, apply the saved model or the default one.
 		const savedModel = localStorage.getItem('selectedLlmModel');
-		applySelectedModel(savedModel || defaultModelId);
+		applyModelToDropdown(savedModel || defaultModelId);
 	}
 	
 	// --- Save Settings Logic ---
@@ -187,6 +211,11 @@ $(document).ready(function () {
 		
 		localStorage.setItem('selectedPersonalityTone', selectedToneValue);
 		localStorage.setItem('selectedLlmModel', selectedDefaultModel);
+		
+		// MODIFIED: Immediately update the model selector dropdown UI if it exists.
+		if (modeDropdownMenu.length) {
+			applyModelToDropdown(selectedDefaultModel);
+		}
 		
 		settingsModal.close(); // MODIFIED: DaisyUI close method
 	});

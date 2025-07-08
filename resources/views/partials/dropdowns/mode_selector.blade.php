@@ -4,7 +4,8 @@
 		<span id="selected-model-name" class="btn-text">Smart Mode</span>
 		<i class="bi bi-chevron-down"></i>
 	</div>
-	<ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+	{{-- MODIFIED: Added an ID for easier and more reliable JS selection --}}
+	<ul tabindex="0" id="mode-dropdown-menu" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
 		{{-- The 'bordered' class will be used by JS to show the active item --}}
 		<li data-model-id="openai/gpt-4o-mini"><a data-display-name="Smart Mode (4o Mini)">Smart Mode (4o Mini)</a></li>
 		<li><hr class="my-1"></li>
