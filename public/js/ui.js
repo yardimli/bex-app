@@ -4,7 +4,7 @@
  */
 window.BexApp = {
 	attachedFiles: new Map(),
-	
+
 	/**
 	 * Gets a Bootstrap Icon class based on the file's MIME type.
 	 * @param {string} mimeType - The MIME type of the file.
@@ -19,14 +19,14 @@ window.BexApp = {
 		if (mimeType.includes('text')) return 'bi-file-earmark-text-fill text-secondary';
 		return 'bi-file-earmark-fill text-base-content/60';
 	},
-	
+
 	/**
 	 * Renders the attached file "pills" (badges) in the UI.
 	 */
 	renderFilePills: function () {
 		const container = $('#file-pills-container');
 		if (!container.length) return;
-		
+
 		container.empty();
 		const fileIds = [];
 		this.attachedFiles.forEach((file, id) => {
@@ -52,7 +52,7 @@ $(document).ready(function () {
 	const htmlElement = $('html');
 	const defaultModelId = 'openai/gpt-4o-mini';
 	const themeControllerCheckbox = $('#theme-controller-checkbox'); // MODIFIED: Selector for the theme checkbox.
-	
+
 	// --- Modal Selectors (FIX) ---
 	// MODIFIED: Added definitions for all modal dialogs. This fixes them not opening.
 	const recentMeetingsModal = document.getElementById('recentMeetingsModal');
@@ -64,7 +64,7 @@ $(document).ready(function () {
 	const settingsModal = document.getElementById('settingsModal');
 	const imagePreviewModal = document.getElementById('imagePreviewModal');
 	const pdfPreviewModal = document.getElementById('pdfPreviewModal');
-	
+
 	// --- Theme Toggle Logic ---
 	// MODIFIED: Refactored to correctly work with DaisyUI's theme-controller component.
 	function initializeTheme() {
@@ -72,17 +72,17 @@ $(document).ready(function () {
 		// Fallback to system preference if no theme is saved
 		const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 		const theme = savedTheme || systemTheme;
-		
+
 		htmlElement.attr('data-theme', theme);
 		// Sync the checkbox's state with the determined theme on page load.
 		if (themeControllerCheckbox.length) {
 			themeControllerCheckbox.prop('checked', theme === 'dark');
 		}
 	}
-	
+
 	// Initialize theme on page load.
 	initializeTheme();
-	
+
 	// The theme-controller checkbox handles the data-theme attribute change automatically.
 	// We just need to listen to its change to save the new preference to localStorage.
 	if (themeControllerCheckbox.length) {
@@ -91,7 +91,7 @@ $(document).ready(function () {
 			localStorage.setItem('theme', theme);
 		});
 	}
-	
+
 	// --- Modal Opening Logic ---
 	// MODIFIED: Use the defined modal variables and add checks to ensure they exist.
 	if (recentMeetingsModal) $('#meetingSummaryButton').on('click', () => recentMeetingsModal.showModal());
@@ -101,7 +101,7 @@ $(document).ready(function () {
 	if (summarizeContentModal) $('#summarizeButton').on('click', () => summarizeContentModal.showModal());
 	if (transcribeModal) $('#transcribeButton').on('click', () => transcribeModal.showModal());
 	if (teamFilesModal) $('#teamWorkspaceButton').on('click', () => teamFilesModal.showModal());
-	
+
 	// Settings modal can be opened from two places.
 	if (settingsModal) {
 		$('#settingsButton, #settingsButtonFromDropdown').on('click', (e) => {
@@ -113,16 +113,16 @@ $(document).ready(function () {
 			$(`input[name="personalityTone"][value="${savedTone}"]`).prop('checked', true);
 			const savedDefaultModel = localStorage.getItem('selectedLlmModel') || defaultModelId;
 			$('#defaultModeSelect').val(savedDefaultModel);
-			
+
 			settingsModal.showModal();
 		});
 	}
-	
+
 	// --- Model Selector Dropdown Logic ---
 	// MODIFIED: Corrected selectors and refactored logic to handle model selection and UI updates properly.
 	const modeDropdownMenu = $('#mode-dropdown-menu');
 	const selectedModelNameSpan = $('#selected-model-name');
-	
+
 	if (modeDropdownMenu.length) {
 		/**
 		 * Updates the dropdown's appearance (button text and active item).
@@ -138,7 +138,7 @@ $(document).ready(function () {
 				selectedLi.addClass('bordered');
 			}
 		}
-		
+
 		/**
 		 * Applies a model selection to the UI, typically on page load or after settings change.
 		 * It finds the first matching item in the dropdown for a given model ID.
@@ -148,7 +148,7 @@ $(document).ready(function () {
 			// Find the first list item that matches the model ID.
 			const selectedLi = modeDropdownMenu.find(`li[data-model-id="${modelId}"]`).first();
 			let displayName = 'Smart Mode'; // Default display name.
-			
+
 			if (selectedLi.length) {
 				const link = selectedLi.find('a');
 				// Use the specific display name from the found item, or its text.
@@ -168,63 +168,63 @@ $(document).ready(function () {
 				}
 			}
 		}
-		
+
 		// Event listener for when a user clicks an item in the dropdown.
 		modeDropdownMenu.on('click', 'a', function (e) {
 			e.preventDefault();
 			const clickedLink = $(this);
 			const liParent = clickedLink.closest('li');
 			const selectedModelId = liParent.data('model-id');
-			
+
 			if (selectedModelId) {
 				// Save the selected model ID to local storage.
 				localStorage.setItem('selectedLlmModel', selectedModelId);
-				
+
 				// Get the display name directly from the clicked item.
 				const displayName = clickedLink.data('display-name') || clickedLink.text().trim();
-				
+
 				// Update the UI to reflect the clicked item.
 				updateDropdownSelection(liParent, displayName);
-				
+
 				// Close the dropdown by removing focus from the active element.
 				if (document.activeElement) document.activeElement.blur();
 			}
 		});
-		
+
 		// On page load, apply the saved model or the default one.
 		const savedModel = localStorage.getItem('selectedLlmModel');
 		applyModelToDropdown(savedModel || defaultModelId);
 	}
-	
+
 	// --- Save Settings Logic ---
 	$('#saveSettingsButton').on('click', function () {
 		const selectedDefaultModel = $('#defaultModeSelect').val();
 		const selectedThemeValue = $('#themeSelect').val();
 		const selectedToneValue = $('input[name="personalityTone"]:checked').val();
-		
+
 		// When saving from settings, we need to manually set the theme
 		htmlElement.attr('data-theme', selectedThemeValue);
 		if (themeControllerCheckbox.length) {
 			themeControllerCheckbox.prop('checked', selectedThemeValue === 'dark');
 		}
 		localStorage.setItem('theme', selectedThemeValue);
-		
+
 		localStorage.setItem('selectedPersonalityTone', selectedToneValue);
 		localStorage.setItem('selectedLlmModel', selectedDefaultModel);
-		
+
 		// MODIFIED: Immediately update the model selector dropdown UI if it exists.
 		if (modeDropdownMenu.length) {
 			applyModelToDropdown(selectedDefaultModel);
 		}
-		
+
 		settingsModal.close(); // MODIFIED: DaisyUI close method
 	});
-	
+
 	// --- Summarize Content Logic ---
 	function redirectToChatWithSummarizationData(data) {
 		const chatUrl = '/chat';
 		let redirectUrl;
-		
+
 		if (data.context_key) {
 			redirectUrl = `${chatUrl}?summarize_key=${encodeURIComponent(data.context_key)}&prompt_text=${encodeURIComponent(data.prompt_text || '')}`;
 		} else if (data.full_text_for_prompt) {
@@ -234,13 +234,13 @@ $(document).ready(function () {
 			alert('Error: Could not prepare summarization data.');
 			return;
 		}
-		
+
 		if (summarizeContentModal) summarizeContentModal.close(); // MODIFIED: DaisyUI close method
 		setTimeout(() => {
 			window.location.href = redirectUrl;
 		}, 150);
 	}
-	
+
 	$('#summarizeWebButton').on('click', function () {
 		const url = $('#summarizeUrlInput').val().trim();
 		if (!url) {
@@ -253,11 +253,11 @@ $(document).ready(function () {
 			alert('Please enter a valid URL.');
 			return;
 		}
-		
+
 		const button = $(this);
 		const originalButtonText = button.html();
 		button.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span> Fetching...'); // MODIFIED: DaisyUI spinner
-		
+
 		$.ajax({
 			url: '/api/summarize/url',
 			method: 'POST',
@@ -278,7 +278,7 @@ $(document).ready(function () {
 			}
 		});
 	});
-	
+
 	$('#summarizeTextButton').on('click', function () {
 		const text = $('#summarizeTextInput').val().trim();
 		if (!text) {
@@ -292,7 +292,7 @@ $(document).ready(function () {
 			window.location.href = redirectUrl;
 		}, 150);
 	});
-	
+
 	$('#summarizeFileButton').on('click', function () {
 		const fileInput = $('#summarizeFileInput');
 		const file = fileInput.prop('files')[0];
@@ -304,11 +304,11 @@ $(document).ready(function () {
 		const formData = new FormData();
 		formData.append('file', file);
 		formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
-		
+
 		const button = $(this);
 		const originalButtonText = button.html();
 		button.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span> Uploading...'); // MODIFIED: DaisyUI spinner
-		
+
 		$.ajax({
 			url: '/api/summarize/upload',
 			method: 'POST',
@@ -333,7 +333,7 @@ $(document).ready(function () {
 			}
 		});
 	});
-	
+
 	// --- Chat History Deletion ---
 	// Logic is unchanged, but selectors target the new menu structure.
 	$('.sidebar .menu').on('click', '.delete-chat-btn', function (e) {
@@ -343,12 +343,12 @@ $(document).ready(function () {
 		const chatListItem = chatLinkElement.closest('li');
 		const chatId = $(this).data('chat-id');
 		const chatTitle = chatLinkElement.attr('title') || `Chat ID ${chatId}`;
-		
+
 		if (!chatId) {
 			alert('Error: Could not determine which chat to delete.');
 			return;
 		}
-		
+
 		if (confirm(`Are you sure you want to delete the chat "${chatTitle}"? This cannot be undone.`)) {
 			chatListItem.css('opacity', '0.5');
 			$.ajax({
@@ -376,7 +376,7 @@ $(document).ready(function () {
 			});
 		}
 	});
-	
+
 	// --- Unread Message Count (Logic Unchanged) ---
 	function updateUnreadCountInNav() {
 		const countElement = $('#unread-messages-count');
@@ -390,9 +390,9 @@ $(document).ready(function () {
 			});
 		}
 	}
-	
+
 	updateUnreadCountInNav();
-	
+
 	// --- Account Switcher (Logic Unchanged) ---
 	$(document).on('click', '#account-switcher-submenu a', function (e) {
 		e.preventDefault();
@@ -420,7 +420,7 @@ $(document).ready(function () {
 			}
 		});
 	});
-	
+
 	// --- Global File Attachment Logic ---
 	const attachFileModal = document.getElementById('attachFileModal');
 	if (attachFileModal) {
@@ -428,25 +428,40 @@ $(document).ready(function () {
 		const attachMyFilesList = $('#attach-my-files-list');
 		const attachTeamFilesList = $('#attach-team-files-list');
 		const attachTeamSelectFilter = $('#attach-team-select-filter');
-		
+
+
+        const allowedMimeTypesForAttachment = [
+            'application/pdf',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'text/plain'
+        ];
 		function renderFileSelectItem(file) {
+            const isAllowed = allowedMimeTypesForAttachment.includes(file.mime_type) ||
+                file.original_filename.toLowerCase().endsWith('.docx');
 			const isSelected = window.BexApp.attachedFiles.has(file.id);
 			const safeFileName = $('<div>').text(file.original_filename).html();
 			const ownerName = file.owner ? $('<div>').text(file.owner.name).html() : 'N/A';
+
+            const selectableClass = isAllowed ? 'file-list-item-selectable' : '';
+            const hoverClass = isAllowed ? 'hover:bg-base-200' : '';
+            const stateClass = isSelected ? 'bg-base-300' : '';
+            const disabledClass = !isAllowed ? 'opacity-50 cursor-not-allowed' : '';
+            const titleAttr = !isAllowed ? 'title="This file type cannot be attached for context (only PDF, DOCX, TXT are supported)."' : '';
+
 			// MODIFIED: Uses Tailwind/DaisyUI classes for the list item.
-			return `
-            <a href="#" class="flex justify-between items-center p-2 rounded-lg hover:bg-base-200 file-list-item-selectable ${isSelected ? 'bg-base-300' : ''}" data-file-id="${file.id}" data-file-name="${safeFileName}" data-mime-type="${file.mime_type}">
-                <div class="flex items-center min-w-0">
-                    <i class="bi ${window.BexApp.getFileIcon(file.mime_type)} me-3 text-2xl"></i>
-                    <div class="truncate">
-                        <strong class="block truncate">${safeFileName}</strong>
-                        <small class="text-base-content/70">Owner: ${ownerName}</small>
-                    </div>
-                </div>
-                <i class="bi bi-check-circle-fill text-xl text-primary selection-check" style="display: ${isSelected ? 'block' : 'none'};"></i>
-            </a>`;
+            return `
+ <a href="#" class="flex justify-between items-center p-2 rounded-lg ${hoverClass} ${stateClass} ${disabledClass} ${selectableClass}" ${titleAttr} data-file-id="${file.id}" data-file-name="${safeFileName}" data-mime-type="${file.mime_type}">
+ <div class="flex items-center min-w-0">
+ <i class="bi ${window.BexApp.getFileIcon(file.mime_type)} me-3 text-2xl"></i>
+ <div class="truncate">
+ <strong class="block truncate">${safeFileName}</strong>
+ <small class="text-base-content/70">Owner: ${ownerName}</small>
+ </div>
+ </div>
+ <i class="bi bi-check-circle-fill text-xl text-primary selection-check" style="display: ${isSelected ? 'block' : 'none'};"></i>
+ </a>`;
 		}
-		
+
 		function loadMyFilesForAttachment() {
 			attachMyFilesList.html('<div class="text-center p-3"><span class="loading loading-spinner"></span></div>');
 			$.get('/api/user/files', function (files) {
@@ -458,7 +473,7 @@ $(document).ready(function () {
 				}
 			});
 		}
-		
+
 		function loadTeamFilesForAttachment(teamId) {
 			if (!teamId) {
 				attachTeamFilesList.html('<p class="text-base-content/60 p-3 text-center">Select a team to see its files.</p>');
@@ -474,7 +489,7 @@ $(document).ready(function () {
 				}
 			});
 		}
-		
+
 		function loadUserTeamsForAttachment() {
 			$.get('/api/user/teams', function (response) {
 				attachTeamSelectFilter.empty().append('<option value="">-- Select a Team --</option>');
@@ -491,18 +506,18 @@ $(document).ready(function () {
 				}
 			});
 		}
-		
+
 		// MODIFIED: Open modal with button click instead of data attributes.
 		$('#attach-file-btn').on('click', function () {
 			loadMyFilesForAttachment();
 			loadUserTeamsForAttachment();
 			attachFileModal.showModal();
 		});
-		
+
 		attachTeamSelectFilter.on('change', function () {
 			loadTeamFilesForAttachment($(this).val());
 		});
-		
+
 		$(document).on('click', '#attachFileModal .file-list-item-selectable', function (e) {
 			e.preventDefault();
 			const item = $(this);
@@ -519,18 +534,18 @@ $(document).ready(function () {
 				window.BexApp.attachedFiles.set(fileId, {name: fileName, mime_type: mimeType});
 			}
 		});
-		
+
 		confirmAttachFilesBtn.on('click', function () {
 			window.BexApp.renderFilePills();
 			// No need to close modal here, as it's handled by the form method="dialog"
 		});
-		
+
 		$(document).on('click', '#file-pills-container .remove-file-pill', function () {
 			const fileId = $(this).data('id');
 			window.BexApp.attachedFiles.delete(fileId);
 			window.BexApp.renderFilePills();
 		});
-		
+
 		// --- Dashboard Form Submission Logic ---
 		const dashboardPromptForm = $('#dashboard-prompt-form');
 		if (dashboardPromptForm.length) {
@@ -539,15 +554,15 @@ $(document).ready(function () {
 				const promptText = $('#dashboard-prompt-input').val().trim();
 				const attachedFileIds = [...window.BexApp.attachedFiles.keys()];
 				if (!promptText && attachedFileIds.length === 0) return;
-				
+
 				const sendButton = $('#dashboard-send-button');
 				const originalButtonHtml = sendButton.html();
 				sendButton.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span>');
 				$('#dashboard-prompt-input').prop('disabled', true);
-				
+
 				const selectedModel = localStorage.getItem('selectedLlmModel') || defaultModelId;
 				const selectedTone = localStorage.getItem('selectedPersonalityTone') || 'professional';
-				
+
 				$.ajax({
 					url: '/api/chat',
 					method: 'POST',
@@ -577,14 +592,14 @@ $(document).ready(function () {
 			});
 		}
 	}
-	
+
 	// --- Global File Preview Logic ---
 	$(document).on('click', '.preview-btn', function () {
 		const fileId = $(this).data('file-id');
 		const mimeType = $(this).data('mime-type');
 		const previewUrl = `/api/files/${fileId}/preview`;
 		if (!fileId || !mimeType) return;
-		
+
 		if (mimeType.startsWith('image/')) {
 			$('#image-preview-content').attr('src', previewUrl);
 			if (imagePreviewModal) imagePreviewModal.showModal(); // MODIFIED
