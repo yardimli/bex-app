@@ -1,85 +1,81 @@
+// resources/views/auth/register.blade.php:
+
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('Register') }}</div>
-
-                <div class="card-body">
-                    <form method="POST" action="{{ route('register') }}">
-                        @csrf
-
-                        <div class="row mb-3">
-                            <label for="name" class="col-md-4 col-form-label text-md-end">{{ __('Name') }}</label>
-
-                            <div class="col-md-6">
-                                <input id="name" type="text" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name') }}" required autocomplete="name" autofocus>
-
-                                @error('name')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <label for="email" class="col-md-4 col-form-label text-md-end">{{ __('Email Address') }}</label>
-
-                            <div class="col-md-6">
-                                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email">
-
-                                @error('email')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <label for="password" class="col-md-4 col-form-label text-md-end">{{ __('Password') }}</label>
-
-                            <div class="col-md-6">
-                                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password">
-
-                                @error('password')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <label for="password-confirm" class="col-md-4 col-form-label text-md-end">{{ __('Confirm Password') }}</label>
-
-                            <div class="col-md-6">
-                                <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
-                            </div>
-                        </div>
-
-                        <div class="row mb-0">
-                            <div class="col-md-6 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    {{ __('Register') }}
-                                </button>
-                            </div>
-                        </div>
-                    </form>
+    {{-- MODIFIED: Replaced Bootstrap grid with a full-height flex container to center the registration card. --}}
+    <div class="flex items-center justify-center flex-grow py-12">
+        {{-- MODIFIED: Replaced Bootstrap card with DaisyUI card component. --}}
+        <div class="card bg-base-100 shadow-xl w-full max-w-lg mx-4">
+            <div class="card-body">
+                {{-- MODIFIED: Updated card title to match DaisyUI card structure. --}}
+                <h2 class="card-title justify-center text-2xl mb-4">{{ __('Register') }}</h2>
+                
+                <form method="POST" action="{{ route('register') }}">
+                    @csrf
                     
-                    <div class="row mb-0 mt-3">
-                        <div class="col-md-8">
-                            <a href="{{ route('login') }}" class="btn btn-link">
-                                {{ __('Already have an account? Login') }}
-                            </a>
-                        </div>
+                    {{-- MODIFIED: Replaced Bootstrap form group with DaisyUI form-control for Name. --}}
+                    <div class="form-control w-full mb-3">
+                        <label class="label" for="name">
+                            <span class="label-text">{{ __('Name') }}</span>
+                        </label>
+                        {{-- MODIFIED: Updated input with DaisyUI classes. Used `input-error` for validation state. --}}
+                        <input id="name" type="text" class="input input-bordered w-full @error('name') input-error @enderror" name="name" value="{{ old('name') }}" required autocomplete="name" autofocus>
+                        @error('name')
+                        {{-- MODIFIED: Styled error message using DaisyUI/Tailwind classes. --}}
+                        <label class="label">
+                            <span class="label-text-alt text-error">{{ $message }}</span>
+                        </label>
+                        @enderror
                     </div>
-                </div>
+                    
+                    {{-- MODIFIED: Replaced Bootstrap form group with DaisyUI form-control for Email. --}}
+                    <div class="form-control w-full mb-3">
+                        <label class="label" for="email">
+                            <span class="label-text">{{ __('Email Address') }}</span>
+                        </label>
+                        <input id="email" type="email" class="input input-bordered w-full @error('email') input-error @enderror" name="email" value="{{ old('email') }}" required autocomplete="email">
+                        @error('email')
+                        <label class="label">
+                            <span class="label-text-alt text-error">{{ $message }}</span>
+                        </label>
+                        @enderror
+                    </div>
+                    
+                    {{-- MODIFIED: Replaced Bootstrap form group with DaisyUI form-control for Password. --}}
+                    <div class="form-control w-full mb-3">
+                        <label class="label" for="password">
+                            <span class="label-text">{{ __('Password') }}</span>
+                        </label>
+                        <input id="password" type="password" class="input input-bordered w-full @error('password') input-error @enderror" name="password" required autocomplete="new-password">
+                        @error('password')
+                        <label class="label">
+                            <span class="label-text-alt text-error">{{ $message }}</span>
+                        </label>
+                        @enderror
+                    </div>
+                    
+                    {{-- MODIFIED: Replaced Bootstrap form group with DaisyUI form-control for Password Confirmation. --}}
+                    <div class="form-control w-full mb-6">
+                        <label class="label" for="password-confirm">
+                            <span class="label-text">{{ __('Confirm Password') }}</span>
+                        </label>
+                        <input id="password-confirm" type="password" class="input input-bordered w-full" name="password_confirmation" required autocomplete="new-password">
+                    </div>
+                    
+                    {{-- MODIFIED: Updated form actions to use DaisyUI button and layout classes. --}}
+                    <div class="card-actions items-center justify-between">
+                        {{-- NEW: Added link to login page, styled as a DaisyUI link. --}}
+                        <a href="{{ route('login') }}" class="link link-hover">
+                            {{ __('Already have an account?') }}
+                        </a>
+                        {{-- MODIFIED: Updated button with DaisyUI classes. --}}
+                        <button type="submit" class="btn btn-primary">
+                            {{ __('Register') }}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-</div>
 @endsection
