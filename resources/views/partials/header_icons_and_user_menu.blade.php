@@ -7,7 +7,8 @@
 </button>
 <label class="swap swap-rotate btn btn-ghost btn-circle" id="themeToggleButton" title="Toggle Theme">
 	{{-- this hidden checkbox controls the state --}}
-	<input type="checkbox" class="theme-controller" value="dark" />
+	{{-- MODIFIED: Added an ID to the checkbox for JS interaction --}}
+	<input type="checkbox" class="theme-controller" value="dark" id="theme-controller-checkbox" />
 	<i class="bi bi-brightness-high-fill swap-off text-xl"></i>
 	<i class="bi bi-moon-stars-fill swap-on text-xl"></i>
 </label>

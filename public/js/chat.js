@@ -13,7 +13,7 @@ $(document).ready(function () {
 	let currentAudio = null; // Variable to hold the current Audio object
 	let currentReadAloudButton = null; // Variable to hold the button associated with the current audio
 	
-	// NOTE: The model selector dropdown logic has been moved to the global app.js
+	// NOTE: The model selector dropdown logic has been moved to the global ui.js
 	// to be shared across pages (like Dashboard and Chat).
 	
 	/**

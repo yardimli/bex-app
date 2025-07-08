@@ -101,9 +101,8 @@
 
 <!-- jQuery & Scripts -->
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-{{-- MODIFIED: Removed Bootstrap JS --}}
 @vite('resources/js/app.js')
-{{-- These scripts need to be checked for Bootstrap dependencies as well --}}
+<script src="{{ asset('js/ui.js') }}"></script>
 <script src="{{ asset('js/action-items.js') }}"></script>
 <script src="{{ asset('js/my-notes.js') }}"></script>
 <script src="{{ asset('js/message-composer.js') }}"></script>

@@ -23,10 +23,10 @@
 	<link href="{{ asset('css/app.css') }}" rel="stylesheet">
 	
 	<!-- Scripts required for Vite/Laravel Mix (if used) and dark mode JS -->
-	{{-- @vite(['resources/sass/app.scss', 'resources/js/app.js']) --}}
-	{{-- NOTE: If you are using Vite, uncomment the line above and potentially remove the app.css/app.js links below.
+	{{-- @vite(['resources/sass/app.scss', 'resources/js/ui.js']) --}}
+	{{-- NOTE: If you are using Vite, uncomment the line above and potentially remove the app.css/ui.js links below.
 					 If you are NOT using Vite (just manually linking), keep the lines below.
-					 Make sure your build process compiles app.css and app.js to the public directory. --}}
+					 Make sure your build process compiles app.css and ui.js to the public directory. --}}
 
 </head>
 <body>
@@ -40,6 +40,6 @@
 <!-- Bootstrap Bundle JS (includes Popper) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 <!-- Custom JS (includes theme toggling logic) -->
-<script src="{{ asset('js/app.js') }}"></script>
+<script src="{{ asset('js/ui.js') }}"></script>
 </body>
 </html>
