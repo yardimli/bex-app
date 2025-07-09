@@ -1,10 +1,8 @@
-// resources/views/pages/chat.blade.php:
-
 @extends('layouts.app')
 
 @section('content')
-	{{-- MODIFIED: Added a full-height flex container to manage the layout, padding, and spacing. --}}
-	<div class="p-4 flex flex-col h-full gap-4">
+	{{-- MODIFIED: Adjusted padding and gap to be smaller on mobile (p-2, gap-2) and larger on medium screens and up (md:p-4, md:gap-4). --}}
+	<div class="p-2 md:p-4 flex flex-col h-full gap-2 md:gap-4">
 		{{-- MODIFIED: Replaced inline header with a reusable partial. --}}
 		@include('partials.page_header')
 		

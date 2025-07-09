@@ -15,10 +15,16 @@
 
 @guest
 	@if (Route::has('login'))
-		<a href="{{ route('login') }}" class="btn btn-ghost" title="Login">Login</a>
+		{{-- MODIFIED: Replaced text link with an icon button for Login. --}}
+		<a href="{{ route('login') }}" class="btn btn-ghost btn-circle" title="Login">
+			<i class="bi bi-box-arrow-in-right text-xl"></i>
+		</a>
 	@endif
 	@if (Route::has('register'))
-		<a href="{{ route('register') }}" class="btn btn-ghost" title="Register">Register</a>
+		{{-- MODIFIED: Replaced text link with an icon button for Register. --}}
+		<a href="{{ route('register') }}" class="btn btn-ghost btn-circle" title="Register">
+			<i class="bi bi-person-plus-fill text-xl"></i>
+		</a>
 	@endif
 @else
 	{{-- Logged in User Dropdown --}}
