@@ -3,45 +3,41 @@
 @extends('layouts.app')
 
 @section('content')
-    {{-- MODIFIED: Added a full-height flex container to manage the layout. --}}
     <div class="p-4 flex flex-col h-full gap-4">
-        {{-- MODIFIED: Included the shared page header. --}}
         @include('partials.page_header')
-        
-        {{-- MODIFIED: Wrapped original content in a flex-grow container for proper layout and scrolling. --}}
-        <div class="bg-base-100 rounded-box shadow-sm flex-grow p-4 overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h1 class="text-2xl font-bold">Messaging</h1>
-                <button class="btn btn-primary" id="compose-message-btn"><i class="bi bi-pencil-square me-1"></i> Compose Message</button>
-            </div>
-            
-            {{-- MODIFIED: Converted nav-tabs to DaisyUI tabs --}}
-            <div role="tablist" class="tabs tabs-lifted tabs-lg mb-4">
-                <input type="radio" name="inbox_tabs" role="tab" class="tab" id="inbox-tab-radio" aria-label="Inbox" checked />
-                <input type="radio" name="inbox_tabs" role="tab" class="tab" id="sent-tab-radio" aria-label="Sent" />
-            </div>
-            
-            <!-- MODIFIED: Filters converted from card to a styled div -->
-            <div class="p-4 bg-base-200 rounded-box flex flex-wrap items-center gap-4 mb-4">
-                <strong class="me-3">Filters:</strong>
-                <div class="form-control" id="unread-filter-container">
-                    <label class="label cursor-pointer gap-2">
-                        <span class="label-text">Unread Only</span>
-                        <input type="checkbox" id="unread-filter" class="checkbox checkbox-sm" />
-                    </label>
+
+        <div class="bg-base-100 rounded-box shadow-sm flex-grow p-4 flex flex-col min-h-0">
+            <div class="flex-shrink-0">
+                <div class="flex justify-between items-center mb-4">
+                    <h1 class="text-2xl font-bold">Messaging</h1>
+                    <button class="btn btn-primary" id="compose-message-btn"><i class="bi bi-pencil-square me-1"></i> Compose Message</button>
                 </div>
-                <div class="form-control" style="min-width: 250px;">
-                    <select id="team-filter" class="select select-bordered select-sm">
-                        <option value="">All Teams</option>
-                        @foreach($userTeams as $team)
-                            <option value="{{ $team->id }}">{{ $team->name }}</option>
-                        @endforeach
-                    </select>
+
+                <div role="tablist" class="tabs tabs-lifted tabs-lg mb-4">
+                    <input type="radio" name="inbox_tabs" role="tab" class="tab" id="inbox-tab-radio" aria-label="Inbox" checked />
+                    <input type="radio" name="inbox_tabs" role="tab" class="tab" id="sent-tab-radio" aria-label="Sent" />
+                </div>
+
+                <div class="p-4 bg-base-200 rounded-box flex flex-wrap items-center gap-4 mb-4">
+                    <strong class="me-3">Filters:</strong>
+                    <div class="form-control" id="unread-filter-container">
+                        <label class="label cursor-pointer gap-2">
+                            <span class="label-text">Unread Only</span>
+                            <input type="checkbox" id="unread-filter" class="checkbox checkbox-sm" />
+                        </label>
+                    </div>
+                    <div class="form-control" style="min-width: 250px;">
+                        <select id="team-filter" class="select select-bordered select-sm">
+                            <option value="">All Teams</option>
+                            @foreach($userTeams as $team)
+                                <option value="{{ $team->id }}">{{ $team->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
             </div>
-            
-            {{-- MODIFIED: Tab content structure for DaisyUI tabs --}}
-            <div class="tab-content-container">
+
+            <div class="tab-content-container flex-grow overflow-y-auto">
                 <!-- Inbox Pane -->
                 <div id="inbox-pane" class="space-y-2">
                     <div id="inbox-list">
@@ -50,7 +46,6 @@
                     </div>
                     <div id="inbox-pagination-links" class="mt-4 flex justify-center"></div>
                 </div>
-                
                 <!-- Sent Pane (initially hidden by JS logic) -->
                 <div id="sent-pane" class="space-y-2" style="display: none;">
                     <div id="sent-list">
@@ -61,8 +56,8 @@
             </div>
         </div>
     </div>
-    
-    <!-- MODIFIED: Message Detail Modal converted to DaisyUI <dialog> -->
+
+
     <dialog id="messageDetailModal" class="modal">
         <div class="modal-box w-11/12 max-w-3xl">
             <h3 class="font-bold text-lg" id="message-subject"></h3>
@@ -83,12 +78,11 @@
 @endsection
 
 @push('scripts')
-    {{-- MODIFIED: JS to handle tab visibility based on radio buttons --}}
     <script>
         $(document).ready(function() {
             const inboxPane = $('#inbox-pane');
             const sentPane = $('#sent-pane');
-            
+
             function togglePanes() {
                 if ($('#inbox-tab-radio').is(':checked')) {
                     inboxPane.show();
