@@ -1,7 +1,7 @@
 {{-- MODIFIED: Rewritten with DaisyUI dropdown component --}}
 <div class="dropdown">
-	{{-- MODIFIED: Added w-full for better layout in the sidebar; it will be constrained by its parent in the header. --}}
-	<div tabindex="0" role="button" class="btn btn-primary w-full">
+	{{-- MODIFIED: Added the optional $buttonClass variable. This allows it to be full-width in the sidebar but auto-width in the header. --}}
+	<div tabindex="0" role="button" class="btn btn-primary {{ $buttonClass ?? '' }}">
 		{{-- MODIFIED: Replaced ID with a class for multiple instance support --}}
 		<span class="selected-model-name btn-text">Smart Mode</span>
 		<i class="bi bi-chevron-down"></i>
