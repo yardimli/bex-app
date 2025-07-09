@@ -46,7 +46,6 @@ class ChatController extends Controller
 			}
 		}
 
-		$chatHeaders = $user->chatHeaders()->orderBy('updated_at', 'desc')->get();
 		$messages = $chatHeader ? $chatHeader->messages()->get() : collect();
 
 		$initialPrompt = null;
@@ -70,7 +69,6 @@ class ChatController extends Controller
 		}
 
 		return view('pages.chat', [
-			'chatHeaders' => $chatHeaders,
 			'activeChat' => $chatHeader,
 			'messages' => $messages,
 			'initialPrompt' => $initialPrompt,
