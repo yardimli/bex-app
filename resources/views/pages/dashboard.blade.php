@@ -14,11 +14,15 @@
 			
 			<div class="w-full max-w-3xl mx-auto mt-auto">
 				{{-- Action buttons --}}
-				<div class="flex flex-wrap justify-center gap-2 mb-4">
-					<button class="btn btn-sm btn-outline" id="meetingSummaryButton"><i class="bi bi-calendar-check"></i> Meeting Summary</button>
-					<button class="btn btn-sm btn-outline" id="actionItemsButton"><i class="bi bi-check2-square"></i> My Action Items</button>
-					<button class="btn btn-sm btn-outline" id="myNotesButton"><i class="bi bi-journal-text"></i> My Notes</button>
-					<button class="btn btn-sm btn-outline" id="myRecordingsButton"><i class="bi bi-mic"></i> My Recordings</button>
+				{{-- MODIFIED: Added a container with overflow-x-auto and a custom scrollbar-hide utility to allow horizontal dragging of buttons on small screens. --}}
+				<div class="overflow-x-auto pb-2 mb-2 scrollbar-hide">
+					{{-- MODIFIED: Changed to flex-nowrap to keep buttons on a single line. Added padding for scroll spacing and flex-shrink-0 to buttons. --}}
+					<div class="flex flex-nowrap justify-start md:justify-center gap-2 px-2">
+						<button class="btn btn-sm btn-outline flex-shrink-0" id="meetingSummaryButton"><i class="bi bi-calendar-check"></i> Meeting Summary</button>
+						<button class="btn btn-sm btn-outline flex-shrink-0" id="actionItemsButton"><i class="bi bi-check2-square"></i> My Action Items</button>
+						<button class="btn btn-sm btn-outline flex-shrink-0" id="myNotesButton"><i class="bi bi-journal-text"></i> My Notes</button>
+						<button class="btn btn-sm btn-outline flex-shrink-0" id="myRecordingsButton"><i class="bi bi-mic"></i> My Recordings</button>
+					</div>
 				</div>
 				
 				{{-- Prompt input form --}}

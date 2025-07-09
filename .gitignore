@@ -17,3 +17,7 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+/.scp
+php_errors.log
+composer.lock
+package-lock.json

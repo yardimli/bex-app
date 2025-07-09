@@ -1,3 +1,5 @@
+// resources/css/app.css:
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -33,4 +35,15 @@
 }
 ::-webkit-scrollbar-thumb:hover {
     @apply bg-neutral;
+}
+
+/* MODIFIED: Added utility to hide scrollbars for a cleaner horizontal scroll on touch devices */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+  }
 }
