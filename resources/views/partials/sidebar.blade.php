@@ -10,14 +10,20 @@
 		<i class="bi bi-plus-lg me-1"></i> New Chat
 	</a>
 	
+	{{-- MODIFIED: This container correctly shows the dropdown only on mobile screens. --}}
+	<div class="lg:hidden mb-3">
+		{{-- MODIFIED: Pass the 'w-full' class to the partial to make the button span the full width of the sidebar. --}}
+		@include('partials.dropdowns.mode_selector', ['buttonClass' => 'w-full'])
+	</div>
+	
 	<label class="input input-bordered flex items-center gap-2 mb-3">
 		<i class="bi bi-search"></i>
 		<input type="text" class="grow" placeholder="Search Chats" />
 	</label>
 	
 	<h2 class="menu-title">History</h2>
-	{{-- MODIFIED: Added id="chat-history-list" for easier JS targeting and "flex-nowrap" to prevent multi-column layout. --}}
-	<ul id="chat-history-list" class="menu flex-nowrap p-0 [&_li>*]:rounded-md mb-3 overflow-y-auto" style="max-height: calc(100vh - 350px);">
+	{{-- MODIFIED: Adjusted max-height to account for the new element on mobile. --}}
+	<ul id="chat-history-list" class="menu flex-nowrap p-0 [&_li>*]:rounded-md mb-3 overflow-y-auto" style="max-height: calc(100vh - 400px);">
 		@if(isset($chatHeaders) && $chatHeaders->isNotEmpty())
 			@foreach ($chatHeaders as $header)
 				<li>

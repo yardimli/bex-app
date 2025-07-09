@@ -1,3 +1,5 @@
+// public/js/ui.js:
+
 /**
  * BexApp Global Object
  * Provides shared functions for file management across the application.
@@ -119,82 +121,91 @@ $(document).ready(function () {
 	}
 
 	// --- Model Selector Dropdown Logic ---
-	// MODIFIED: Corrected selectors and refactored logic to handle model selection and UI updates properly.
-	const modeDropdownMenu = $('#mode-dropdown-menu');
-	const selectedModelNameSpan = $('#selected-model-name');
+	// MODIFIED: Logic refactored to support multiple dropdown instances (one in header, one in sidebar for mobile).
+	// It now uses class selectors instead of IDs to target and update all dropdowns simultaneously.
 
-	if (modeDropdownMenu.length) {
-		/**
-		 * Updates the dropdown's appearance (button text and active item).
-		 * @param {jQuery} selectedLi - The jQuery object for the selected list item.
-		 * @param {string} displayName - The text to display on the button.
-		 */
-		function updateDropdownSelection(selectedLi, displayName) {
-			if (selectedModelNameSpan.length) {
-				selectedModelNameSpan.text(displayName);
-			}
-			modeDropdownMenu.find('li').removeClass('bordered');
-			if (selectedLi && selectedLi.length) {
-				selectedLi.addClass('bordered');
-			}
-		}
+	/**
+	 * Updates the appearance of all model selector dropdowns.
+	 * @param {string|null} modelId - The model ID to mark as selected.
+	 * @param {string} displayName - The text to display on the dropdown buttons.
+	 */
+	function updateAllDropdowns(modelId, displayName) {
+		// Update the button text on all dropdowns.
+		$('.selected-model-name').text(displayName);
 
-		/**
-		 * Applies a model selection to the UI, typically on page load or after settings change.
-		 * It finds the first matching item in the dropdown for a given model ID.
-		 * @param {string} modelId - The ID of the model to apply.
-		 */
-		function applyModelToDropdown(modelId) {
-			// Find the first list item that matches the model ID.
-			const selectedLi = modeDropdownMenu.find(`li[data-model-id="${modelId}"]`).first();
-			let displayName = 'Smart Mode'; // Default display name.
-
-			if (selectedLi.length) {
-				const link = selectedLi.find('a');
-				// Use the specific display name from the found item, or its text.
-				displayName = link.data('display-name') || link.text().trim();
-				updateDropdownSelection(selectedLi, displayName);
-			} else {
-				// If the saved model isn't in the list, fall back to the hardcoded default.
-				const defaultLi = modeDropdownMenu.find(`li[data-model-id="${defaultModelId}"]`).first();
-				if (defaultLi.length) {
-					const link = defaultLi.find('a');
-					displayName = link.data('display-name') || link.text().trim();
-					updateDropdownSelection(defaultLi, displayName);
-				} else {
-					// If even the default is not found, just update the text.
-					updateDropdownSelection(null, displayName);
-					console.error("Default model item not found in dropdown!");
+		// Update the 'bordered' class on all dropdown menus.
+		$('.mode-dropdown-menu').each(function() {
+			const menu = $(this);
+			menu.find('li').removeClass('bordered');
+			if (modelId) {
+				const itemToSelect = menu.find(`li[data-model-id="${modelId}"]`).first();
+				if (itemToSelect.length) {
+					itemToSelect.addClass('bordered');
 				}
 			}
-		}
-
-		// Event listener for when a user clicks an item in the dropdown.
-		modeDropdownMenu.on('click', 'a', function (e) {
-			e.preventDefault();
-			const clickedLink = $(this);
-			const liParent = clickedLink.closest('li');
-			const selectedModelId = liParent.data('model-id');
-
-			if (selectedModelId) {
-				// Save the selected model ID to local storage.
-				localStorage.setItem('selectedLlmModel', selectedModelId);
-
-				// Get the display name directly from the clicked item.
-				const displayName = clickedLink.data('display-name') || clickedLink.text().trim();
-
-				// Update the UI to reflect the clicked item.
-				updateDropdownSelection(liParent, displayName);
-
-				// Close the dropdown by removing focus from the active element.
-				if (document.activeElement) document.activeElement.blur();
-			}
 		});
-
-		// On page load, apply the saved model or the default one.
-		const savedModel = localStorage.getItem('selectedLlmModel');
-		applyModelToDropdown(savedModel || defaultModelId);
 	}
+
+	/**
+	 * Applies a model selection to the UI, typically on page load or after settings change.
+	 * It finds the model info from the first available dropdown and applies it to all.
+	 * @param {string} modelId - The ID of the model to apply.
+	 */
+	function applyModelToAllDropdowns(modelId) {
+		let displayName = 'Smart Mode'; // Default display name.
+		let foundModelId = modelId;
+
+		// Find the first available dropdown menu to source the display name from.
+		const anyMenu = $('.mode-dropdown-menu').first();
+		if (!anyMenu.length) return; // Exit if no dropdowns are on the page.
+
+		const selectedLi = anyMenu.find(`li[data-model-id="${modelId}"]`).first();
+
+		if (selectedLi.length) {
+			const link = selectedLi.find('a');
+			displayName = link.data('display-name') || link.text().trim();
+		} else {
+			// If the saved model isn't in the list, fall back to the hardcoded default.
+			const defaultLi = anyMenu.find(`li[data-model-id="${defaultModelId}"]`).first();
+			if (defaultLi.length) {
+				const link = defaultLi.find('a');
+				displayName = link.data('display-name') || link.text().trim();
+				foundModelId = defaultModelId; // Use the default model ID for highlighting.
+			} else {
+				// If even the default is not found, just update the text.
+				console.error("Default model item not found in dropdown!");
+				foundModelId = null; // Nothing to highlight.
+			}
+		}
+		updateAllDropdowns(foundModelId, displayName);
+	}
+
+	// Event listener for when a user clicks an item in any model dropdown.
+	$('.mode-dropdown-menu').on('click', 'a', function (e) {
+		e.preventDefault();
+		const clickedLink = $(this);
+		const liParent = clickedLink.closest('li');
+		const selectedModelId = liParent.data('model-id');
+
+		if (selectedModelId) {
+			// Save the selected model ID to local storage.
+			localStorage.setItem('selectedLlmModel', selectedModelId);
+
+			// Get the display name directly from the clicked item.
+			const displayName = clickedLink.data('display-name') || clickedLink.text().trim();
+
+			// Update all dropdowns to reflect the new selection.
+			updateAllDropdowns(selectedModelId, displayName);
+
+			// Close the dropdown by removing focus from the active element.
+			if (document.activeElement) document.activeElement.blur();
+		}
+	});
+
+	// On page load, apply the saved model or the default one to all dropdowns.
+	const savedModel = localStorage.getItem('selectedLlmModel');
+	applyModelToAllDropdowns(savedModel || defaultModelId);
+
 
 	// --- Save Settings Logic ---
 	$('#saveSettingsButton').on('click', function () {
@@ -212,10 +223,8 @@ $(document).ready(function () {
 		localStorage.setItem('selectedPersonalityTone', selectedToneValue);
 		localStorage.setItem('selectedLlmModel', selectedDefaultModel);
 
-		// MODIFIED: Immediately update the model selector dropdown UI if it exists.
-		if (modeDropdownMenu.length) {
-			applyModelToDropdown(selectedDefaultModel);
-		}
+		// MODIFIED: Immediately update all model selector dropdowns with the new default.
+		applyModelToAllDropdowns(selectedDefaultModel);
 
 		settingsModal.close(); // MODIFIED: DaisyUI close method
 	});
