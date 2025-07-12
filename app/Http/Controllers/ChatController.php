@@ -5,6 +5,7 @@ use App\Helpers\MyHelper;
 // Import MyHelper
 use App\Models\ChatHeader;
 use App\Models\ChatMessage;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -529,4 +530,35 @@ class ChatController extends Controller
 			], 500);
 		}
 	}
+
+    public function indexHeaders(Request $request)
+    {
+        $user = Auth::user();
+        $chatHeaders = $user->chatHeaders()
+            ->select('id', 'title', 'updated_at') // Select only necessary fields
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        return response()->json($chatHeaders);
+    }
+
+    public function search(Request $request)
+    {
+        $request->validate([
+            'q' => 'required|string|min:2|max:100',
+        ]);
+
+        $user = Auth::user();
+        $searchTerm = $request->input('q');
+
+        $chatHeaders = $user->chatHeaders()
+            ->select('id', 'title', 'updated_at') // Select only necessary fields
+            ->whereHas('messages', function (Builder $query) use ($searchTerm) {
+                $query->where('content', 'LIKE', '%' . $searchTerm . '%');
+            })
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        return response()->json($chatHeaders);
+    }
 }

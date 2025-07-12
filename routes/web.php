@@ -66,6 +66,8 @@
 		Route::prefix('api')->name('api.')->group(function () {
 			// Chat API
 			Route::post('/chat', [ChatController::class, 'store'])->name('chat.store');
+            Route::get('/chat/headers', [ChatController::class, 'indexHeaders'])->name('chat.headers.index');
+            Route::get('/chat/search', [ChatController::class, 'search'])->name('chat.search');
 			Route::delete('/chat/messages/{userMessage}', [ChatController::class, 'destroyMessagePair'])
 				->where('userMessage', '[0-9]+')
 				->name('chat.messages.destroy');

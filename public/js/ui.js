@@ -369,6 +369,9 @@ $(document).ready(function () {
 					if (data.success) {
 						chatListItem.fadeOut(300, function () {
 							$(this).remove();
+                            if ($('#chat-history-list li:not(#no-chat-results, #no-chat-history)').length === 0) {
+                                $('#no-chat-history').show();
+                            }
 						});
 						if (window.location.pathname.includes(`/chat/${chatId}`)) {
 							window.location.href = '/chat';
@@ -385,6 +388,105 @@ $(document).ready(function () {
 			});
 		}
 	});
+
+    // --- Chat History Search ---
+    const chatSearchInput = $('#chat-search-input');
+    const chatHistoryList = $('#chat-history-list');
+    const chatHistoryLoader = $('#chat-history-loader');
+    const noChatResultsMsg = $('#no-chat-results');
+    const noChatHistoryMsg = $('#no-chat-history');
+    let searchDebounceTimer;
+
+    function renderChatHistoryList(headers) {
+        // Clear everything except the placeholder items
+        chatHistoryList.find('li:not(#chat-history-loader, #no-chat-history, #no-chat-results)').remove();
+        chatHistoryLoader.hide();
+        noChatHistoryMsg.hide();
+        noChatResultsMsg.hide();
+
+        if (!headers || headers.length === 0) {
+            // If the list is empty, determine if it's because of no history or no search results
+            if (chatSearchInput.val().trim().length > 0) {
+                noChatResultsMsg.show();
+            } else {
+                noChatHistoryMsg.show();
+            }
+            return;
+        }
+
+        // Get the current active chat ID from the URL, if present
+        const pathParts = window.location.pathname.split('/');
+        const activeChatId = (pathParts[1] === 'chat' && pathParts[2]) ? parseInt(pathParts[2], 10) : null;
+
+        headers.forEach(header => {
+            const safeTitle = $('<div>').text(header.title).html();
+            const truncatedTitle = safeTitle.length > 25 ? safeTitle.substring(0, 22) + '...' : safeTitle;
+            const isActive = header.id === activeChatId;
+
+            const newLinkHtml = `
+            <li>
+                <a href="/chat/${header.id}" id="chat-link-${header.id}" title="${safeTitle}" class="justify-between ${isActive ? 'active' : ''}">
+                    <span class="truncate">${truncatedTitle}</span>
+                    <button class="btn btn-ghost btn-xs btn-circle delete-chat-btn" data-chat-id="${header.id}">
+                        <i class="bi bi-trash text-error"></i>
+                    </button>
+                </a>
+            </li>`;
+            chatHistoryList.append(newLinkHtml);
+        });
+    }
+
+    function loadChatHistory(searchTerm = '') {
+        chatHistoryLoader.show();
+        noChatHistoryMsg.hide();
+        noChatResultsMsg.hide();
+        chatHistoryList.find('li:not(#chat-history-loader, #no-chat-history, #no-chat-results)').remove();
+
+        let url = '/api/chat/headers';
+        let data = {};
+
+        if (searchTerm.length > 0) {
+            url = '/api/chat/search';
+            data = { q: searchTerm };
+        }
+
+        $.ajax({
+            url: url,
+            method: 'GET',
+            data: data,
+            dataType: 'json',
+            success: function(response) {
+                renderChatHistoryList(response);
+            },
+            error: function() {
+                chatHistoryLoader.hide();
+                chatHistoryList.find('li:not(#chat-history-loader, #no-chat-history, #no-chat-results)').remove();
+                noChatHistoryMsg.show().find('span').text('Error loading history.');
+            }
+        });
+    }
+
+    if (chatSearchInput.length && chatHistoryList.length) {
+
+        const savedSearchTerm = sessionStorage.getItem('chatSearchTerm') || '';
+        chatSearchInput.val(savedSearchTerm);
+        // Initial load of chat history
+        loadChatHistory(savedSearchTerm);
+
+        // Event listener for the search input
+        chatSearchInput.on('keyup', function () {
+            clearTimeout(searchDebounceTimer);
+            const searchTerm = $(this).val().trim();
+
+            searchDebounceTimer = setTimeout(() => {
+                sessionStorage.setItem('chatSearchTerm', searchTerm);
+                // Only search if term is empty (to reload) or has 2+ characters
+                if (searchTerm.length === 0 || searchTerm.length >= 2) {
+                    loadChatHistory(searchTerm);
+                }
+            }, 400); // 400ms debounce delay
+        });
+    }
 
 	// --- Unread Message Count (Logic Unchanged) ---
 	function updateUnreadCountInNav() {
