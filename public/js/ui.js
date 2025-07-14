@@ -389,6 +389,95 @@ $(document).ready(function () {
 		}
 	});
 
+    // --- Chat History Deletion ---
+    // MODIFIED: Replaced window.confirm with a DaisyUI modal for a better user experience.
+    const confirmationModal = document.getElementById('confirmationModal');
+    const confirmationModalTitle = $('#confirmationModalTitle');
+    const confirmationModalText = $('#confirmationModalText');
+    const confirmationModalConfirm = $('#confirmationModalConfirm');
+    let itemToDelete = null; // To hold context for the confirmation handler
+
+    // When a delete button is clicked, set up and show the modal
+    $('#chat-history-list').on('click', '.delete-chat-btn', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const chatLinkElement = $(this).closest('a');
+        const chatListItem = chatLinkElement.closest('li');
+        const chatId = $(this).data('chat-id');
+        const chatTitle = chatLinkElement.attr('title') || `Chat ID ${chatId}`;
+
+        if (!chatId) {
+            alert('Error: Could not determine which chat to delete.');
+            return;
+        }
+
+        // Store context for the confirmation handler
+        itemToDelete = {
+            id: chatId,
+            element: chatListItem,
+            type: 'chat'
+        };
+
+        // Populate and show the modal
+        confirmationModalTitle.text('Delete Chat');
+        // Sanitize title before inserting into HTML
+        const safeChatTitle = $('<div>').text(chatTitle).html();
+        confirmationModalText.html(`Are you sure you want to delete the chat "<strong>${safeChatTitle}</strong>"?<br>This action cannot be undone.`);
+        if (confirmationModal) {
+            confirmationModal.showModal();
+        }
+    });
+
+    // When the confirm button in the modal is clicked, perform the deletion
+    if (confirmationModal) {
+        confirmationModalConfirm.on('click', function() {
+            // The modal form has method="dialog", so it will close automatically.
+            // We just need to perform the action.
+            if (!itemToDelete || itemToDelete.type !== 'chat') return;
+
+            const chatListItem = itemToDelete.element;
+            const chatId = itemToDelete.id;
+
+            chatListItem.css('opacity', '0.5');
+
+            $.ajax({
+                url: `/api/chat/headers/${chatId}`,
+                method: 'DELETE',
+                data: { _token: $('meta[name="csrf-token"]').attr('content') },
+                dataType: 'json',
+                success: function (data) {
+                    if (data.success) {
+                        chatListItem.fadeOut(300, function () {
+                            $(this).remove();
+                            if ($('#chat-history-list li:not(#no-chat-results, #no-chat-history)').length === 0) {
+                                $('#no-chat-history').show();
+                            }
+                        });
+                        if (window.location.pathname.includes(`/chat/${chatId}`)) {
+                            window.location.href = '/chat';
+                        }
+                    } else {
+                        alert(data.error || 'Could not delete chat.');
+                        chatListItem.css('opacity', '1');
+                    }
+                },
+                error: function () {
+                    alert('An error occurred while trying to delete the chat.');
+                    chatListItem.css('opacity', '1');
+                },
+                complete: function() {
+                    itemToDelete = null; // Reset after action
+                }
+            });
+        });
+
+        // Also clear the itemToDelete if the modal is closed via Cancel or ESC
+        confirmationModal.addEventListener('close', () => {
+            itemToDelete = null;
+        });
+    }
+
     // --- Chat History Search ---
     const chatSearchInput = $('#chat-search-input');
     const chatHistoryList = $('#chat-history-list');

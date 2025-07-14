@@ -17,7 +17,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
     <link rel="manifest" href="/images/site.webmanifest">
-    
+
     {{-- MODIFIED: Removed Bootstrap CSS, using Vite for Tailwind CSS --}}
     @vite('resources/css/app.css')
     @stack('styles')
@@ -52,6 +52,19 @@
 @include('partials.modals.compose_message')
 
 
+<dialog id="confirmationModal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg" id="confirmationModalTitle">Confirm Action</h3>
+        <p class="py-4" id="confirmationModalText">Are you sure you want to proceed?</p>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn btn-sm btn-ghost" id="confirmationModalCancel">Cancel</button>
+                <button class="btn btn-sm btn-error" id="confirmationModalConfirm">Confirm</button>
+            </form>
+        </div>
+    </div>
+</dialog>
+
 <!-- Attach File Modal -->
 <dialog id="attachFileModal" class="modal modal-bottom sm:modal-middle">
     <div class="modal-box">
@@ -61,7 +74,7 @@
             <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6">
                 <div id="attach-my-files-list" class="max-h-96 overflow-y-auto"></div>
             </div>
-            
+
             <input type="radio" name="attach_file_tabs" role="tab" class="tab" aria-label="Team Files" />
             <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6">
                 <div class="mb-3">
