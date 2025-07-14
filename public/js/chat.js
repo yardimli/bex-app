@@ -9,20 +9,20 @@ $(document).ready(function () {
 	const chatLoader = $('#chat-loader');
 	const chatTitleDisplay = $('#chat-title-display');
 	const sidebarMenu = $('#chat-history-list'); // MODIFIED: Target the specific chat history UL by its new ID for robustness.
-	
+
 	let currentAudio = null; // Variable to hold the current Audio object
 	let currentReadAloudButton = null; // Variable to hold the button associated with the current audio
-	
+
 	// NOTE: The model selector dropdown logic has been moved to the global ui.js
 	// to be shared across pages (like Dashboard and Chat).
-	
+
 	/**
 	 * Scrolls the chat history to the bottom.
 	 */
 	function scrollToBottom() {
 		chatHistoryArea.scrollTop(chatHistoryArea[0].scrollHeight);
 	}
-	
+
 	/**
 	 * Adds a message bubble to the chat interface using DaisyUI chat components.
 	 * @param {string} role - 'user' or 'assistant'.
@@ -36,7 +36,7 @@ $(document).ready(function () {
 		const escapedContentHtml = $('<div>').text(content).html().replace(/\n/g, '<br>');
 		const now = new Date();
 		const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-		
+
 		// MODIFIED: Generate HTML for attached files using DaisyUI badges
 		let filesHtml = '';
 		if (files && files.length > 0) {
@@ -52,14 +52,14 @@ $(document).ready(function () {
 			});
 			filesHtml += '</div>';
 		}
-		
+
 		// MODIFIED: Delete button with DaisyUI and Tailwind classes
 		const deleteButtonHtml = (isUser && canDelete)
 			? `<button class="btn btn-ghost btn-xs btn-circle absolute top-0 right-0 opacity-50 hover:opacity-100 delete-message-btn" title="Delete pair" data-message-id="${messageId}">
                    <i class="bi bi-trash3-fill"></i>
                </button>`
 			: '';
-		
+
 		// MODIFIED: Combined footer logic to prevent action buttons and timestamp from overlapping.
 		let footerHtml;
 		if (role === 'assistant') {
@@ -84,7 +84,7 @@ $(document).ready(function () {
                     <time class="text-xs">${timeString}</time>
                 </div>`;
 		}
-		
+
 		// MODIFIED: The entire bubble structure uses the DaisyUI 'chat' component
 		const bubbleHtml = `
             <div class="chat ${isUser ? 'chat-end' : 'chat-start'}" id="message-${messageId}" data-message-content="${escape(content)}">
@@ -95,10 +95,10 @@ $(document).ready(function () {
                 </div>
                 ${footerHtml}
             </div>`;
-		
+
 		chatHistoryArea.append(bubbleHtml);
 	}
-	
+
 	/**
 	 * Enables or disables the chat input field and send button.
 	 * @param {boolean} enabled - True to enable, false to disable.
@@ -113,7 +113,7 @@ $(document).ready(function () {
 			chatLoader.show();
 		}
 	}
-	
+
 	/**
 	 * Auto-resizes the textarea height based on its content.
 	 */
@@ -121,7 +121,7 @@ $(document).ready(function () {
 		messageInputField.css('height', 'auto'); // Reset height
 		let scrollHeight = messageInputField[0].scrollHeight;
 		messageInputField.css('height', scrollHeight + 'px');
-		
+
 		// Limit max height (e.g., 7 rows equivalent)
 		let maxHeight = parseFloat(messageInputField.css('line-height')) * 7;
 		if (scrollHeight > maxHeight) {
@@ -131,34 +131,44 @@ $(document).ready(function () {
 			messageInputField.css('overflow-y', 'hidden');
 		}
 	}
-	
+
 	messageInputField.on('input', autoResizeTextarea);
 	autoResizeTextarea(); // Initial resize
-	
+
 	// --- Handle Form Submission (Send Message) ---
 	chatInputForm.on('submit', function (e) {
 		e.preventDefault();
 		$('#empty-conversation').remove();
-		
+
 		const message = messageInputField.val().trim();
 		const chatHeaderId = chatHeaderIdInput.val();
 		const selectedModel = localStorage.getItem('selectedLlmModel') || 'openai/gpt-4o-mini';
 		const selectedTone = localStorage.getItem('selectedPersonalityTone') || 'professional';
 		const attachedFileIds = [...window.BexApp.attachedFiles.keys()];
-		
+
+        const attachedFilesForBubble = [];
+        window.BexApp.attachedFiles.forEach((file, id) => {
+            attachedFilesForBubble.push({
+                id: id,
+                original_filename: file.name
+            });
+        });
+
 		if (!message && attachedFileIds.length === 0) {
 			return;
 		};
-		
+
 		setInputEnabled(false);
-		
+
 		// Optimistically add user message
 		const tempUserMessageId = 'temp-user-' + Date.now();
-		addMessageBubble('user', message, tempUserMessageId, false);
+		addMessageBubble('user', message, tempUserMessageId, false, attachedFilesForBubble);
 		scrollToBottom();
 		messageInputField.val('');
 		autoResizeTextarea();
-		
+        window.BexApp.attachedFiles.clear();
+        window.BexApp.renderFilePills();
+
 		$.ajax({
 			url: '/api/chat',
 			method: 'POST',
@@ -176,16 +186,16 @@ $(document).ready(function () {
 					// Replace temporary user message with confirmed one
 					$('#message-' + tempUserMessageId).remove();
 					addMessageBubble(data.user_message.role, data.user_message.content, data.user_message.id, data.user_message.can_delete, data.user_message.files);
-					
+
 					// Add assistant message
 					addMessageBubble(data.assistant_message.role, data.assistant_message.content, data.assistant_message.id, data.assistant_message.can_delete);
-					
+
 					// Update chat header ID and URL if it was a new chat
 					if (data.is_new_chat && data.chat_header_id) {
 						chatHeaderIdInput.val(data.chat_header_id);
 						const newUrl = '/chat/' + data.chat_header_id;
 						history.pushState({chatId: data.chat_header_id}, '', newUrl);
-						
+
 						// Add new chat to sidebar menu
 						const newTitle = data.updated_title || 'Chat ' + data.chat_header_id;
 						// MODIFIED: Create new menu item for DaisyUI menu
@@ -208,7 +218,7 @@ $(document).ready(function () {
 						// Remove "no history" message if present
 						sidebarMenu.find('.text-base-content\\/60').parent().remove();
 					}
-					
+
 					// Update title if it changed
 					if (data.updated_title) {
 						chatTitleDisplay.text(data.updated_title.substring(0, 50));
@@ -218,7 +228,7 @@ $(document).ready(function () {
 							$('#chat-link-' + data.chat_header_id).attr('title', data.updated_title);
 						}
 					}
-					
+
 					scrollToBottom();
 				} else {
 					// Handle backend error
@@ -236,13 +246,10 @@ $(document).ready(function () {
 			},
 			complete: function () {
 				setInputEnabled(true);
-				// Clear attached files after sending
-				window.BexApp.attachedFiles.clear();
-				window.BexApp.renderFilePills();
 			}
 		});
 	});
-	
+
 	// --- Handle Enter Key in Textarea (Submit, allow Shift+Enter for newline) ---
 	messageInputField.on('keydown', function (e) {
 		if (e.key === 'Enter' && !e.shiftKey) {
@@ -250,8 +257,8 @@ $(document).ready(function () {
 			chatInputForm.submit(); // Trigger form submission
 		}
 	});
-	
-	
+
+
 	// --- Handle Delete Message Pair ---
 	chatHistoryArea.on('click', '.delete-message-btn', function () {
 		// MODIFIED: Use robust selectors for the new chat structure
@@ -259,16 +266,16 @@ $(document).ready(function () {
 		const userMessageId = $(this).data('message-id');
 		// Find the next assistant message bubble that follows the user bubble
 		const assistantMessageBubble = userMessageBubble.nextAll('.chat-start').first();
-		
+
 		if (!userMessageId) {
 			console.error("Could not find user message ID for deletion.");
 			return;
 		}
-		
+
 		if (!confirm('Are you sure you want to delete this message and its response?')) {
 			return;
 		}
-		
+
 		$.ajax({
 			url: `/api/chat/messages/${userMessageId}`,
 			method: 'DELETE',
@@ -294,13 +301,13 @@ $(document).ready(function () {
 			}
 		});
 	});
-	
-	
+
+
 	// --- Handle Copy Button ---
 	chatHistoryArea.on('click', '.copy-btn', function () {
 		const button = $(this);
 		const messageContent = unescape(button.closest('.chat').data('message-content'));
-		
+
 		navigator.clipboard.writeText(messageContent).then(() => {
 			const originalIcon = button.html();
 			button.html('<i class="bi bi-check-lg text-success"></i>'); // Show checkmark
@@ -312,25 +319,25 @@ $(document).ready(function () {
 			alert('Failed to copy text.');
 		});
 	});
-	
+
 	// --- Handle Read Aloud Button ---
 	// NOTE: The core logic for audio playback is unchanged.
 	chatHistoryArea.on('click', '.read-aloud-btn', function () {
 		const button = $(this);
 		const messageContent = unescape(button.closest('.chat').data('message-content'));
-		
+
 		if (currentAudio && currentReadAloudButton && currentReadAloudButton.is(button)) {
 			stopAudio();
 			return;
 		}
-		
+
 		if (currentAudio) {
 			stopAudio();
 		}
-		
+
 		setReadAloudLoading(button, true);
 		currentReadAloudButton = button;
-		
+
 		$.ajax({
 			url: '/api/chat/tts',
 			method: 'POST',
@@ -355,12 +362,12 @@ $(document).ready(function () {
 			}
 		});
 	});
-	
+
 	// --- Helper functions for Audio ---
 	function playAudio(url, button) {
 		setReadAloudLoading(button, false);
 		currentAudio = new Audio(url);
-		
+
 		currentAudio.oncanplaythrough = () => {
 			currentAudio.play();
 			button.find('i').removeClass('bi-play-circle').addClass('bi-pause-circle-fill');
@@ -373,7 +380,7 @@ $(document).ready(function () {
 			stopAudio();
 		};
 	}
-	
+
 	function stopAudio() {
 		if (currentAudio) {
 			currentAudio.pause();
@@ -384,7 +391,7 @@ $(document).ready(function () {
 			currentReadAloudButton = null;
 		}
 	}
-	
+
 	function setReadAloudLoading(button, isLoading) {
 		const spinner = button.find('.loading-spinner');
 		const icon = button.find('i');
@@ -398,20 +405,20 @@ $(document).ready(function () {
 			icon.show();
 		}
 	}
-	
+
 	function resetReadAloudButton(button) {
 		button.find('i').removeClass('bi-pause-circle-fill').addClass('bi-play-circle');
 		setReadAloudLoading(button, false);
 	}
 	// --- End Audio Helper Functions ---
-	
-	
+
+
 	// --- Initial Page Load ---
 	if (chatHistoryArea.children('.chat').length > 0) {
 		scrollToBottom();
 	}
-	
+
 	messageInputField.focus();
 	autoResizeTextarea();
-	
+
 }); // End document ready
