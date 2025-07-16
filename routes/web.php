@@ -10,6 +10,7 @@
 	use App\Http\Controllers\Auth\RegisterController;
 	use App\Http\Controllers\ChatController;
 	use App\Http\Controllers\FileController;
+    use App\Http\Controllers\GroupChatController;
 	use App\Http\Controllers\MessageController;
 	use App\Http\Controllers\ProfileController;
 	use App\Http\Controllers\TeamController;
@@ -54,6 +55,9 @@
 		Route::get('/chat/{chatHeaderId?}', [ChatController::class, 'show'])
 			->where('chatHeaderId', '[0-9]+')
 			->name('chat.show');
+        Route::get('/team/{team}/group-chat/{groupChatHeader?}', [GroupChatController::class, 'show'])
+            ->where(['team' => '[0-9]+', 'groupChatHeader' => '[0-9]+'])
+            ->name('group-chat.show');
 
 		// Form submission routes for profile
 		Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -75,6 +79,13 @@
 				->where('chatHeader', '[0-9]+')
 				->name('chat.headers.destroy');
 			Route::post('/chat/tts', [ChatController::class, 'textToSpeech'])->name('chat.tts');
+
+            // Group Chat API
+            Route::post('/group-chat/store', [GroupChatController::class, 'store'])->name('group-chat.store');
+            Route::get('/team/{team}/group-chats', [GroupChatController::class, 'indexHeaders'])->name('group-chat.headers.index')->where('team', '[0-9]+');
+            Route::get('/team/{team}/group-chats/search', [GroupChatController::class, 'search'])->name('group-chat.search')->where('team', '[0-9]+');
+            Route::delete('/group-chat/headers/{groupChatHeader}', [GroupChatController::class, 'destroyHeader'])->name('group-chat.headers.destroy')->where('groupChatHeader', '[0-9]+');
+            Route::delete('/group-chat/messages/{userMessage}', [GroupChatController::class, 'destroyMessagePair'])->name('group-chat.messages.destroy')->where('userMessage', '[0-9]+');
 
 			// Action Items API
 			Route::get('/action-items', [ActionItemController::class, 'index'])->name('action-items.index');

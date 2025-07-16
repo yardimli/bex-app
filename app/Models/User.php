@@ -90,4 +90,10 @@
             return $this->hasMany(File::class);
         }
 
-	}
+        public function createdGroupChats(): HasMany
+        {
+            return $this->hasMany(GroupChatHeader::class, 'creator_id')->orderBy('updated_at', 'desc');
+        }
+
+
+    }

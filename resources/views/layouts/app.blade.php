@@ -50,6 +50,8 @@
 @include('partials.modals.summarize_content')
 @include('partials.modals.transcribe')
 @include('partials.modals.compose_message')
+@include('partials.modals.new_chat_options')
+@include('partials.modals.group_chat_required')
 
 
 <dialog id="confirmationModal" class="modal">

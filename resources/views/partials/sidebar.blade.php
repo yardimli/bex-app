@@ -6,7 +6,7 @@
 		<a href="{{ route('dashboard') }}"><img src="/images/logo-bex_02-logo-bex-color.png" alt="Bex Logo" class="h-10"></a>
 	</div>
 
-	<a href="{{ route('chat.show') }}" class="btn btn-success w-full mb-3">
+	<a href="{{ route('chat.show') }}" id="new-chat-button" class="btn btn-success w-full mb-3">
 		<i class="bi bi-plus-lg me-1"></i> New Chat
 	</a>
 

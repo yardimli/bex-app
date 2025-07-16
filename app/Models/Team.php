@@ -36,6 +36,11 @@ class Team extends Model
         return $this->hasMany(Message::class);
     }
 
+    public function groupChats()
+    {
+        return $this->hasMany(GroupChatHeader::class)->orderBy('updated_at', 'desc');
+    }
+
     public function sharedFiles(): BelongsToMany
     {
         return $this->belongsToMany(File::class, 'file_teams')
@@ -43,4 +48,6 @@ class Team extends Model
             ->withTimestamps()
             ->withPivot('created_at'); // Keep this if you want to order by it
     }
+
+
 }

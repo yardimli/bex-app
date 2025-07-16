@@ -67,6 +67,33 @@ $(document).ready(function () {
 	const imagePreviewModal = document.getElementById('imagePreviewModal');
 	const pdfPreviewModal = document.getElementById('pdfPreviewModal');
 
+
+    $('#new-chat-button').on('click', function(e) {
+        e.preventDefault();
+        const newChatModal = document.getElementById('newChatOptionsModal');
+        if (newChatModal) {
+            newChatModal.showModal();
+        }
+    });
+
+    $('#start-group-chat-link').on('click', function(e) {
+        e.preventDefault();
+        const currentTeamId = $('meta[name="current-team-id"]').attr('content');
+
+        const newChatModal = document.getElementById('newChatOptionsModal');
+        if (newChatModal) newChatModal.close();
+
+        if (currentTeamId && currentTeamId !== '0') {
+            window.location.href = `/team/${currentTeamId}/group-chat`;
+        } else {
+            const requiredModal = document.getElementById('groupChatRequiredModal');
+            if (requiredModal) {
+                requiredModal.showModal();
+            }
+        }
+    });
+
+
 	// --- Theme Toggle Logic ---
 	// MODIFIED: Refactored to correctly work with DaisyUI's theme-controller component.
 	function initializeTheme() {
@@ -343,7 +370,6 @@ $(document).ready(function () {
 		});
 	});
 
-	// --- Chat History Deletion ---
 	// Logic is unchanged, but selectors target the new menu structure.
 	$('.sidebar .menu').on('click', '.delete-chat-btn', function (e) {
 		e.preventDefault();
@@ -390,7 +416,6 @@ $(document).ready(function () {
 	});
 
     // --- Chat History Deletion ---
-    // MODIFIED: Replaced window.confirm with a DaisyUI modal for a better user experience.
     const confirmationModal = document.getElementById('confirmationModal');
     const confirmationModalTitle = $('#confirmationModalTitle');
     const confirmationModalText = $('#confirmationModalText');
@@ -402,10 +427,12 @@ $(document).ready(function () {
         e.preventDefault();
         e.stopPropagation();
 
+        const button = $(this);
         const chatLinkElement = $(this).closest('a');
         const chatListItem = chatLinkElement.closest('li');
         const chatId = $(this).data('chat-id');
         const chatTitle = chatLinkElement.attr('title') || `Chat ID ${chatId}`;
+        const chatType = button.data('type') || 'personal';
 
         if (!chatId) {
             alert('Error: Could not determine which chat to delete.');
@@ -416,11 +443,11 @@ $(document).ready(function () {
         itemToDelete = {
             id: chatId,
             element: chatListItem,
-            type: 'chat'
+            type: chatType
         };
 
         // Populate and show the modal
-        confirmationModalTitle.text('Delete Chat');
+        confirmationModalTitle.text(`Delete ${chatType === 'group' ? 'Group' : 'Personal'} Chat`);
         // Sanitize title before inserting into HTML
         const safeChatTitle = $('<div>').text(chatTitle).html();
         confirmationModalText.html(`Are you sure you want to delete the chat "<strong>${safeChatTitle}</strong>"?<br>This action cannot be undone.`);
@@ -434,15 +461,22 @@ $(document).ready(function () {
         confirmationModalConfirm.on('click', function() {
             // The modal form has method="dialog", so it will close automatically.
             // We just need to perform the action.
-            if (!itemToDelete || itemToDelete.type !== 'chat') return;
+            if (!itemToDelete) return;
 
             const chatListItem = itemToDelete.element;
             const chatId = itemToDelete.id;
+            const apiUrl = itemToDelete.type === 'group'
+                ? `/api/group-chat/headers/${chatId}`
+                : `/api/chat/headers/${chatId}`;
+            const redirectUrl = itemToDelete.type === 'group'
+                ? `/team/${$('meta[name="current-team-id"]').attr('content')}/group-chat`
+                : '/chat';
+
 
             chatListItem.css('opacity', '0.5');
 
             $.ajax({
-                url: `/api/chat/headers/${chatId}`,
+                url: apiUrl,
                 method: 'DELETE',
                 data: { _token: $('meta[name="csrf-token"]').attr('content') },
                 dataType: 'json',
@@ -454,8 +488,8 @@ $(document).ready(function () {
                                 $('#no-chat-history').show();
                             }
                         });
-                        if (window.location.pathname.includes(`/chat/${chatId}`)) {
-                            window.location.href = '/chat';
+                        if (window.location.pathname.includes(`/${chatId}`)) {
+                            window.location.href = redirectUrl;
                         }
                     } else {
                         alert(data.error || 'Could not delete chat.');
@@ -505,18 +539,22 @@ $(document).ready(function () {
 
         // Get the current active chat ID from the URL, if present
         const pathParts = window.location.pathname.split('/');
-        const activeChatId = (pathParts[1] === 'chat' && pathParts[2]) ? parseInt(pathParts[2], 10) : null;
+        const activeChatId = pathParts.length > 2 ? parseInt(pathParts[pathParts.length - 1], 10) : null;
+        const currentTeamId = $('meta[name="current-team-id"]').attr('content');
+        const isTeamContext = currentTeamId && currentTeamId !== '0';
 
         headers.forEach(header => {
             const safeTitle = $('<div>').text(header.title).html();
             const truncatedTitle = safeTitle.length > 25 ? safeTitle.substring(0, 22) + '...' : safeTitle;
             const isActive = header.id === activeChatId;
+            const chatUrl = isTeamContext ? `/team/${currentTeamId}/group-chat/${header.id}` : `/chat/${header.id}`;
+            const deleteType = isTeamContext ? 'group' : 'personal';
 
             const newLinkHtml = `
             <li>
-                <a href="/chat/${header.id}" id="chat-link-${header.id}" title="${safeTitle}" class="justify-between ${isActive ? 'active' : ''}">
+                <a href="${chatUrl}" id="chat-link-${header.id}" title="${safeTitle}" class="justify-between ${isActive ? 'active' : ''}">
                     <span class="truncate">${truncatedTitle}</span>
-                    <button class="btn btn-ghost btn-xs btn-circle delete-chat-btn" data-chat-id="${header.id}">
+                    <button class="btn btn-ghost btn-xs btn-circle delete-chat-btn" data-chat-id="${header.id}" data-type="${deleteType}">
                         <i class="bi bi-trash text-error"></i>
                     </button>
                 </a>
@@ -531,12 +569,17 @@ $(document).ready(function () {
         noChatResultsMsg.hide();
         chatHistoryList.find('li:not(#chat-history-loader, #no-chat-history, #no-chat-results)').remove();
 
-        let url = '/api/chat/headers';
-        let data = {};
+        const currentTeamId = $('meta[name="current-team-id"]').attr('content');
+        let url, data = {};
 
-        if (searchTerm.length > 0) {
-            url = '/api/chat/search';
-            data = { q: searchTerm };
+        if (currentTeamId && currentTeamId !== '0') {
+            // Team context: load group chats
+            url = searchTerm ? `/api/team/${currentTeamId}/group-chats/search` : `/api/team/${currentTeamId}/group-chats`;
+            if (searchTerm) data.q = searchTerm;
+        } else {
+            // Personal context: load personal chats
+            url = searchTerm ? '/api/chat/search' : '/api/chat/headers';
+            if (searchTerm) data.q = searchTerm;
         }
 
         $.ajax({
