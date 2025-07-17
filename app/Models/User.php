@@ -8,6 +8,7 @@
 	use Illuminate\Notifications\Notifiable;
 	use Laravel\Sanctum\HasApiTokens;
 	use Illuminate\Database\Eloquent\Relations\HasMany;
+    use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 	use App\Models\ChatHeader;
 	use App\Models\ActionItem;
@@ -93,6 +94,11 @@
         public function createdGroupChats(): HasMany
         {
             return $this->hasMany(GroupChatHeader::class, 'creator_id')->orderBy('updated_at', 'desc');
+        }
+
+        public function groupChats(): BelongsToMany
+        {
+            return $this->belongsToMany(GroupChatHeader::class, 'group_chat_header_user')->orderBy('updated_at', 'desc');
         }
 
 

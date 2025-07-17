@@ -8,6 +8,7 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="current-team-id" content="{{ session('current_team_id') }}">
+    <meta name="current-user-id" content="{{ auth()->id() }}">
     <!-- Fonts & Icons -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
@@ -52,6 +53,7 @@
 @include('partials.modals.compose_message')
 @include('partials.modals.new_chat_options')
 @include('partials.modals.group_chat_required')
+@include('partials.modals.group_chat_setup')
 
 
 <dialog id="confirmationModal" class="modal">

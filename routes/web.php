@@ -81,6 +81,7 @@
 			Route::post('/chat/tts', [ChatController::class, 'textToSpeech'])->name('chat.tts');
 
             // Group Chat API
+            Route::post('/group-chat/setup', [GroupChatController::class, 'setup'])->name('group-chat.setup');
             Route::post('/group-chat/store', [GroupChatController::class, 'store'])->name('group-chat.store');
             Route::get('/team/{team}/group-chats', [GroupChatController::class, 'indexHeaders'])->name('group-chat.headers.index')->where('team', '[0-9]+');
             Route::get('/team/{team}/group-chats/search', [GroupChatController::class, 'search'])->name('group-chat.search')->where('team', '[0-9]+');

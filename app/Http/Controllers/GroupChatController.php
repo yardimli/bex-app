@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Validation\Rule;
 
 class GroupChatController extends Controller
 {
@@ -44,6 +45,45 @@ class GroupChatController extends Controller
         ]);
     }
 
+    public function setup(Request $request)
+    {
+        $validated = $request->validate([
+            'team_id' => 'required|integer|exists:teams,id',
+            'title' => 'required|string|max:255',
+            'participant_ids' => 'required|array|min:1',
+            'participant_ids.*' => [
+                'integer',
+                Rule::exists('team_members', 'user_id')->where(function ($query) use ($request) {
+                    return $query->where('team_id', $request->team_id);
+                }),
+            ],
+        ]);
+
+        $user = Auth::user();
+        $team = Team::findOrFail($validated['team_id']);
+
+        if (!$user->teams()->where('team_id', $team->id)->exists()) {
+            return response()->json(['error' => 'You are not a member of this team.'], 403);
+        }
+
+        $groupChatHeader = DB::transaction(function () use ($user, $team, $validated) {
+            $chat = $team->groupChats()->create([
+                'creator_id' => $user->id,
+                'title' => $validated['title'],
+            ]);
+
+            // Add the creator and the selected participants to the chat
+            $allParticipantIds = array_unique(array_merge($validated['participant_ids'], [$user->id]));
+            $chat->participants()->attach($allParticipantIds);
+
+            return $chat;
+        });
+
+        return response()->json([
+            'success' => true,
+            'redirect_url' => route('group-chat.show', ['team' => $team->id, 'groupChatHeader' => $groupChatHeader->id]),
+        ]);
+    }
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -164,38 +204,45 @@ class GroupChatController extends Controller
 
     public function indexHeaders(Request $request, Team $team)
     {
-        if (!Auth::user()->teams()->where('team_id', $team->id)->exists()) {
+        $user = Auth::user();
+        if (!$user->teams()->where('team_id', $team->id)->exists()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
-        $chatHeaders = $team->groupChats()->select('id', 'title', 'updated_at')->get();
+
+        $chatHeaders = $team->groupChats()
+            ->whereHas('participants', function ($query) use ($user) {
+                $query->where('users.id', $user->id);
+            })
+            ->select('id', 'title', 'updated_at')
+            ->get();
+
         return response()->json($chatHeaders);
     }
+
 
     public function search(Request $request, Team $team)
     {
         $request->validate(['q' => 'required|string|min:2|max:100']);
-        if (!Auth::user()->teams()->where('team_id', $team->id)->exists()) {
+        $user = Auth::user();
+        if (!$user->teams()->where('team_id', $team->id)->exists()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
         $searchTerm = $request->input('q');
         $chatHeaders = $team->groupChats()
-            ->select('id', 'title', 'updated_at')
-            ->whereHas('messages', function (Builder $query) use ($searchTerm) {
-                $query->where('content', 'LIKE', '%' . $searchTerm . '%');
+            ->whereHas('participants', function ($query) use ($user) {
+                $query->where('users.id', $user->id);
             })
+            ->where(function (Builder $query) use ($searchTerm) {
+                $query->where('title', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhereHas('messages', function (Builder $msgQuery) use ($searchTerm) {
+                        $msgQuery->where('content', 'LIKE', '%' . $searchTerm . '%');
+                    });
+            })
+            ->select('group_chat_headers.id', 'group_chat_headers.title', 'group_chat_headers.updated_at')
             ->orderBy('updated_at', 'desc')
             ->get();
-        return response()->json($chatHeaders);
-    }
 
-    public function destroyHeader(GroupChatHeader $groupChatHeader)
-    {
-        $user = Auth::user();
-        if (!$user->teams()->where('team_id', $groupChatHeader->team_id)->exists()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-        $groupChatHeader->delete();
-        return response()->json(['success' => true]);
+        return response()->json($chatHeaders);
     }
 
     public function destroyMessagePair(GroupChatMessage $userMessage)

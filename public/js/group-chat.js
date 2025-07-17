@@ -21,44 +21,41 @@ $(document).ready(function () {
         const isAssistant = role === 'assistant';
         const isCurrentUser = !isAssistant && user && user.id === currentUserId;
 
-        const alignment = isCurrentUser ? 'chat-end' : 'chat-start';
+        const alignment = isAssistant ? 'chat-start' : 'chat-end';
         const bubbleColor = isCurrentUser ? 'chat-bubble-primary' : '';
         const escapedContentHtml = $('<div>').text(content).html().replace(/\n/g, '<br>');
         const now = new Date();
         const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-
-        let headerHtml = '';
-        if (!isCurrentUser) {
-            const senderName = isAssistant ? 'Bex' : (user ? user.name : 'Unknown User');
-            headerHtml = `<div class="chat-header text-xs opacity-70 mb-1">${$('<div>').text(senderName).html()}</div>`;
-        }
 
         const deleteButtonHtml = (isCurrentUser && canDelete)
             ? `<button class="btn btn-ghost btn-xs btn-circle absolute top-0 right-0 opacity-50 hover:opacity-100 delete-message-btn" title="Delete pair" data-message-id="${messageId}">
                    <i class="bi bi-trash3-fill"></i>
                </button>`
             : '';
+        const senderName = isAssistant ? 'Bex' : (user ? user.name : 'Unknown User');
+        const escapedSenderName = $('<div>').text(senderName).html();
 
-        let footerHtml;
+        let assistantButtons = '';
         if (isAssistant) {
-            footerHtml = `
-                <div class="chat-footer opacity-50 flex items-center justify-between mt-1 w-full">
-                    <time class="text-xs">${timeString}</time>
-                    <div class="flex items-center gap-1">
-                        <button class="btn btn-ghost btn-xs copy-btn" title="Copy text"><i class="bi bi-clipboard"></i></button>
-                        <button class="btn btn-ghost btn-xs read-aloud-btn" title="Read aloud">
-                            <i class="bi bi-play-circle"></i>
-                            <span class="loading loading-spinner loading-xs" style="display: none;"></span>
-                        </button>
-                    </div>
-                </div>`;
-        } else {
-            footerHtml = `<div class="chat-footer opacity-50"><time class="text-xs">${timeString}</time></div>`;
+            assistantButtons = `
+                <button class="btn btn-ghost btn-xs copy-btn" title="Copy text"><i class="bi bi-clipboard"></i></button>
+                <button class="btn btn-ghost btn-xs read-aloud-btn" title="Read aloud">
+                    <i class="bi bi-play-circle"></i>
+                    <span class="loading loading-spinner loading-xs" style="display: none;"></span>
+                </button>
+            `;
         }
+
+        const footerHtml = `
+            <div class="chat-footer opacity-50 flex items-center gap-2 mt-1">
+                <span class="text-xs font-semibold">${escapedSenderName}</span>
+                <time class="text-xs">${timeString}</time>
+                <div class="flex-grow"></div>
+                ${assistantButtons}
+            </div>`;
 
         const bubbleHtml = `
             <div class="chat ${alignment}" id="message-${messageId}" data-message-content="${escape(content)}">
-                ${headerHtml}
                 <div class="chat-bubble ${bubbleColor} relative">
                     ${escapedContentHtml}
                     ${deleteButtonHtml}

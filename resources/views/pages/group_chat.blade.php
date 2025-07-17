@@ -14,17 +14,15 @@
                 @else
                     @foreach ($messages as $message)
                         @php
-                            $isCurrentUser = !$message->user_id ? false : ($message->user_id === auth()->id());
+
                             $isAssistant = $message->role === 'assistant';
-                            $alignment = $isCurrentUser ? 'chat-end' : 'chat-start';
+                            $isCurrentUser = !$isAssistant && $message->user_id === auth()->id();
+                            $alignment = $isAssistant ? 'chat-start' : 'chat-end';
+                            $bubbleColor = $isCurrentUser ? 'chat-bubble-primary' : '';
+                            $senderName = $isAssistant ? 'Bex' : ($message->user ? $message->user->name : 'Unknown User');
                         @endphp
                         <div class="chat {{ $alignment }}" id="message-{{ $message->id }}" data-message-content="{!! e($message->content) !!}">
-                            @if(!$isCurrentUser)
-                                <div class="chat-header text-xs opacity-70 mb-1">
-                                    {{ $isAssistant ? 'Bex' : ($message->user ? $message->user->name : 'Unknown') }}
-                                </div>
-                            @endif
-                            <div class="chat-bubble {{ $isCurrentUser ? 'chat-bubble-primary' : '' }} relative">
+                            <div class="chat-bubble {{ $bubbleColor }} relative">
                                 {!! nl2br(e($message->content)) !!}
                                 @if ($isCurrentUser)
                                     <button class="btn btn-ghost btn-xs btn-circle absolute top-0 right-0 opacity-50 hover:opacity-100 delete-message-btn" title="Delete pair" data-message-id="{{ $message->id }}">
@@ -32,8 +30,10 @@
                                     </button>
                                 @endif
                             </div>
-                            <div class="chat-footer opacity-50">
+                            <div class="chat-footer opacity-50 flex items-center gap-2 mt-1">
+                                <span class="text-xs font-semibold">{{ $senderName }}</span>
                                 <time class="text-xs">{{ $message->created_at->format('H:i') }}</time>
+                                <div class="flex-grow"></div>
                                 @if ($isAssistant)
                                     <button class="btn btn-ghost btn-xs copy-btn" title="Copy text" data-message-id="{{ $message->id }}"><i class="bi bi-clipboard"></i></button>
                                     <button class="btn btn-ghost btn-xs read-aloud-btn" title="Read aloud" data-message-id="{{ $message->id }}">

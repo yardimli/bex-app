@@ -66,6 +66,7 @@ $(document).ready(function () {
 	const settingsModal = document.getElementById('settingsModal');
 	const imagePreviewModal = document.getElementById('imagePreviewModal');
 	const pdfPreviewModal = document.getElementById('pdfPreviewModal');
+    const groupChatSetupModal = document.getElementById('groupChatSetupModal');
 
 
     $('#new-chat-button').on('click', function(e) {
@@ -79,18 +80,86 @@ $(document).ready(function () {
     $('#start-group-chat-link').on('click', function(e) {
         e.preventDefault();
         const currentTeamId = $('meta[name="current-team-id"]').attr('content');
+        const currentUserId = parseInt($('meta[name="current-user-id"]').attr('content'), 10);
 
         const newChatModal = document.getElementById('newChatOptionsModal');
         if (newChatModal) newChatModal.close();
 
         if (currentTeamId && currentTeamId !== '0') {
-            window.location.href = `/team/${currentTeamId}/group-chat`;
+            // Team context: fetch members and show setup modal
+            const participantList = $('#group-chat-participant-list');
+            participantList.html('<div class="text-center"><span class="loading loading-spinner"></span></div>');
+            if (groupChatSetupModal) groupChatSetupModal.showModal();
+
+            $.get(`/api/teams/${currentTeamId}/members`, function(members) {
+                participantList.empty();
+                if (members && members.length > 1) {
+                    members.forEach(member => {
+                        // Don't let users select themselves
+                        if (member.id === currentUserId) return;
+
+                        const safeName = $('<div>').text(member.name).html();
+                        participantList.append(`
+                            <label class="label cursor-pointer hover:bg-base-200 rounded-lg p-2">
+                                <span class="label-text">${safeName}</span>
+                                <input type="checkbox" value="${member.id}" class="checkbox checkbox-primary participant-checkbox" />
+                            </label>
+                        `);
+                    });
+                } else {
+                    participantList.html('<p class="text-base-content/60 p-3 text-center">No other members in this team to start a chat with.</p>');
+                }
+            });
         } else {
             const requiredModal = document.getElementById('groupChatRequiredModal');
             if (requiredModal) {
                 requiredModal.showModal();
             }
         }
+    });
+
+    $('#create-group-chat-btn').on('click', function() {
+        const button = $(this);
+        const title = $('#group-chat-title').val().trim();
+        const participant_ids = $('.participant-checkbox:checked').map(function() {
+            return $(this).val();
+        }).get();
+        const team_id = $('meta[name="current-team-id"]').attr('content');
+
+        if (!title) {
+            alert('Please enter a name for the chat.');
+            return;
+        }
+        if (participant_ids.length === 0) {
+            alert('Please select at least one other participant.');
+            return;
+        }
+
+        button.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span> Creating...');
+
+        $.ajax({
+            url: '/api/group-chat/setup',
+            method: 'POST',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                team_id: team_id,
+                title: title,
+                participant_ids: participant_ids
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    window.location.href = response.redirect_url;
+                } else {
+                    alert(response.error || 'Failed to create group chat.');
+                    button.prop('disabled', false).html('Create Chat');
+                }
+            },
+            error: function(jqXHR) {
+                alert(jqXHR.responseJSON?.error || 'An unknown error occurred.');
+                button.prop('disabled', false).html('Create Chat');
+            }
+        });
     });
 
 
