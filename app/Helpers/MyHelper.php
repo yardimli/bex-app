@@ -909,4 +909,64 @@ PROMPT;
 				throw $e; // Re-throw
 			}
 		}
+
+
+        public static function shouldAiReplyInGroupChat(array $chatMessages, ?string $model = null): bool
+        {
+            if (empty($chatMessages)) {
+                return false; // No messages, no reply
+            }
+
+            // Use a fast and cheap model for this decision
+            $modelToUse = $model ?: env('ACTION_ITEM_LLM', 'openai/gpt-4o-mini');
+            $systemPrompt = <<<PROMPT
+You are a strict AI moderator for a group chat. Your primary goal is to prevent the AI assistant "Bex" from interrupting human-to-human conversations.
+Your task is to analyze ONLY the last message in the provided history and decide if Bex should reply.
+
+**RULES:**
+1.  **Default to `false`:** By default, you must return `{"should_reply": false}`. Only return `true` if one of the specific conditions below is met.
+2.  **REPLY (`true`) Conditions:**
+    - The last message explicitly mentions "Bex" by name (e.g., "Hey Bex", "@Bex", "Bex, can you...").
+    - The last message is a direct question for factual information that is not directed at a specific person (e.g., "What is the capital of France?").
+3.  **DO NOT REPLY (`false`) Conditions:**
+    - The message is a question to a specific person (e.g., "What's your opinion Dobby?").
+    - The message is a general question to the group (e.g., "What do you guys think?", "How is everyone doing?").
+    - The message is a simple statement, agreement, or social comment (e.g., "I agree.", "lol", "Thanks!", "That's a good point.", "ok").
+    - Any message that is clearly part of an ongoing conversation between users.
+
+**Final Instruction:** If there is any doubt, the answer is `false`. It is better to miss a potential reply than to interrupt unnecessarily.
+
+Respond ONLY with a valid JSON object with a single key "should_reply" which is a boolean (true or false).
+PROMPT;
+
+            // The controller will prepare the messages with user prefixes.
+            Log::info("Checking if AI should reply in group chat.", ['model' => $modelToUse]);
+
+            $llmResult = self::llm_no_tool_call(
+                $modelToUse,
+                $systemPrompt,
+                $chatMessages,
+                true, // Expect JSON response
+                1 // Max retries
+            );
+
+            if (isset($llmResult['error'])) {
+                Log::error("LLM call to decide on group chat reply failed.", [
+                    'error' => $llmResult['error'],
+                    'details' => $llmResult['details'] ?? null,
+                ]);
+                // Fail safe: if the check fails, assume we should not reply to avoid spamming.
+                return false;
+            }
+
+            if (isset($llmResult['should_reply']) && is_bool($llmResult['should_reply'])) {
+                Log::info("AI reply decision: " . ($llmResult['should_reply'] ? 'Yes' : 'No'));
+                return $llmResult['should_reply'];
+            }
+
+            Log::warning("Could not determine AI reply status from LLM response.", ['response' => $llmResult]);
+            // Default to false if the response is malformed.
+            return false;
+        }
+
 	}

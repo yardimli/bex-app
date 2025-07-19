@@ -122,14 +122,15 @@ $(document).ready(function () {
                 message: message,
                 team_id: teamId,
                 group_chat_header_id: groupChatHeaderId || null,
-                llm_model: selectedModel,
             },
             dataType: 'json',
             success: function (data) {
                 if (data.success) {
                     $('#message-' + tempUserMessageId).remove();
                     addMessageBubble(data.user_message.role, data.user_message.content, data.user_message.id, data.user_message.user, true);
-                    addMessageBubble(data.assistant_message.role, data.assistant_message.content, data.assistant_message.id, null, false);
+                    if (data.assistant_message) {
+                        addMessageBubble(data.assistant_message.role, data.assistant_message.content, data.assistant_message.id, null, false);
+                    }
 
                     if (data.is_new_chat && data.group_chat_header_id) {
                         groupChatHeaderIdInput.val(data.group_chat_header_id);

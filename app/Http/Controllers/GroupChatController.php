@@ -57,6 +57,7 @@ class GroupChatController extends Controller
                     return $query->where('team_id', $request->team_id);
                 }),
             ],
+            'llm_model' => 'nullable|string|max:100', // Add validation for llm_model
         ]);
 
         $user = Auth::user();
@@ -70,6 +71,7 @@ class GroupChatController extends Controller
             $chat = $team->groupChats()->create([
                 'creator_id' => $user->id,
                 'title' => $validated['title'],
+                'llm_model' => $validated['llm_model'] ?? env('DEFAULT_LLM'),
             ]);
 
             // Add the creator and the selected participants to the chat
@@ -90,7 +92,6 @@ class GroupChatController extends Controller
             'message' => 'required|string|max:60000',
             'team_id' => 'required|integer|exists:teams,id',
             'group_chat_header_id' => 'nullable|integer|exists:group_chat_headers,id',
-            'llm_model' => 'nullable|string|max:100',
         ]);
 
         $user = Auth::user();
@@ -102,7 +103,6 @@ class GroupChatController extends Controller
 
         $userPrompt = $validated['message'];
         $groupChatHeaderId = $validated['group_chat_header_id'];
-        $selectedModel = $validated['llm_model'];
         $groupChatHeader = null;
         $isNewChat = false;
 
@@ -115,7 +115,9 @@ class GroupChatController extends Controller
                 $groupChatHeader = $team->groupChats()->create([
                     'creator_id' => $user->id,
                     'title' => 'New Group Chat',
+                    'llm_model' => env('DEFAULT_LLM', 'openai/gpt-4o-mini'),
                 ]);
+                $groupChatHeader->participants()->attach($user->id);
                 $groupChatHeaderId = $groupChatHeader->id;
                 $isNewChat = true;
             }
@@ -142,30 +144,29 @@ class GroupChatController extends Controller
                 }
             }
 
-            $systemPrompt = "You are Bex, an AI assistant in a group chat. Be helpful and address users by name if appropriate. The user messages are prefixed with their name.";
-            $modelToUse = $selectedModel ?: env('DEFAULT_LLM', 'openai/gpt-4o-mini');
-
-            $llmResult = MyHelper::llm_no_tool_call($modelToUse, $systemPrompt, $llmChatMessages, false);
-
-            $assistantMessageContent = "Sorry, I couldn't get a response. Please try again.";
+            $shouldReply = MyHelper::shouldAiReplyInGroupChat($llmChatMessages, $groupChatHeader->llm_model);
             $assistantMessage = null;
 
-            if (isset($llmResult['content']) && !str_starts_with($llmResult['content'], 'Error:')) {
-                $userMessage->prompt_tokens = $llmResult['prompt_tokens'] ?? 0;
-                $userMessage->save();
+            if ($shouldReply) {
+                Log::info("AI will reply in group chat {$groupChatHeaderId}.");
+                $systemPrompt = "You are Bex, an AI assistant in a group chat. Be helpful and address users by name if appropriate. The user messages are prefixed with their name.";
+                $modelToUse = $groupChatHeader->llm_model ?: env('DEFAULT_LLM', 'openai/gpt-4o-mini');
+                $llmResult = MyHelper::llm_no_tool_call($modelToUse, $systemPrompt, $llmChatMessages, false);
 
-                $assistantMessageContent = $llmResult['content'];
-                $assistantMessage = $groupChatHeader->messages()->create([
-                    'user_id' => null,
-                    'role' => 'assistant',
-                    'content' => $assistantMessageContent,
-                    'completion_tokens' => $llmResult['completion_tokens'] ?? 0,
-                ]);
+                if (isset($llmResult['content']) && !str_starts_with($llmResult['content'], 'Error:')) {
+                    $userMessage->prompt_tokens = $llmResult['prompt_tokens'] ?? 0;
+                    $userMessage->save();
+                    $assistantMessage = $groupChatHeader->messages()->create([
+                        'user_id' => null,
+                        'role' => 'assistant',
+                        'content' => $llmResult['content'],
+                        'completion_tokens' => $llmResult['completion_tokens'] ?? 0,
+                    ]);
+                } else {
+                    Log::error("Group Chat LLM call failed", ['result' => $llmResult, 'group_chat_header_id' => $groupChatHeaderId]);
+                }
             } else {
-                Log::error("Group Chat LLM call failed", ['result' => $llmResult, 'group_chat_header_id' => $groupChatHeaderId]);
-                $assistantMessage = $groupChatHeader->messages()->create([
-                    'role' => 'assistant', 'content' => $assistantMessageContent, 'completion_tokens' => 0,
-                ]);
+                Log::info("AI will not reply in group chat {$groupChatHeaderId}.");
             }
 
             $updatedTitle = null;
@@ -189,7 +190,7 @@ class GroupChatController extends Controller
             return response()->json([
                 'success' => true,
                 'user_message' => $userMessage->load('user'),
-                'assistant_message' => $assistantMessage->load('user'), // user will be null
+                'assistant_message' => $assistantMessage ? $assistantMessage->load('user') : null,
                 'group_chat_header_id' => $groupChatHeaderId,
                 'is_new_chat' => $isNewChat,
                 'updated_title' => $updatedTitle,
