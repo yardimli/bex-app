@@ -274,4 +274,25 @@ class GroupChatController extends Controller
             return response()->json(['error' => 'Could not delete messages.'], 500);
         }
     }
+    public function destroyHeader(GroupChatHeader $groupChatHeader)
+    {
+        $user = Auth::user();
+
+        // Authorization: User must be a member of the team that owns the chat.
+        if (!$user->teams()->where('team_id', $groupChatHeader->team_id)->exists()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        DB::beginTransaction();
+        try {
+            // The GroupChatHeader model's 'deleting' event will handle deleting messages.
+            $groupChatHeader->delete();
+            DB::commit();
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error deleting group chat header: " . $e->getMessage(), ['group_chat_header_id' => $groupChatHeader->id]);
+            return response()->json(['error' => 'Could not delete chat.'], 500);
+        }
+    }
 }
