@@ -917,35 +917,46 @@ PROMPT;
                 return false; // No messages, no reply
             }
 
-            // Use a fast and cheap model for this decision
+
+            $lastMessage = end($chatMessages);
+            // Ensure we are only checking the last message from a user.
+            if ($lastMessage && $lastMessage['role'] === 'user' && isset($lastMessage['content'])) {
+                // Use a regular expression to match "Bex" as a whole word, case-insensitively.
+                if (preg_match('/\bbex\b/i', $lastMessage['content'])) {
+                    Log::info("AI reply decision: Yes (Programmatic check: name 'bex' was found as a whole word)");
+                    return true;
+                }
+            }
+
+            $lastUserMessageForLlm = end($chatMessages);
+
+            if (!$lastUserMessageForLlm || $lastUserMessageForLlm['role'] !== 'user') {
+                Log::info("AI will not reply. Last message was not from a user.");
+                return false;
+            }
+
             $modelToUse = $model ?: env('ACTION_ITEM_LLM', 'openai/gpt-4o-mini');
             $systemPrompt = <<<PROMPT
-You are a strict AI moderator for a group chat. Your primary goal is to prevent the AI assistant "Bex" from interrupting human-to-human conversations.
-Your task is to analyze ONLY the last message in the provided history and decide if Bex should reply.
+You are an AI assistant named Bex. Your task is to analyze a SINGLE user message from a group chat and decide if you should reply. You should only reply if the user is calling you by : @Bex or hey, Bex (no case sensitive).
 
-**RULES:**
-1.  **Default to `false`:** By default, you must return `{"should_reply": false}`. Only return `true` if one of the specific conditions below is met.
-2.  **REPLY (`true`) Conditions:**
-    - The last message explicitly mentions "Bex" by name (e.g., "Hey Bex", "@Bex", "Bex, can you...").
-    - The last message is a direct question for factual information that is not directed at a specific person (e.g., "What is the capital of France?").
-3.  **DO NOT REPLY (`false`) Conditions:**
-    - The message is a question to a specific person (e.g., "What's your opinion Dobby?").
-    - The message is a general question to the group (e.g., "What do you guys think?", "How is everyone doing?").
-    - The message is a simple statement, agreement, or social comment (e.g., "I agree.", "lol", "Thanks!", "That's a good point.", "ok").
-    - Any message that is clearly part of an ongoing conversation between users.
+**Output Format:**
+You MUST respond with ONLY a valid JSON object. Do not include any other text or explanations.
+{
+  "should_reply": boolean,
+  "reasoning": "A brief explanation for your decision. Example: 'The user asked a general question to the group.'"
+}
 
-**Final Instruction:** If there is any doubt, the answer is `false`. It is better to miss a potential reply than to interrupt unnecessarily.
-
-Respond ONLY with a valid JSON object with a single key "should_reply" which is a boolean (true or false).
+Now, analyze the following SINGLE message and provide your JSON response.
 PROMPT;
 
-            // The controller will prepare the messages with user prefixes.
-            Log::info("Checking if AI should reply in group chat.", ['model' => $modelToUse]);
+            Log::info("Checking if AI should reply via LLM (name was not found).", ['model' => $modelToUse]);
+
+            $relevantMessages = [$lastUserMessageForLlm];
 
             $llmResult = self::llm_no_tool_call(
                 $modelToUse,
                 $systemPrompt,
-                $chatMessages,
+                $relevantMessages, 
                 true, // Expect JSON response
                 1 // Max retries
             );
@@ -955,18 +966,18 @@ PROMPT;
                     'error' => $llmResult['error'],
                     'details' => $llmResult['details'] ?? null,
                 ]);
-                // Fail safe: if the check fails, assume we should not reply to avoid spamming.
                 return false;
             }
 
             if (isset($llmResult['should_reply']) && is_bool($llmResult['should_reply'])) {
-                Log::info("AI reply decision: " . ($llmResult['should_reply'] ? 'Yes' : 'No'));
+                $reasoning = $llmResult['reasoning'] ?? 'No reasoning provided by LLM.';
+                Log::info("AI reply decision: " . ($llmResult['should_reply'] ? 'Yes' : 'No') . ". Reasoning: " . $reasoning);
                 return $llmResult['should_reply'];
             }
 
-            Log::warning("Could not determine AI reply status from LLM response.", ['response' => $llmResult]);
-            // Default to false if the response is malformed.
+            Log::warning("Could not determine AI reply status from LLM response. The 'should_reply' key was missing or not a boolean.", ['response' => $llmResult]);
             return false;
         }
+
 
 	}

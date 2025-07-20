@@ -136,6 +136,9 @@ class GroupChatController extends Controller
 
             $llmChatMessages = [];
             foreach ($historyMessages as $message) {
+                if ($message->id === $userMessage->id) {
+                    continue;
+                }
                 if ($message->role === 'assistant') {
                     $llmChatMessages[] = ['role' => 'assistant', 'content' => $message->content];
                 } else {
@@ -143,6 +146,11 @@ class GroupChatController extends Controller
                     $llmChatMessages[] = ['role' => 'user', 'content' => "{$userName}: {$message->content}"];
                 }
             }
+
+            $llmChatMessages[] = [
+                'role' => 'user',
+                'content' => "{$user->name}: {$userPrompt}"
+            ];
 
             $shouldReply = MyHelper::shouldAiReplyInGroupChat($llmChatMessages, $groupChatHeader->llm_model);
             $assistantMessage = null;
