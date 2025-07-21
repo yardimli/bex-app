@@ -71,12 +71,13 @@
 
 <!-- Attach File Modal -->
 <dialog id="attachFileModal" class="modal modal-bottom sm:modal-middle">
-    <div class="modal-box">
+    <div class="modal-box flex flex-col max-h-[85vh]">
+        <div class="flex-grow min-h-0 overflow-y-auto">
         <h3 class="font-bold text-lg">Attach Files to Chat</h3>
         <div role="tablist" class="tabs tabs-lifted mt-4">
             <input type="radio" name="attach_file_tabs" role="tab" class="tab" aria-label="My Files" checked />
             <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6">
-                <div id="attach-my-files-list" class="max-h-96 overflow-y-auto"></div>
+                <div id="attach-my-files-list"></div>
             </div>
 
             <input type="radio" name="attach_file_tabs" role="tab" class="tab" aria-label="Team Files" />
@@ -84,10 +85,11 @@
                 <div class="mb-3">
                     <select id="attach-team-select-filter" class="select select-bordered select-sm w-full max-w-xs"></select>
                 </div>
-                <div id="attach-team-files-list" class="max-h-96 overflow-y-auto"></div>
+                <div id="attach-team-files-list"></div>
             </div>
         </div>
-        <div class="modal-action">
+    </div>
+        <div class="modal-action flex-shrink-0 pt-4">
             <form method="dialog">
                 <button class="btn btn-sm btn-ghost">Cancel</button>
                 <button class="btn btn-sm btn-primary" id="confirm-attach-files-btn">Attach Selected</button>
