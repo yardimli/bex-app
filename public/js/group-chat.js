@@ -17,7 +17,7 @@ $(document).ready(function () {
         chatHistoryArea.scrollTop(chatHistoryArea[0].scrollHeight);
     }
 
-    function addMessageBubble(role, content, messageId, user = null, canDelete = false) {
+    function addMessageBubble(role, content, messageId, user = null, canDelete = false, files = []) {
         const isAssistant = role === 'assistant';
         const isCurrentUser = !isAssistant && user && user.id === currentUserId;
 
@@ -26,6 +26,20 @@ $(document).ready(function () {
         const escapedContentHtml = $('<div>').text(content).html().replace(/\n/g, '<br>');
         const now = new Date();
         const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        let filesHtml = '';
+
+        if (files && files.length > 0) {
+            filesHtml += '<div class="flex flex-wrap gap-2 mb-2">';
+            files.forEach(file => {
+                const safeFileName = $('<div>').text(file.original_filename).html();
+                const truncatedName = safeFileName.length > 25 ? safeFileName.substring(0, 22) + '...' : safeFileName;
+                filesHtml += `
+                <a href="/api/files/${file.id}/download" class="badge badge-outline" title="Download ${safeFileName}">
+                    <i class="bi bi-file-earmark-arrow-down me-1"></i> ${truncatedName}
+                </a>`;
+            });
+            filesHtml += '</div>';
+        }
 
         const deleteButtonHtml = (isCurrentUser && canDelete)
             ? `<button class="btn btn-ghost btn-xs btn-circle absolute top-0 right-0 opacity-50 hover:opacity-100 delete-message-btn" title="Delete pair" data-message-id="${messageId}">
@@ -99,8 +113,15 @@ $(document).ready(function () {
         $('#empty-conversation').remove();
 
         const message = messageInputField.val().trim();
-        if (!message) return;
+        const attachedFileIds = [...window.BexApp.attachedFiles.keys()];
+        const attachedFilesForBubble = [];
+        window.BexApp.attachedFiles.forEach((file, id) => {
+            attachedFilesForBubble.push({ id: id, original_filename: file.name });
+        });
 
+        if (!message && attachedFileIds.length === 0) {
+            return;
+        };
         const groupChatHeaderId = groupChatHeaderIdInput.val();
         const teamId = teamIdInput.val();
         const selectedModel = localStorage.getItem('selectedLlmModel') || 'openai/gpt-4o-mini';
@@ -109,10 +130,12 @@ $(document).ready(function () {
 
         const tempUserMessageId = 'temp-user-' + Date.now();
         // Optimistically add user message
-        addMessageBubble('user', message, tempUserMessageId, { id: currentUserId, name: 'You' }, false);
+        addMessageBubble('user', message, tempUserMessageId, { id: currentUserId, name: 'You' }, false, attachedFilesForBubble);
         scrollToBottom();
         messageInputField.val('');
         autoResizeTextarea();
+        window.BexApp.attachedFiles.clear();
+        window.BexApp.renderFilePills();
 
         $.ajax({
             url: '/api/group-chat/store',
@@ -122,12 +145,13 @@ $(document).ready(function () {
                 message: message,
                 team_id: teamId,
                 group_chat_header_id: groupChatHeaderId || null,
+                attached_files: attachedFileIds,
             },
             dataType: 'json',
             success: function (data) {
                 if (data.success) {
                     $('#message-' + tempUserMessageId).remove();
-                    addMessageBubble(data.user_message.role, data.user_message.content, data.user_message.id, data.user_message.user, true);
+                    addMessageBubble(data.user_message.role, data.user_message.content, data.user_message.id, data.user_message.user, true), data.user_message.files;
                     if (data.assistant_message) {
                         addMessageBubble(data.assistant_message.role, data.assistant_message.content, data.assistant_message.id, null, false);
                     }
@@ -139,14 +163,7 @@ $(document).ready(function () {
 
                         const newTitle = data.updated_title || 'Group Chat ' + data.group_chat_header_id;
                         const newLinkHtml = `
-                         <li>
-                            <a href="${newUrl}" id="chat-link-${data.group_chat_header_id}" title="${newTitle}" class="active justify-between">
-                                <span class="truncate">${newTitle.substring(0, 25)}</span>
-                                <button class="btn btn-ghost btn-xs btn-circle delete-chat-btn" data-chat-id="${data.group_chat_header_id}" data-type="group">
-                                    <i class="bi bi-trash text-error"></i>
-                                </button>
-                            </a>
-                         </li>`;
+                         <li> <a href="${newUrl}" id="chat-link-${data.group_chat_header_id}" title="${newTitle}" class="active justify-between"> <span class="truncate">${newTitle.substring(0, 25)}</span> <button class="btn btn-ghost btn-xs btn-circle delete-chat-btn" data-chat-id="${data.group_chat_header_id}" data-type="group"> <i class="bi bi-trash text-error"></i> </button> </a> </li>`;
                         sidebarMenu.find('a').removeClass('active');
                         sidebarMenu.prepend(newLinkHtml);
                         sidebarMenu.find('.text-base-content\\/60').parent().remove();

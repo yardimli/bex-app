@@ -956,7 +956,7 @@ PROMPT;
             $llmResult = self::llm_no_tool_call(
                 $modelToUse,
                 $systemPrompt,
-                $relevantMessages, 
+                $relevantMessages,
                 true, // Expect JSON response
                 1 // Max retries
             );

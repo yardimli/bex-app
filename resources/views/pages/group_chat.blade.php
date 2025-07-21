@@ -23,6 +23,16 @@
                         @endphp
                         <div class="chat {{ $alignment }}" id="message-{{ $message->id }}" data-message-content="{!! e($message->content) !!}">
                             <div class="chat-bubble {{ $bubbleColor }} relative">
+                                @if($message->files->isNotEmpty())
+                                    <div class="flex flex-wrap gap-2 mb-2">
+                                        @foreach($message->files as $file)
+                                            <a href="{{ route('api.files.download', $file) }}" class="badge badge-outline" title="Download {{ $file->original_filename }}">
+                                                <i class="bi bi-file-earmark-arrow-down me-1"></i>
+                                                {{ Str::limit($file->original_filename, 25) }}
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                @endif
                                 {!! nl2br(e($message->content)) !!}
                                 @if ($isCurrentUser)
                                     <button class="btn btn-ghost btn-xs btn-circle absolute top-0 right-0 opacity-50 hover:opacity-100 delete-message-btn" title="Delete pair" data-message-id="{{ $message->id }}">
@@ -59,9 +69,12 @@
                     <input type="hidden" id="team_id" name="team_id" value="{{ $team->id }}">
                     <input type="hidden" id="group_chat_header_id" name="group_chat_header_id" value="{{ $activeChat?->id }}">
                     <input type="hidden" id="current_user_id" value="{{ auth()->id() }}">
+                    <input type="hidden" id="attached-files-input" name="attached_files">
+                    <div id="file-pills-container" class="flex flex-wrap gap-2 mb-2"></div>
                     <div class="form-control">
                         <div class="join w-full">
-                            <textarea class="textarea textarea-bordered join-item w-full" id="message-input-field" name="message" placeholder="Message {{ $team->name }}..." rows="1" style="resize: none;" required></textarea>
+                            <button type="button" class="btn join-item" id="attach-file-btn"><i class="bi bi-paperclip text-xl"></i></button>
+                            <textarea class="textarea textarea-bordered join-item w-full" id="message-input-field" name="message" placeholder="Message {{ $team->name }}..." rows="1" style="resize: none;"></textarea>
                             <button type="submit" class="btn btn-primary join-item" id="send-message-button" title="Send">
                                 <i class="bi bi-send-fill text-xl"></i>
                             </button>

@@ -92,6 +92,8 @@ class GroupChatController extends Controller
             'message' => 'required|string|max:60000',
             'team_id' => 'required|integer|exists:teams,id',
             'group_chat_header_id' => 'nullable|integer|exists:group_chat_headers,id',
+            'attached_files' => 'nullable|array',
+            'attached_files.*' => 'integer|exists:files,id',
         ]);
 
         $user = Auth::user();
@@ -101,8 +103,54 @@ class GroupChatController extends Controller
             return response()->json(['error' => 'You are not a member of this team.'], 403);
         }
 
-        $userPrompt = $validated['message'];
+        $userPrompt = $validated['message'] ?? '';
         $groupChatHeaderId = $validated['group_chat_header_id'];
+        $attachedFileIds = $validated['attached_files'] ?? [];
+        $actualUserMessageForLlm = $userPrompt;
+
+        $fileContextText = '';
+        $validatedFileIds = [];
+        if (!empty($attachedFileIds)) {
+            $files = \App\Models\File::with('sharedWithTeams')->find($attachedFileIds);
+            $userTeamIds = $user->teams()->pluck('teams.id');
+
+            foreach ($files as $file) {
+                // Authorization Check: User must own the file OR it must be shared with their teams
+                $isOwner = $file->user_id === $user->id;
+                $isSharedWithTeam = $file->sharedWithTeams->pluck('id')->intersect($userTeamIds)->isNotEmpty();
+
+                if ($isOwner || $isSharedWithTeam) {
+                    try {
+                        $fileText = MyHelper::extractTextFromFile($file);
+                        if (!empty(trim($fileText))) {
+                            $fileContextText .= "--- Start of content from file: {$file->original_filename} ---\n";
+                            $fileContextText .= $fileText . "\n";
+                            $fileContextText .= "--- End of content from file: {$file->original_filename} ---\n\n";
+                            $validatedFileIds[] = $file->id;
+                        } else {
+                            Log::warning("Extracted text was empty for attached file_id: {$file->id} in group chat");
+                            $actualUserMessageForLlm .= "\n[System notice: The attached file '{$file->original_filename}' appears to be empty or contains no extractable text.]";
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning("Could not extract text from attached file_id: {$file->id} for group chat. Error: " . $e->getMessage());
+                        $actualUserMessageForLlm .= "\n[System notice: Could not process the attached file '{$file->original_filename}'.]";
+                    }
+                } else {
+                    Log::warning("User {$user->id} attempted to use unauthorized file_id: {$file->id} in group chat {$groupChatHeaderId}.");
+                }
+            }
+        }
+
+        if (!empty($fileContextText)) {
+            $actualUserMessageForLlm = $fileContextText . $actualUserMessageForLlm;
+            Log::info("Prepended text from " . count($validatedFileIds) . " file(s) to user prompt for group_chat_header_id: {$groupChatHeaderId}");
+        }
+
+        if (empty(trim($userPrompt)) && empty($validatedFileIds)) {
+            return response()->json(['error' => 'A message or a file is required.'], 422);
+        }
+
+
         $groupChatHeader = null;
         $isNewChat = false;
 
@@ -128,6 +176,10 @@ class GroupChatController extends Controller
                 'content' => $userPrompt,
             ]);
 
+            if (!empty($validatedFileIds)) {
+                $userMessage->files()->attach($validatedFileIds);
+            }
+
             $historyMessages = $groupChatHeader->messages()
                 ->with('user')
                 ->orderBy('created_at', 'desc')
@@ -149,7 +201,7 @@ class GroupChatController extends Controller
 
             $llmChatMessages[] = [
                 'role' => 'user',
-                'content' => "{$user->name}: {$userPrompt}"
+                'content' => "{$user->name}: {$actualUserMessageForLlm}"
             ];
 
             $shouldReply = MyHelper::shouldAiReplyInGroupChat($llmChatMessages, $groupChatHeader->llm_model);
