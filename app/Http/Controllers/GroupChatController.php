@@ -28,10 +28,12 @@ class GroupChatController extends Controller
         $userTeams = $user->teams()->get();
         $currentTeamId = session('current_team_id');
         $groupChatHeader = null;
+        $participants = collect();
         if ($groupChatHeaderId) {
             $groupChatHeader = GroupChatHeader::where('id', $groupChatHeaderId)
                 ->where('team_id', $team->id)
                 ->firstOrFail();
+            $participants = $groupChatHeader->participants()->get();
         }
 
         $messages = $groupChatHeader ? $groupChatHeader->messages()->with('user')->get() : collect();
@@ -42,6 +44,7 @@ class GroupChatController extends Controller
             'messages' => $messages,
             'userTeams' => $userTeams,
             'currentTeamId' => $currentTeamId,
+            'participants' => $participants,
         ]);
     }
 
