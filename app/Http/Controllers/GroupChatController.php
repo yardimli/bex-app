@@ -29,11 +29,22 @@ class GroupChatController extends Controller
         $currentTeamId = session('current_team_id');
         $groupChatHeader = null;
         $participants = collect();
+        $mentionableParticipants = collect();
+
+
         if ($groupChatHeaderId) {
             $groupChatHeader = GroupChatHeader::where('id', $groupChatHeaderId)
                 ->where('team_id', $team->id)
                 ->firstOrFail();
             $participants = $groupChatHeader->participants()->get();
+
+            $bexParticipant = new \stdClass();
+            $bexParticipant->id = 'bex_ai'; // A unique, non-numeric ID.
+            $bexParticipant->name = 'Bex';
+
+            $mentionableParticipants = $participants->reject(function ($participant) use ($user) {
+                return $participant->id === $user->id;
+            })->prepend($bexParticipant);
         }
 
         $messages = $groupChatHeader ? $groupChatHeader->messages()->with('user')->get() : collect();
@@ -45,6 +56,7 @@ class GroupChatController extends Controller
             'userTeams' => $userTeams,
             'currentTeamId' => $currentTeamId,
             'participants' => $participants,
+            'mentionableParticipants' => $mentionableParticipants,
         ]);
     }
 

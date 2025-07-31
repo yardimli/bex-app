@@ -113,7 +113,7 @@
 
 @push('scripts')
     <script>
-        const groupParticipants = @json($participants->map(function($p) { return ['id' => $p->id, 'name' => $p->name]; })->all());
+        const groupParticipants = @json($mentionableParticipants->map(function($p) { return ['id' => $p->id, 'name' => $p->name]; })->all());
     </script>
     <script src="{{ asset('js/group-chat.js') }}"></script>
 @endpush
