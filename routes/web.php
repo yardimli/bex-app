@@ -85,6 +85,8 @@
             Route::post('/group-chat/store', [GroupChatController::class, 'store'])->name('group-chat.store');
             Route::get('/team/{team}/group-chats', [GroupChatController::class, 'indexHeaders'])->name('group-chat.headers.index')->where('team', '[0-9]+');
             Route::get('/team/{team}/group-chats/search', [GroupChatController::class, 'search'])->name('group-chat.search')->where('team', '[0-9]+');
+            Route::get('/team/{team}/group-chat/{groupChatHeader}/updates', [GroupChatController::class, 'getUpdates'])->name('group-chat.updates')->where(['team' => '[0-9]+', 'groupChatHeader' => '[0-9]+']);
+            Route::post('/team/{team}/group-chat/{groupChatHeader}/typing', [GroupChatController::class, 'isTyping'])->name('group-chat.typing')->where(['team' => '[0-9]+', 'groupChatHeader' => '[0-9]+']);
             Route::delete('/group-chat/headers/{groupChatHeader}', [GroupChatController::class, 'destroyHeader'])->name('group-chat.headers.destroy')->where('groupChatHeader', '[0-9]+');
             Route::delete('/group-chat/messages/{userMessage}', [GroupChatController::class, 'destroyMessagePair'])->name('group-chat.messages.destroy')->where('userMessage', '[0-9]+');
 

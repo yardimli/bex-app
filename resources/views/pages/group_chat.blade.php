@@ -84,6 +84,8 @@
 
             {{-- Message Input Area --}}
             <div class="w-full pt-4">
+                <div id="typing-indicator" class="text-left px-2 pb-2 text-sm text-base-content/70 hidden" style="min-height: 28px;">
+                </div>
                 <form id="chat-input-form" class="w-full max-w-4xl mx-auto">
                     @csrf
                     <input type="hidden" id="team_id" name="team_id" value="{{ $team->id }}">

@@ -9,6 +9,7 @@ $(document).ready(function () {
     const chatTitleDisplay = $('#chat-title-display');
     const sidebarMenu = $('#chat-history-list');
     const currentUserId = parseInt($('#current_user_id').val(), 10);
+    const typingIndicator = $('#typing-indicator');
     // --- Start: Mention Feature Variables ---
     const mentionsDropdown = $('#mentions-dropdown');
     const mentionsList = $('#mentions-list');
@@ -17,11 +18,15 @@ $(document).ready(function () {
     let currentAudio = null;
     let currentReadAloudButton = null;
 
+    let pollingInterval; // To hold the interval ID
+    let typingTimer; // To hold the typing timeout
+    const typingTimeout = 800;
+
     function scrollToBottom() {
         chatHistoryArea.scrollTop(chatHistoryArea[0].scrollHeight);
     }
 
-    function addMessageBubble(role, content, messageId, user = null, canDelete = false, files = []) {
+    function addMessageBubble(role, content, messageId, user = null, files = []) {
         const isAssistant = role === 'assistant';
         const isCurrentUser = !isAssistant && user && user.id === currentUserId;
         const alignment = isAssistant ? 'chat-start' : 'chat-end';
@@ -53,15 +58,18 @@ $(document).ready(function () {
             filesHtml += '</div>';
         }
 
-        const deleteButtonHtml = (isCurrentUser && canDelete) ? `<button class="btn btn-ghost btn-xs btn-circle absolute top-0 right-0 opacity-50 hover:opacity-100 delete-message-btn" title="Delete pair" data-message-id="${messageId}"> <i class="bi bi-trash3-fill"></i> </button>` : '';
+        const deleteButtonHtml = (isCurrentUser) ? `<button class="btn btn-ghost btn-xs btn-circle absolute top-0 right-0 opacity-50 hover:opacity-100 delete-message-btn" title="Delete pair" data-message-id="${messageId}"> <i class="bi bi-trash3-fill"></i> </button>` : '';
         const senderName = isAssistant ? 'Bex' : (user ? user.name : 'Unknown User');
         const escapedSenderName = $('<div>').text(senderName).html();
+
         let assistantButtons = '';
         if (isAssistant) {
             assistantButtons = ` <button class="btn btn-ghost btn-xs copy-btn" title="Copy text"><i class="bi bi-clipboard"></i></button> <button class="btn btn-ghost btn-xs read-aloud-btn" title="Read aloud"> <i class="bi bi-play-circle"></i> <span class="loading loading-spinner loading-xs" style="display: none;"></span> </button> `;
         }
+
         const footerHtml = ` <div class="chat-footer opacity-50 flex items-center gap-2 mt-1"> <span class="text-xs font-semibold">${escapedSenderName}</span> <time class="text-xs">${timeString}</time> <div class="flex-grow"></div> ${assistantButtons} </div>`;
-        const bubbleHtml = ` <div class="chat ${alignment}" id="message-${messageId}" data-message-content="${escape(content)}"> <div class="chat-bubble ${bubbleColor} relative"> ${filesHtml} ${escapedContentHtml} </div> ${footerHtml} </div>`;
+
+        const bubbleHtml = ` <div class="chat ${alignment}" id="message-${messageId}" data-message-content="${escape(content)}"> <div class="chat-bubble ${bubbleColor} relative"> ${filesHtml} ${escapedContentHtml} ${deleteButtonHtml} </div> ${footerHtml} </div>`;
         chatHistoryArea.append(bubbleHtml);
     }
 
@@ -136,6 +144,77 @@ $(document).ready(function () {
         messageInputField.focus();
     }
 
+    function pollForUpdates() {
+        const groupChatHeaderId = groupChatHeaderIdInput.val();
+        const teamId = teamIdInput.val();
+
+        if (!groupChatHeaderId || !teamId) {
+            return; // Don't poll if we're not in a chat
+        }
+
+        let lastMessageId = 0;
+        const lastMessageElement = chatHistoryArea.find('.chat[id^="message-"]').last();
+        if (lastMessageElement.length) {
+            const idStr = lastMessageElement.attr('id');
+            // Ensure we only parse numeric IDs, not temp ones
+            const potentialId = parseInt(idStr.replace('message-', ''), 10);
+            if (!isNaN(potentialId)) {
+                lastMessageId = potentialId;
+            }
+        }
+
+        $.ajax({
+            url: `/api/team/${teamId}/group-chat/${groupChatHeaderId}/updates`,
+            method: 'GET',
+            data: { last_message_id: lastMessageId },
+            dataType: 'json',
+            success: function(data) {
+                // Append new messages
+                if (data.new_messages && data.new_messages.length > 0) {
+                    let shouldScroll = (chatHistoryArea.scrollTop() + chatHistoryArea.innerHeight() + 100) >= chatHistoryArea[0].scrollHeight;
+
+                    data.new_messages.forEach(message => {
+                        // Check if message already exists to avoid duplicates
+                        if ($('#message-' + message.id).length === 0) {
+                            addMessageBubble(message.role, message.content, message.id, message.user, message.files);
+                        }
+                    });
+
+                    if (shouldScroll) {
+                        scrollToBottom();
+                    }
+                }
+
+                // Update typing indicator
+                if (data.typing_users && data.typing_users.length > 0) {
+                    const names = data.typing_users.join(', ');
+                    const verb = data.typing_users.length > 1 ? 'are' : 'is';
+                    typingIndicator.text(`${names} ${verb} typing...`).show();
+                } else {
+                    typingIndicator.hide();
+                }
+            },
+            error: function(jqXHR) {
+                // Stop polling on auth errors or if chat is not found
+                if (jqXHR.status === 403 || jqXHR.status === 404) {
+                    clearInterval(pollingInterval);
+                }
+            }
+        });
+    }
+
+    function notifyTyping() {
+        const groupChatHeaderId = groupChatHeaderIdInput.val();
+        const teamId = teamIdInput.val();
+        if (!groupChatHeaderId || !teamId) return;
+
+        $.ajax({
+            url: `/api/team/${teamId}/group-chat/${groupChatHeaderId}/typing`,
+            method: 'POST',
+            data: { _token: $('meta[name="csrf-token"]').attr('content') }
+        });
+    }
+
     messageInputField.on('input', function() {
         autoResizeTextarea();
         const input = $(this);
@@ -152,6 +231,9 @@ $(document).ready(function () {
             isMentioning = false;
             mentionsDropdown.hide();
         }
+
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(notifyTyping, typingTimeout);
     });
 
     mentionsList.on('click', 'li', function(e) {
@@ -205,9 +287,9 @@ $(document).ready(function () {
             success: function (data) {
                 if (data.success) {
                     $('#message-' + tempUserMessageId).remove();
-                    addMessageBubble(data.user_message.role, data.user_message.content, data.user_message.id, data.user_message.user, true, data.user_message.files);
+                    addMessageBubble(data.user_message.role, data.user_message.content, data.user_message.id, data.user_message.user, data.user_message.files);
                     if (data.assistant_message) {
-                        addMessageBubble(data.assistant_message.role, data.assistant_message.content, data.assistant_message.id, null, false);
+                        addMessageBubble(data.assistant_message.role, data.assistant_message.content, data.assistant_message.id, null, []);
                     }
                     if (data.is_new_chat && data.group_chat_header_id) {
                         groupChatHeaderIdInput.val(data.group_chat_header_id);
@@ -218,6 +300,10 @@ $(document).ready(function () {
                         sidebarMenu.find('a').removeClass('active');
                         sidebarMenu.prepend(newLinkHtml);
                         sidebarMenu.find('.text-base-content\\/60').parent().remove();
+
+                        if (!pollingInterval) {
+                            pollingInterval = setInterval(pollForUpdates, 3000);
+                        }
                     }
                     if (data.updated_title) {
                         chatTitleDisplay.text(data.updated_title.substring(0, 50));
@@ -376,4 +462,13 @@ $(document).ready(function () {
     }
     messageInputField.focus();
     autoResizeTextarea();
+
+    if (groupChatHeaderIdInput.val()) {
+        pollingInterval = setInterval(pollForUpdates, 3000); // Poll every 5 seconds
+    }
+
+    // Clean up interval when user navigates away to prevent memory leaks
+    $(window).on('beforeunload', function() {
+        clearInterval(pollingInterval);
+    });
 });

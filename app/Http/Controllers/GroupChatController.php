@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Cache;
 
 class GroupChatController extends Controller
 {
@@ -276,6 +277,64 @@ class GroupChatController extends Controller
             Log::error("Error processing group chat message: " . $e->getMessage(), ['exception' => $e]);
             return response()->json(['error' => 'An internal error occurred.'], 500);
         }
+    }
+
+    public function getUpdates(Request $request, Team $team, GroupChatHeader $groupChatHeader)
+    {
+        $user = Auth::user();
+
+        // Authorization check
+        if (!$groupChatHeader->participants()->where('user_id', $user->id)->exists()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $lastMessageId = $request->input('last_message_id', 0);
+
+        // Fetch new messages, eager load relations for efficiency
+        $newMessages = GroupChatMessage::where('group_chat_header_id', $groupChatHeader->id)
+            ->where('id', '>', $lastMessageId)
+            ->with('user', 'files')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        // Fetch typing users from cache
+        $typingUsers = [];
+        $participants = $groupChatHeader->participants()->get();
+        foreach ($participants as $participant) {
+            // Don't show the current user that they are typing
+            if ($participant->id === $user->id) {
+                continue;
+            }
+            $cacheKey = 'group-chat:'.$groupChatHeader->id.':typing:'.$participant->id;
+            if (Cache::has($cacheKey)) {
+                $typingUsers[] = Cache::get($cacheKey);
+            }
+        }
+
+        return response()->json([
+            'new_messages' => $newMessages,
+            'typing_users' => array_unique($typingUsers),
+        ]);
+    }
+
+    /**
+     * Set a user's typing status in the cache.
+     */
+    public function isTyping(Request $request, Team $team, GroupChatHeader $groupChatHeader)
+    {
+        $user = Auth::user();
+
+        // Authorization check
+        if (!$groupChatHeader->participants()->where('user_id', $user->id)->exists()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $cacheKey = 'group-chat:'.$groupChatHeader->id.':typing:'.$user->id;
+
+        // Set cache with a short TTL (e.g., 10 seconds)
+        Cache::put($cacheKey, $user->name, now()->addSeconds(4));
+
+        return response()->json(['success' => true]);
     }
 
     public function indexHeaders(Request $request, Team $team)
