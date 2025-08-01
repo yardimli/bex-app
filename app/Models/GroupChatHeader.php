@@ -17,7 +17,6 @@ class GroupChatHeader extends Model
         'team_id',
         'creator_id',
         'title',
-        'llm_model',
     ];
 
     public function team(): BelongsTo

@@ -917,65 +917,32 @@ PROMPT;
                 return false; // No messages, no reply
             }
 
-
             $lastMessage = end($chatMessages);
-            // Ensure we are only checking the last message from a user.
-            if ($lastMessage && $lastMessage['role'] === 'user' && isset($lastMessage['content'])) {
-                // Use a regular expression to match "Bex" as a whole word, case-insensitively.
-                if (preg_match('/\bbex\b/i', $lastMessage['content'])) {
-                    Log::info("AI reply decision: Yes (Programmatic check: name 'bex' was found as a whole word)");
-                    return true;
-                }
-            }
 
-            $lastUserMessageForLlm = end($chatMessages);
-
-            if (!$lastUserMessageForLlm || $lastUserMessageForLlm['role'] !== 'user') {
-                Log::info("AI will not reply. Last message was not from a user.");
+            // We only care about the last message from a user.
+            if (!$lastMessage || $lastMessage['role'] !== 'user' || empty(trim($lastMessage['content']))) {
                 return false;
             }
 
-            $modelToUse = $model ?: env('ACTION_ITEM_LLM', 'openai/gpt-4o-mini');
-            $systemPrompt = <<<PROMPT
-You are an AI assistant named Bex. Your task is to analyze a SINGLE user message from a group chat and decide if you should reply. You should only reply if the user is calling you by : @Bex or hey, Bex (no case sensitive).
+            $content = $lastMessage['content'];
 
-**Output Format:**
-You MUST respond with ONLY a valid JSON object. Do not include any other text or explanations.
-{
-  "should_reply": boolean,
-  "reasoning": "A brief explanation for your decision. Example: 'The user asked a general question to the group.'"
-}
+            // This single, more robust regex replaces both the old regex and the LLM call.
+            // It checks for:
+            // 1. @Bex (as a whole word, case-insensitive)
+            // 2. "Bex" at the start of the message, optionally followed by a comma.
+            // 3. "hey Bex" or "hi Bex" (as whole words, case-insensitive)
+            $pattern = '/(@Bex\b|^\s*Bex[,]?|\b(hey|hi)\s+Bex\b)/i';
 
-Now, analyze the following SINGLE message and provide your JSON response.
-PROMPT;
-
-            Log::info("Checking if AI should reply via LLM (name was not found).", ['model' => $modelToUse]);
-
-            $relevantMessages = [$lastUserMessageForLlm];
-
-            $llmResult = self::llm_no_tool_call(
-                $modelToUse,
-                $systemPrompt,
-                $relevantMessages,
-                true, // Expect JSON response
-                1 // Max retries
-            );
-
-            if (isset($llmResult['error'])) {
-                Log::error("LLM call to decide on group chat reply failed.", [
-                    'error' => $llmResult['error'],
-                    'details' => $llmResult['details'] ?? null,
+            if (preg_match($pattern, $content)) {
+                Log::info("AI reply decision: Yes (Programmatic check: A direct summons was found in the message).", [
+                    'content' => Str::limit($content, 100)
                 ]);
-                return false;
+                return true;
             }
 
-            if (isset($llmResult['should_reply']) && is_bool($llmResult['should_reply'])) {
-                $reasoning = $llmResult['reasoning'] ?? 'No reasoning provided by LLM.';
-                Log::info("AI reply decision: " . ($llmResult['should_reply'] ? 'Yes' : 'No') . ". Reasoning: " . $reasoning);
-                return $llmResult['should_reply'];
-            }
-
-            Log::warning("Could not determine AI reply status from LLM response. The 'should_reply' key was missing or not a boolean.", ['response' => $llmResult]);
+            Log::info("AI reply decision: No (Programmatic check: No direct summons found).", [
+                'content' => Str::limit($content, 100)
+            ]);
             return false;
         }
 

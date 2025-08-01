@@ -125,7 +125,6 @@ $(document).ready(function () {
             return $(this).val();
         }).get();
         const team_id = $('meta[name="current-team-id"]').attr('content');
-        const llm_model = localStorage.getItem('selectedLlmModel') || 'openai/gpt-4o-mini';
         if (!title) {
             alert('Please enter a name for the chat.');
             return;
@@ -144,8 +143,7 @@ $(document).ready(function () {
                 _token: $('meta[name="csrf-token"]').attr('content'),
                 team_id: team_id,
                 title: title,
-                participant_ids: participant_ids,
-                llm_model: llm_model
+                participant_ids: participant_ids
             },
             dataType: 'json',
             success: function(response) {

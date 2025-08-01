@@ -282,6 +282,7 @@ $(document).ready(function () {
                 team_id: teamId,
                 group_chat_header_id: groupChatHeaderId || null,
                 attached_files: attachedFileIds,
+                llm_model: selectedModel,
             },
             dataType: 'json',
             success: function (data) {
