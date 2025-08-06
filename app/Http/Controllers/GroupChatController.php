@@ -28,6 +28,7 @@ class GroupChatController extends Controller
 
         $userTeams = $user->teams()->get();
         $currentTeamId = session('current_team_id');
+        $llms = MyHelper::getLlmList();
         $groupChatHeader = null;
         $participants = collect();
         $mentionableParticipants = collect();
@@ -58,6 +59,7 @@ class GroupChatController extends Controller
             'currentTeamId' => $currentTeamId,
             'participants' => $participants,
             'mentionableParticipants' => $mentionableParticipants,
+            'llms' => $llms,
         ]);
     }
 

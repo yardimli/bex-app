@@ -1,7 +1,7 @@
 <?php
 
 	namespace App\Http\Controllers;
-
+    use App\Helpers\MyHelper;
 	use Illuminate\Http\Request;
 	use Illuminate\Support\Facades\Auth;
 
@@ -14,12 +14,15 @@
 				$chatHeaders = $user->chatHeaders()->orderBy('updated_at', 'desc')->get();
                 $userTeams = $user->teams()->get();
                 $currentTeamId = session('current_team_id');
-				return view('pages.dashboard', [
+                $llms = MyHelper::getLlmList();
+
+                return view('pages.dashboard', [
 					'chatHeaders' => $chatHeaders,
 					'activeChat' => null, // Pass the active chat object (or null)
 					'messages' => null,
                     'userTeams' => $userTeams,
                     'currentTeamId' => $currentTeamId,
+                    'llms' => $llms,
 				]);
 
 			} else {

@@ -27,6 +27,7 @@
 	use Google\Cloud\TextToSpeech\V1\VoiceSelectionParams;
 	use Exception;
     use App\Models\File as FileModel;
+    use App\Models\Llm;
 	use PhpOffice\PhpWord\IOFactory;
 	use Spatie\PdfToText\Pdf;
 	use Symfony\Component\DomCrawler\Crawler;
@@ -944,6 +945,70 @@ PROMPT;
                 'content' => Str::limit($content, 100)
             ]);
             return false;
+        }
+
+        public static function fetchAndCacheLlms(): array
+        {
+            $response = Http::timeout(30)->get('https://openrouter.ai/api/v1/models');
+
+            if (!$response->successful()) {
+                throw new \Exception('Failed to fetch models from OpenRouter API. Status: ' . $response->status());
+            }
+
+            $models = $response->json()['data'] ?? [];
+            if (empty($models)) {
+                throw new \Exception('No models found in the OpenRouter API response.');
+            }
+
+            $createdCount = 0;
+            $updatedCount = 0;
+
+            foreach ($models as $modelData) {
+                $data = [
+                    'name' => $modelData['name'],
+                    'description' => $modelData['description'],
+                    'context_length' => $modelData['context_length'] ?? 0,
+                    'prompt_price' => (float)($modelData['pricing']['prompt'] ?? 0.0),
+                    'completion_price' => (float)($modelData['pricing']['completion'] ?? 0.0),
+                    'created_at_openrouter' => isset($modelData['created']) ? Carbon::createFromTimestamp($modelData['created']) : null,
+                ];
+
+                // The updateOrCreate method returns the model instance.
+                $llmInstance = Llm::updateOrCreate(['id' => $modelData['id']], $data);
+
+                // MODIFIED: Check the 'wasRecentlyCreated' *property* on the returned instance.
+                if ($llmInstance->wasRecentlyCreated) {
+                    $createdCount++;
+                } else {
+                    $updatedCount++;
+                }
+            }
+
+            Log::info("LLM cache updated. Created: $createdCount, Updated: $updatedCount");
+
+            return ['created' => $createdCount, 'updated' => $updatedCount];
+        }
+
+        public static function getLlmList()
+        {
+            // Check if the table is empty.
+            if (Llm::count() === 0) {
+                Log::info('LLMs table is empty. Fetching from OpenRouter API...');
+                try {
+                    self::fetchAndCacheLlms();
+                } catch (\Exception $e) {
+                    Log::error('Failed to auto-fetch LLMs on first load: ' . $e->getMessage());
+                    // Return an empty collection on failure to avoid breaking the page.
+                    return collect();
+                }
+            }
+
+            // Return a sorted list for the dropdown.
+            return Llm::query()
+                ->where('prompt_price', '>=', 0) // Exclude free/test models
+                ->orderBy('prompt_price', 'asc')
+                ->orderBy('name', 'asc')
+                ->get();
         }
 
 
