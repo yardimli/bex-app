@@ -27,24 +27,45 @@
 {{-- MODIFIED: Replaced entire layout with DaisyUI Drawer for responsive sidebar --}}
 <div class="drawer lg:drawer-open">
     <input id="my-drawer-2" type="checkbox" class="drawer-toggle" />
-    <div class="drawer-content flex flex-col items-center justify-center">
-        <!-- Page content here -->
-        {{-- MODIFIED: Removed padding from the main layout to allow child templates to control their own full-height layout. --}}
-        <main class="w-full h-screen flex flex-col">
+    <div class="drawer-content flex flex-col h-screen">
+
+        {{-- This main area will hold the page content and grow, pushing the footer down --}}
+        <main class="flex-grow min-h-0 overflow-y-auto">
             @yield('content')
         </main>
+
+        {{-- ADDED: New persistent footer bar --}}
+        <footer class="p-2 bg-base-200 border-t border-base-300 flex justify-between items-center text-sm">
+            {{-- Left Side: Usage Analysis Button --}}
+            <div>
+                <button id="usage-log-button" class="btn btn-sm btn-ghost" title="View detailed usage logs">
+                    <i class="bi bi-bar-chart-line-fill text-base"></i>
+                    <span class="hidden md:inline">Usage Analysis</span>
+                </button>
+            </div>
+
+            {{-- Right Side: User's Personal Stats --}}
+            <div id="usage-stats-container" class="flex items-center gap-4 md:gap-6">
+                <div class="text-right">
+                    <div class="font-bold" id="total-prompt-tokens">...</div>
+                    <div class="text-xs opacity-70">Prompt Tokens</div>
+                </div>
+                <div class="text-right">
+                    <div class="font-bold" id="total-completion-tokens">...</div>
+                    <div class="text-xs opacity-70">Completion Tokens</div>
+                </div>
+                <div class="text-right">
+                    <div class="font-bold" id="total-cost">...</div>
+                    <div class="text-xs opacity-70">Total Cost</div>
+                </div>
+            </div>
+        </footer>
     </div>
     <div class="drawer-side">
         <label for="my-drawer-2" aria-label="close sidebar" class="drawer-overlay"></label>
         {{-- Include the refactored sidebar --}}
         @include('partials.sidebar')
     </div>
-</div>
-
-<div class="fixed bottom-4 right-4 z-50">
-    <button id="usage-log-button" class="btn btn-primary btn-circle shadow-lg" title="View Usage Logs">
-        <i class="bi bi-bar-chart-line-fill text-xl"></i>
-    </button>
 </div>
 
 {{-- Usage Log Modal --}}
@@ -174,6 +195,7 @@
 <script src="{{ asset('js/message-composer.js') }}"></script>
 <script src="{{ asset('js/team-files.js') }}"></script>
 <script src="{{ asset('js/usage-log.js') }}"></script>
+<script src="{{ asset('js/usage-footer.js') }}">
 @stack('scripts')
 </body>
 </html>

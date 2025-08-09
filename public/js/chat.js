@@ -230,6 +230,7 @@ $(document).ready(function () {
 					}
 
 					scrollToBottom();
+                    document.dispatchEvent(new CustomEvent('usageUpdated'));
 				} else {
 					// Handle backend error
 					console.error("Error from server:", data.error);

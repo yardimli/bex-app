@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LlmUsageLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class UsageController extends Controller
 {
@@ -22,5 +23,24 @@ class UsageController extends Controller
             ->paginate(25); // Paginate for performance
 
         return response()->json($logs);
+    }
+
+    public function getUsageStats(Request $request)
+    {
+        $user = Auth::user();
+
+        $stats = LlmUsageLog::where('user_id', $user->id)
+            ->select(
+                DB::raw('SUM(prompt_tokens) as total_prompt_tokens'),
+                DB::raw('SUM(completion_tokens) as total_completion_tokens'),
+                DB::raw('SUM(prompt_cost + completion_cost) as total_cost')
+            )
+            ->first();
+
+        return response()->json([
+            'total_prompt_tokens' => (int) $stats->total_prompt_tokens,
+            'total_completion_tokens' => (int) $stats->total_completion_tokens,
+            'total_cost' => (float) $stats->total_cost,
+        ]);
     }
 }

@@ -141,6 +141,7 @@
 
             //Usage Log API
             Route::get('/usage-logs', [UsageController::class, 'getUsageLogs'])->name('usage-logs.index');
+            Route::get('/usage-stats', [UsageController::class, 'getUsageStats'])->name('usage-stats.index');
 		});
 	});
 

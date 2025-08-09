@@ -315,6 +315,7 @@ $(document).ready(function () {
                         }
                     }
                     scrollToBottom();
+                    document.dispatchEvent(new CustomEvent('usageUpdated'));
                 } else {
                     $('#message-' + tempUserMessageId).find('.chat-bubble').addClass('chat-bubble-error');
                     alert(data.error || 'An error occurred.');
