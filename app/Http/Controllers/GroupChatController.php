@@ -14,6 +14,8 @@ use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Cache;
+use App\Models\Llm;
+use App\Models\LlmUsageLog;
 
 class GroupChatController extends Controller
 {
@@ -231,14 +233,39 @@ class GroupChatController extends Controller
                 $llmResult = MyHelper::llm_no_tool_call($modelToUse, $systemPrompt, $llmChatMessages, false);
 
                 if (isset($llmResult['content']) && !str_starts_with($llmResult['content'], 'Error:')) {
-                    $userMessage->prompt_tokens = $llmResult['prompt_tokens'] ?? 0;
+                    $promptTokens = $llmResult['prompt_tokens'] ?? 0;
+                    $completionTokens = $llmResult['completion_tokens'] ?? 0;
+                    $userMessage->prompt_tokens = $promptTokens;
                     $userMessage->save();
                     $assistantMessage = $groupChatHeader->messages()->create([
                         'user_id' => null,
                         'role' => 'assistant',
                         'content' => $llmResult['content'],
-                        'completion_tokens' => $llmResult['completion_tokens'] ?? 0,
+                        'completion_tokens' => $completionTokens,
                     ]);
+
+                    // --- ADDED: Log LLM Usage ---
+                    try {
+                        $llm = Llm::find($modelToUse);
+                        if ($llm) {
+                            $promptCost = $promptTokens * $llm->prompt_price;
+                            $completionCost = $completionTokens * $llm->completion_price;
+
+                            LlmUsageLog::create([
+                                'user_id' => $user->id,
+                                'team_id' => $team->id, // Group chat has a team
+                                'llm_id' => $llm->id,
+                                'prompt_tokens' => $promptTokens,
+                                'completion_tokens' => $completionTokens,
+                                'prompt_cost' => $promptCost,
+                                'completion_cost' => $completionCost,
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Failed to log LLM usage for group chat.', ['error' => $e->getMessage()]);
+                    }
+                    // --- END: Log LLM Usage ---
+
                 } else {
                     Log::error("Group Chat LLM call failed", ['result' => $llmResult, 'group_chat_header_id' => $groupChatHeaderId]);
                 }

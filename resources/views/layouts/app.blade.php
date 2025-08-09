@@ -41,6 +41,50 @@
     </div>
 </div>
 
+<div class="fixed bottom-4 right-4 z-50">
+    <button id="usage-log-button" class="btn btn-primary btn-circle shadow-lg" title="View Usage Logs">
+        <i class="bi bi-bar-chart-line-fill text-xl"></i>
+    </button>
+</div>
+
+{{-- Usage Log Modal --}}
+<dialog id="usage_log_modal" class="modal modal-bottom sm:items-center">
+    <div class="modal-box w-11/12 max-w-6xl">
+        <h3 class="font-bold text-lg">LLM Usage Logs</h3>
+        <div id="usage-log-loader" class="text-center p-8">
+            <span class="loading loading-spinner loading-lg"></span>
+        </div>
+        <div id="usage-log-content" class="hidden">
+            <div class="overflow-x-auto mt-4">
+                <table class="table table-zebra table-sm w-full">
+                    <thead>
+                    <tr>
+                        <th class="w-2/12 whitespace-nowrap">Timestamp</th>
+                        <th class="w-1/12">User</th>
+                        <th class="w-1/12">Team</th>
+                        <th class="w-4/12">Model</th>
+                        <th class="w-1/12 text-right whitespace-nowrap">Prompt Tokens</th>
+                        <th class="w-1/12 text-right whitespace-nowrap">Comp. Tokens</th>
+                        <th class="w-2/12 text-right whitespace-nowrap">Total Cost</th>
+                    </tr>
+                    </thead>
+                    <tbody id="usage-log-table-body">
+                    </tbody>
+                </table>
+            </div>
+            <div id="usage-log-pagination" class="mt-4 flex justify-center"></div>
+        </div>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn">Close</button>
+            </form>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
 {{-- MODIFIED: All modals rewritten with DaisyUI <dialog> syntax --}}
 @include('partials.modals.recent_meetings')
 @include('partials.modals.my_notes')
@@ -129,6 +173,7 @@
 <script src="{{ asset('js/my-notes.js') }}"></script>
 <script src="{{ asset('js/message-composer.js') }}"></script>
 <script src="{{ asset('js/team-files.js') }}"></script>
+<script src="{{ asset('js/usage-log.js') }}"></script>
 @stack('scripts')
 </body>
 </html>

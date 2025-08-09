@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Models\Note;
+use App\Models\Llm;
+use App\Models\LlmUsageLog;
 
 class ChatController extends Controller
 {
@@ -367,6 +369,26 @@ class ChatController extends Controller
 					'content' => $assistantMessageContent,
 					'completion_tokens' => $completionTokens,
 				]);
+
+                try {
+                    $llm = Llm::find($modelToUse);
+                    if ($llm) {
+                        $promptCost = $promptTokens * $llm->prompt_price;
+                        $completionCost = $completionTokens * $llm->completion_price;
+
+                        LlmUsageLog::create([
+                            'user_id' => $user->id,
+                            'team_id' => null, // Personal chat has no team
+                            'llm_id' => $llm->id,
+                            'prompt_tokens' => $promptTokens,
+                            'completion_tokens' => $completionTokens,
+                            'prompt_cost' => $promptCost,
+                            'completion_cost' => $completionCost,
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to log LLM usage for personal chat.', ['error' => $e->getMessage()]);
+                }
 			} else {
 				Log::error("LLM call failed or returned error content", ['result' => $llmResult, 'chat_header_id' => $chatHeaderId]);
 				$assistantMessage = $chatHeader->messages()->create([
