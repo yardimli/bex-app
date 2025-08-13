@@ -14,6 +14,14 @@ $(document).ready(function () {
     const mentionsDropdown = $('#mentions-dropdown');
     const mentionsList = $('#mentions-list');
     let isMentioning = false;
+    let groupParticipants = chatInputForm.data('participants');
+
+    // Add a safety check to ensure it's an array, in case the attribute is missing or malformed.
+    if (!Array.isArray(groupParticipants)) {
+        console.error("Participants data was not a valid array, defaulting to empty.", groupParticipants);
+        groupParticipants = [];
+    }
+
     // --- End: Mention Feature Variables ---
     let currentAudio = null;
     let currentReadAloudButton = null;
@@ -404,32 +412,6 @@ $(document).ready(function () {
             chatInputForm.submit();
         }
     });
-
-    // Also update the initial list creation to use the new class
-    function updateMentionsDropdown(query) {
-        if (typeof groupParticipants === 'undefined') return;
-
-        const filteredParticipants = groupParticipants.filter(p =>
-            p.name.toLowerCase().includes(query.toLowerCase())
-        );
-
-        mentionsList.empty();
-
-        if (filteredParticipants.length > 0) {
-            filteredParticipants.forEach((p, index) => {
-                const listItem = $(`<li><a href="#">${$('<div>').text(p.name).html()}</a></li>`);
-                listItem.data('username', p.name);
-                if (index === 0) {
-                    // Use the new class here as well
-                    listItem.addClass('mention-active');
-                }
-                mentionsList.append(listItem);
-            });
-            mentionsDropdown.show();
-        } else {
-            mentionsDropdown.hide();
-        }
-    }
 
     chatHistoryArea.on('click', '.delete-message-btn', function () {
         const userMessageBubble = $(this).closest('.chat');

@@ -86,7 +86,7 @@
             <div class="w-full pt-4">
                 <div id="typing-indicator" class="text-left px-2 pb-2 text-sm text-base-content/70 hidden" style="min-height: 28px;">
                 </div>
-                <form id="chat-input-form" class="w-full max-w-4xl mx-auto">
+                <form id="chat-input-form" class="w-full max-w-4xl mx-auto" data-participants='{{ json_encode($mentionableParticipants) }}'>
                     @csrf
                     <input type="hidden" id="team_id" name="team_id" value="{{ $team->id }}">
                     <input type="hidden" id="group_chat_header_id" name="group_chat_header_id" value="{{ $activeChat?->id }}">
@@ -115,7 +115,7 @@
 
 @push('scripts')
     <script>
-        const groupParticipants = @json($mentionableParticipants->map(function($p) { return ['id' => $p->id, 'name' => $p->name]; })->all());
+        var groupParticipants = {!! json_encode($mentionableParticipants) !!};
     </script>
     <script src="{{ asset('js/group-chat.js') }}"></script>
 @endpush
