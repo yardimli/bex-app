@@ -8,6 +8,8 @@
     </div>
     {{-- MODIFIED: Replaced ID with a class for multiple instance support --}}
     <ul tabindex="0" class="mode-dropdown-menu dropdown-content z-[1] menu flex-col p-2 shadow bg-base-100 rounded-box w-96 max-h-96" style="overflow-y: scroll; display: block">
+        <li data-model-id="openai/gpt-4o-mini"><a data-display-name="Smart Mode (Default)">Smart Mode (Default : gpt-4o-mini)</a></li>
+        <li><hr class="my-1"></li>
         @if(isset($llms) && $llms->isNotEmpty())
             {{-- Loop through the LLMs provided by the controller --}}
             @foreach($llms as $llm)
