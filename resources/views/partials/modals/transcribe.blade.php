@@ -4,14 +4,6 @@
 		<h3 class="font-bold text-lg">Transcribe Audio/Video</h3>
 		
 		<div class="py-4">
-			{{-- MODIFIED: Replaced input-group with DaisyUI join --}}
-			<div class="join w-full mb-6">
-				<div class="indicator w-full">
-					<span class="indicator-item indicator-start join-item border-r-0 bg-base-200 px-3"><i class="bi bi-link-45deg"></i></span>
-					<input type="text" placeholder="Enter YouTube, Audio or Video File URL..." class="input input-bordered join-item w-full">
-				</div>
-				<button class="btn btn-primary join-item">Go</button>
-			</div>
 			
 			{{-- MODIFIED: Replaced row/col with a responsive grid --}}
 			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -36,20 +28,8 @@
 						</div>
 					</div>
 				</div>
-				<div class="card bg-base-200 shadow-md text-center">
-					<div class="card-body items-center">
-						<i class="bi bi-pc-display-horizontal text-4xl text-info"></i>
-						<h4 class="card-title">Record App Audio</h4>
-						<p class="text-sm text-base-content/70">Record system audio</p>
-						<div class="card-actions justify-center mt-2">
-							<button class="btn btn-info">Record System</button>
-						</div>
-					</div>
-				</div>
-				{{-- Add more cards as needed --}}
 			</div>
 			
-			{{-- MODIFIED: Replaced row/col with flexbox for form controls --}}
 			<div class="flex flex-col sm:flex-row gap-4 mt-6">
 				<div class="form-control w-full">
 					<label class="label"><span class="label-text">Input Language</span></label>
