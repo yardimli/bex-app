@@ -37,23 +37,24 @@ $(document).ready(function () {
     function addMessageBubble(role, content, messageId, user = null, files = []) {
         const isAssistant = role === 'assistant';
         const isCurrentUser = !isAssistant && user && user.id === currentUserId;
-        const alignment = isAssistant ? 'chat-start' : 'chat-end';
-        const bubbleColor = isCurrentUser ? 'chat-bubble-primary' : '';
+        const alignment = isAssistant ? 'chat-start' : (isCurrentUser ? 'chat-end' : 'chat-start');
+        const bubbleColor = isCurrentUser ? 'chat-bubble-primary' : 'bg-white border border-base-200 text-base-content';
 
-        // --- Start: Mention Highlighting ---
+        // --- START: MODIFIED MENTION HIGHLIGHTING ---
         let processedContent = $('<div>').text(content).html(); // Escape first
         if (typeof groupParticipants !== 'undefined' && groupParticipants.length > 0) {
             const participantNames = groupParticipants.map(p => p.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
             if (participantNames.length > 0) {
-                const mentionRegex = new RegExp(`@(${participantNames.join('|')})\\b`, 'gi'); // 'gi' for global, case-insensitive
-                processedContent = processedContent.replace(mentionRegex, '<strong><u>$&</u></strong>');
+                const mentionRegex = new RegExp(`@(${participantNames.join('|')})\\b`, 'gi');
+                // Use the same light green style as the blade file
+                processedContent = processedContent.replace(mentionRegex, '<span class="bg-green-100 text-green-800 font-semibold rounded px-1 py-0.5">$&</span>');
             }
         }
         const escapedContentHtml = processedContent.replace(/\n/g, '<br>');
-        // --- End: Mention Highlighting ---
+        // --- END: MODIFIED MENTION HIGHLIGHTING ---
 
         const now = new Date();
-        const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        const timeString = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
         let filesHtml = '';
         if (files && files.length > 0) {
@@ -70,14 +71,45 @@ $(document).ready(function () {
         const senderName = isAssistant ? 'Bex' : (user ? user.name : 'Unknown User');
         const escapedSenderName = $('<div>').text(senderName).html();
 
-        let assistantButtons = '';
+        // --- START: NEW AVATAR LOGIC ---
+        let avatarInitials = 'BX';
+        let avatarColorClass = 'bg-neutral text-neutral-content';
+        if (!isAssistant && user) {
+            const name = user.name;
+            const words = name.split(" ");
+            let initials = "";
+            if (words.length >= 2) {
+                initials += words[0].substring(0, 1).toUpperCase();
+                initials += words[words.length - 1].substring(0, 1).toUpperCase();
+            } else if (name.length > 1) {
+                initials = name.substring(0, 2).toUpperCase();
+            } else {
+                initials = "??";
+            }
+            avatarInitials = initials;
+            const colors = ['bg-sky-500', 'bg-amber-500', 'bg-rose-500', 'bg-violet-500', 'bg-emerald-500', 'bg-red-500'];
+            // Simple hash to get a consistent color from user ID
+            let hash = 0;
+            for (let i = 0; i < String(user.id).length; i++) {
+                const char = String(user.id).charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash |= 0;
+            }
+            const colorIndex = Math.abs(hash) % colors.length;
+            avatarColorClass = colors[colorIndex] + ' text-white';
+        }
+        const avatarHtml = ` <div class="chat-image avatar placeholder"> <div class="w-10 rounded-full ${avatarColorClass}"> <span class="text-lg">${avatarInitials}</span> </div> </div>`;
+        // --- END: NEW AVATAR LOGIC ---
+
+        const headerHtml = ` <div class="chat-header"> ${escapedSenderName} <time class="text-xs opacity-50 ml-1">${timeString}</time> </div>`;
+
+        let footerHtml = '';
         if (isAssistant) {
-            assistantButtons = ` <button class="btn btn-ghost btn-xs copy-btn" title="Copy text"><i class="bi bi-clipboard"></i></button> <button class="btn btn-ghost btn-xs read-aloud-btn" title="Read aloud"> <i class="bi bi-play-circle"></i> <span class="loading loading-spinner loading-xs" style="display: none;"></span> </button> `;
+            const assistantButtons = ` <button class="btn btn-ghost btn-xs copy-btn" title="Copy text"><i class="bi bi-clipboard"></i></button> <button class="btn btn-ghost btn-xs read-aloud-btn" title="Read aloud"> <i class="bi bi-play-circle"></i> <span class="loading loading-spinner loading-xs" style="display: none;"></span> </button> `;
+            footerHtml = `<div class="chat-footer opacity-50 flex items-center gap-1 mt-1">${assistantButtons}</div>`;
         }
 
-        const footerHtml = ` <div class="chat-footer opacity-50 flex items-center gap-2 mt-1"> <span class="text-xs font-semibold">${escapedSenderName}</span> <time class="text-xs">${timeString}</time> <div class="flex-grow"></div> ${assistantButtons} </div>`;
-
-        const bubbleHtml = ` <div class="chat ${alignment}" id="message-${messageId}" data-message-content="${escape(content)}"> <div class="chat-bubble ${bubbleColor} relative"> ${filesHtml} ${escapedContentHtml} ${deleteButtonHtml} </div> ${footerHtml} </div>`;
+        const bubbleHtml = ` <div class="chat ${alignment}" id="message-${messageId}" data-message-content="${escape(content)}"> ${avatarHtml} ${headerHtml} <div class="chat-bubble ${bubbleColor} relative"> ${filesHtml} ${escapedContentHtml} ${deleteButtonHtml} </div> ${footerHtml} </div>`;
         chatHistoryArea.append(bubbleHtml);
     }
 
@@ -112,15 +144,55 @@ $(document).ready(function () {
         const filteredParticipants = groupParticipants.filter(p =>
             p.name.toLowerCase().includes(query.toLowerCase())
         );
-
         mentionsList.empty();
 
         if (filteredParticipants.length > 0) {
+            // Add a header to the dropdown like in the image
+            mentionsList.append('<li class="menu-title">Mention someone</li>');
+
             filteredParticipants.forEach((p, index) => {
-                const listItem = $(`<li><a href="#">${$('<div>').text(p.name).html()}</a></li>`);
+                // --- Avatar Generation Logic (copied and adapted for dropdown) ---
+                const name = p.name;
+                const words = name.split(" ");
+                let initials = "";
+                if (words.length >= 2) {
+                    initials += words[0].substring(0, 1).toUpperCase();
+                    initials += words[words.length - 1].substring(0, 1).toUpperCase();
+                } else if (name.length > 1) {
+                    initials = name.substring(0, 2).toUpperCase();
+                } else {
+                    initials = "??";
+                }
+                const avatarInitials = initials;
+                const colors = ['bg-sky-500', 'bg-amber-500', 'bg-rose-500', 'bg-violet-500', 'bg-emerald-500', 'bg-red-500'];
+                let hash = 0;
+                for (let i = 0; i < String(p.id).length; i++) {
+                    const char = String(p.id).charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash |= 0;
+                }
+                const colorIndex = Math.abs(hash) % colors.length;
+                const avatarColorClass = colors[colorIndex] + ' text-white';
+                // --- End Avatar Logic ---
+
+                // Create the new list item with avatar and name
+                const listItem = $(`
+                    <li>
+                        <a href="#" class="flex items-center gap-3">
+                            <div class="avatar placeholder">
+                                <div class="w-8 p-1 rounded-full ${avatarColorClass}">
+                                    <span class="text-xs">${avatarInitials}</span>
+                                </div>
+                            </div>
+                            <span>${$('<div>').text(p.name).html()}</span>
+                        </a>
+                    </li>
+                `);
+
                 listItem.data('username', p.name);
                 if (index === 0) {
-                    listItem.addClass('bordered');
+                    // Use a different class for keyboard navigation to avoid style conflicts
+                    listItem.addClass('mention-active');
                 }
                 mentionsList.append(listItem);
             });
@@ -129,6 +201,7 @@ $(document).ready(function () {
             mentionsDropdown.hide();
         }
     }
+
 
     function selectMention(username) {
         const text = messageInputField.val();
@@ -143,7 +216,6 @@ $(document).ready(function () {
 
         const newText = text.substring(0, startIndex) + `@${username} ` + text.substring(cursorPos);
         messageInputField.val(newText);
-
         const newCursorPos = startIndex + username.length + 2;
         messageInputField[0].setSelectionRange(newCursorPos, newCursorPos);
 
