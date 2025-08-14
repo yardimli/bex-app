@@ -194,9 +194,8 @@
 <script src="{{ asset('js/my-notes.js') }}"></script>
 <script src="{{ asset('js/message-composer.js') }}"></script>
 <script src="{{ asset('js/team-files.js') }}"></script>
-<script src="{{ asset('js/teams.js') }}"></script>
 <script src="{{ asset('js/usage-log.js') }}"></script>
-<script src="{{ asset('js/usage-footer.js') }}">
+<script src="{{ asset('js/usage-footer.js') }}"></script>
 @stack('scripts')
 </body>
 </html>
