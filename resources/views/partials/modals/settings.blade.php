@@ -1,4 +1,4 @@
-{{-- MODIFIED: Rewritten with DaisyUI modal syntax --}}
+@php $llms = \App\Helpers\MyHelper::getLlmList(); @endphp
 <dialog id="settingsModal" class="modal">
 	<div class="modal-box">
 		<form method="dialog">
@@ -10,16 +10,19 @@
 				<label class="label" for="defaultModeSelect">
 					<span class="label-text">Default Model (for new chats):</span>
 				</label>
-				<select class="select select-bordered" id="defaultModeSelect">
-					<option value="openai/gpt-4o-mini">Smart Mode (4o Mini)</option>
-					<option value="openai/gpt-4o-mini">OpenAI: GPT-4o Mini</option>
-					<option value="openai/o1-mini">OpenAI: O1 Mini</option>
-					<option value="anthropic/claude-3.5-haiku">Anthropic: Claude 3.5 Haiku</option>
-					<option value="google/gemini-2.0-flash-001">Google: Gemini 2 Flash</option>
-					<option value="deepseek/deepseek-chat-v3-0324">Deepseek: V3 Chat</option>
-				</select>
+                <select class="select select-bordered" id="defaultModeSelect">
+                    <option value="openai/gpt-4o-mini">Smart Mode (Default : gpt-4o-mini)</option>
+                    <option disabled>────────────────</option>
+                    @if(isset($llms) && $llms->isNotEmpty())
+                        @foreach($llms as $llm)
+                            <option value="{{ $llm->id }}">{{ $llm->name }}</option>
+                        @endforeach
+                    @else
+                        <option disabled>No models available</option>
+                    @endif
+                </select>
 			</div>
-			
+
 			<div class="form-control w-full">
 				<label class="label" for="themeSelect">
 					<span class="label-text">Theme:</span>
@@ -29,7 +32,7 @@
 					<option value="dark">Dark</option>
 				</select>
 			</div>
-			
+
 			<div class="form-control">
 				<label class="label"><span class="label-text">Personality/Tone:</span></label>
 				<div class="grid grid-cols-2 gap-x-4 gap-y-2">
