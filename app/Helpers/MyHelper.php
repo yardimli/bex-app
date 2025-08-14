@@ -35,7 +35,7 @@
 
 	class MyHelper
 	{
-
+        private static $llmListCache = null;
         public static function extractTextFromFile(FileModel $file): string
         {
             if (!Storage::exists($file->path)) {
@@ -989,8 +989,11 @@ PROMPT;
             return ['created' => $createdCount, 'updated' => $updatedCount];
         }
 
-        public static function getLlmList()
-        {
+        public static function getLlmList() {
+            if (self::$llmListCache !== null) {
+                return self::$llmListCache;
+            }
+
             // Check if the table is empty.
             if (Llm::count() === 0) {
                 Log::info('LLMs table is empty. Fetching from OpenRouter API...');
@@ -1004,11 +1007,13 @@ PROMPT;
             }
 
             // Return a sorted list for the dropdown.
-            return Llm::query()
+            self::$llmListCache = Llm::query()
                 ->where('prompt_price', '>=', 0) // Exclude free/test models
                 ->orderBy('prompt_price', 'asc')
                 ->orderBy('name', 'asc')
                 ->get();
+
+            return self::$llmListCache;
         }
 
 

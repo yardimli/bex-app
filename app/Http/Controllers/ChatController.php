@@ -38,7 +38,6 @@ class ChatController extends Controller
 
         $userTeams = $user->teams()->get();
         $currentTeamId = session('current_team_id');
-        $llms = MyHelper::getLlmList();
 
         $chatHeader = null;
 		if ($chatHeaderId) {
@@ -78,7 +77,6 @@ class ChatController extends Controller
 			'initialPrompt' => $initialPrompt,
             'userTeams' => $userTeams,
             'currentTeamId' => $currentTeamId,
-            'llms' => $llms,
 		]);
 	}
 
