@@ -166,14 +166,15 @@
 <!-- Image Preview Modal -->
 <dialog id="imagePreviewModal" class="modal">
     <div class="modal-box w-11/12 max-w-5xl">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
         <h3 class="font-bold text-lg">Image Preview</h3>
         <div class="py-4 text-center">
             <img id="image-preview-content" src="" alt="Image Preview" class="max-w-full h-auto inline-block">
         </div>
-        <div class="modal-action">
-            <form method="dialog"><button class="btn">Close</button></form>
-        </div>
     </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
 <!-- PDF Preview Modal -->
@@ -184,6 +185,7 @@
             <form method="dialog"><button class="btn btn-sm btn-circle btn-ghost">✕</button></form>
         </div>
     </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
 <!-- jQuery & Scripts -->
