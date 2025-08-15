@@ -610,6 +610,7 @@ $(document).ready(function () {
         const activeChatId = pathParts.length > 2 ? parseInt(pathParts[pathParts.length - 1], 10) : null;
         const currentTeamId = $('meta[name="current-team-id"]').attr('content');
         const isTeamContext = currentTeamId && currentTeamId !== '0';
+        const currentUserId = parseInt($('meta[name="current-user-id"]').attr('content'), 10);
 
         headers.forEach(header => {
             const safeTitle = $('<div>').text(header.title).html();
@@ -618,15 +619,22 @@ $(document).ready(function () {
             const chatUrl = isTeamContext ? `/team/${currentTeamId}/group-chat/${header.id}` : `/chat/${header.id}`;
             const deleteType = isTeamContext ? 'group' : 'personal';
 
+            let deleteButtonHtml = '';
+            if (deleteType === 'personal' || (deleteType === 'group' && header.creator_id === currentUserId)) {
+                deleteButtonHtml = `
+                <button class="btn btn-ghost btn-xs btn-circle delete-chat-btn" data-chat-id="${header.id}" data-type="${deleteType}">
+                    <i class="bi bi-trash text-error"></i>
+                </button>`;
+            }
+
             const newLinkHtml = `
             <li>
                 <a href="${chatUrl}" id="chat-link-${header.id}" title="${safeTitle}" class="justify-between ${isActive ? 'active' : ''}">
                     <span class="truncate">${truncatedTitle}</span>
-                    <button class="btn btn-ghost btn-xs btn-circle delete-chat-btn" data-chat-id="${header.id}" data-type="${deleteType}">
-                        <i class="bi bi-trash text-error"></i>
-                    </button>
+                    ${deleteButtonHtml}
                 </a>
             </li>`;
+
             chatHistoryList.append(newLinkHtml);
         });
     }

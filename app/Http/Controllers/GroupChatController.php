@@ -374,7 +374,7 @@ class GroupChatController extends Controller
             ->whereHas('participants', function ($query) use ($user) {
                 $query->where('users.id', $user->id);
             })
-            ->select('id', 'title', 'updated_at')
+            ->select('id', 'title', 'updated_at', 'creator_id')
             ->get();
 
         return response()->json($chatHeaders);
@@ -399,9 +399,10 @@ class GroupChatController extends Controller
                         $msgQuery->where('content', 'LIKE', '%' . $searchTerm . '%');
                     });
             })
-            ->select('group_chat_headers.id', 'group_chat_headers.title', 'group_chat_headers.updated_at')
+            ->select('group_chat_headers.id', 'group_chat_headers.title', 'group_chat_headers.updated_at', 'group_chat_headers.creator_id')
             ->orderBy('updated_at', 'desc')
             ->get();
+
 
         return response()->json($chatHeaders);
     }
@@ -438,9 +439,8 @@ class GroupChatController extends Controller
     {
         $user = Auth::user();
 
-        // Authorization: User must be a member of the team that owns the chat.
-        if (!$user->teams()->where('team_id', $groupChatHeader->team_id)->exists()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+        if ($groupChatHeader->creator_id !== $user->id) {
+            return response()->json(['error' => 'Unauthorized. Only the chat creator can delete it.'], 403);
         }
 
         DB::beginTransaction();
