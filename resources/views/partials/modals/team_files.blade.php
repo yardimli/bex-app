@@ -2,7 +2,7 @@
 <dialog id="teamFilesModal" class="modal">
     <div class="modal-box w-11/12 max-w-6xl">
         <h3 class="font-bold text-lg">Team Workspace</h3>
-        
+
         <div class="py-4">
             {{-- MODIFIED: Replaced row/col with flexbox --}}
             <div class="flex flex-col md:flex-row gap-6">
@@ -17,7 +17,7 @@
                         <li><a data-filter="all">All Files</a></li>
                         <li><a class="active" data-filter="recent">Recent</a></li>
                         <li><a class="disabled" title="Coming soon">Shared with me</a></li>
-                        <li><a class="disabled" title="Coming soon">Favorites</a></li>
+                        <li><a data-filter="favorites">Favorites</a></li>
                     </ul>
                 </div>
                 {{-- MODIFIED: Main content column --}}
@@ -42,7 +42,7 @@
                 </div>
             </div>
         </div>
-        
+
         <form method="dialog">
             <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
         </form>

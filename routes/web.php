@@ -132,8 +132,8 @@
 			Route::get('/files/{file}/download', [ApiFileController::class, 'download'])->name('files.download')->where('file', '[0-9]+');
 			Route::get('/files/{file}/preview', [ApiFileController::class, 'preview'])->name('files.preview')->where('file', '[0-9]+');
 			Route::post('/files/{file}/share', [ApiFileController::class, 'share'])->name('files.share')->where('file', '[0-9]+');
-			// MODIFIED: Cleaned up where constraints for multiple parameters
-			Route::delete('/files/{file}/teams/{team}', [ApiFileController::class, 'revokeShare'])->name('files.revoke')->where(['file' => '[0-9]+', 'team' => '[0-9]+']);
+            Route::post('/files/{file}/toggle-favorite', [ApiFileController::class, 'toggleFavorite'])->name('files.toggle-favorite')->where('file', '[0-9]+');
+            Route::delete('/files/{file}/teams/{team}', [ApiFileController::class, 'revokeShare'])->name('files.revoke')->where(['file' => '[0-9]+', 'team' => '[0-9]+']);
 
 			// Summarization Helper API
 			Route::post('/summarize/upload', [UtilityController::class, 'processFileUploadForSummarization'])->name('summarize.upload');

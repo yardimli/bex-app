@@ -101,5 +101,10 @@
             return $this->belongsToMany(GroupChatHeader::class, 'group_chat_header_user')->orderBy('updated_at', 'desc');
         }
 
+        public function favoriteFiles(): BelongsToMany
+        {
+            return $this->belongsToMany(File::class, 'file_favorites');
+        }
+
 
     }

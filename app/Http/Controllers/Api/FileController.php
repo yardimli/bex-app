@@ -35,15 +35,23 @@ class FileController extends Controller
         }
 
         $searchTerm = $request->input('search');
-        $query = $team->sharedFiles()->with('owner:id,name');
+        $query = $team->sharedFiles()->with('owner:id,name')->withExists(['favoritedByUsers as is_favorited' => function ($query) use ($user) {
+            $query->where('user_id', $user->id);
+        }]);
 
         // If a search term is provided, filter by original filename
         if ($searchTerm) {
             $query->where('original_filename', 'like', '%' . $searchTerm . '%');
         }
 
+        if ($request->input('filter') === 'favorites') {
+            $query->whereHas('favoritedByUsers', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+        }
+
         // Order by your specific pivot timestamp
-        $files = $query->with('owner')->orderBy('pivot_shared_at', 'desc')->get();
+        $files = $query->orderBy('pivot_shared_at', 'desc')->get();
         return response()->json($files);
     }
 
@@ -199,6 +207,22 @@ class FileController extends Controller
         // Return the file inline
         return response()->file($filePath, [
             'Content-Disposition' => 'inline; filename="' . $file->original_filename . '"'
+        ]);
+    }
+
+    public function toggleFavorite(Request $request, File $file)
+    {
+        $user = Auth::user();
+
+        // Use toggle to attach if not present, and detach if present.
+        $result = $user->favoriteFiles()->toggle($file->id);
+
+        // Check if the file was attached in this operation
+        $isFavorited = !empty($result['attached']);
+
+        return response()->json([
+            'success' => true,
+            'is_favorited' => $isFavorited,
         ]);
     }
 }

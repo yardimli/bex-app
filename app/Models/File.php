@@ -39,4 +39,9 @@ class File extends Model
     {
         return $this->belongsToMany(ChatMessage::class, 'chat_message_file');
     }
+
+    public function favoritedByUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'file_favorites');
+    }
 }
