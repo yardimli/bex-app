@@ -9,6 +9,8 @@
     use Illuminate\Support\Facades\Hash;
     use Illuminate\Validation\Rules\Password;
     use Illuminate\Support\Facades\Redirect;
+    use Illuminate\Support\Facades\Storage;
+    use Illuminate\Support\Str;
 
 	class ProfileController extends Controller
 	{
@@ -57,6 +59,36 @@
 			// Redirect back to the profile edit page with a success message
 			return redirect()->route('profile.edit')->with('status', 'profile-updated');
 		}
+
+        public function updateAvatar(Request $request): \Illuminate\Http\JsonResponse
+        {
+            $request->validate([
+                'avatar' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
+            ]);
+
+            $user = $request->user();
+
+            if (!$request->hasFile('avatar')) {
+                return response()->json(['success' => false, 'message' => 'No avatar file received.'], 400);
+            }
+
+            // Delete old avatar if it exists
+            if ($user->avatar) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+
+            $file = $request->file('avatar');
+            $filename = 'avatar-' . $user->id . '-' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('avatars', $filename, 'public');
+
+            $user->update(['avatar' => $path]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Avatar updated successfully.',
+                'avatar_url' => $user->avatar_url,
+            ]);
+        }
 
         public function updatePassword(Request $request): RedirectResponse
         {

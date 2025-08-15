@@ -62,6 +62,7 @@
 
 		// Form submission routes for profile
 		Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar.update'); //
 		Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
 		Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
@@ -114,7 +115,6 @@
 			Route::get('/user/inbox', [ApiMessageController::class, 'inbox'])->name('user.inbox');
 			Route::get('/user/sent', [ApiMessageController::class, 'sent'])->name('user.sent');
 			Route::get('/user/unread-count', [ApiMessageController::class, 'unreadCount'])->name('user.unread-count');
-			// ADDED: The missing route to get a single message's details, fixing the 404 error.
 			Route::get('/messages/{message}', [ApiMessageController::class, 'show'])->name('messages.show')->where('message', '[0-9]+');
 			Route::patch('/messages/{message}/read', [ApiMessageController::class, 'markAsRead'])->name('messages.read')->where('message', '[0-9]+');
 

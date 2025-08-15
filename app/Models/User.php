@@ -2,18 +2,17 @@
 
 	namespace App\Models;
 
-	// use Illuminate\Contracts\Auth\MustVerifyEmail; // <-- REMOVE or COMMENT OUT this line
 	use Illuminate\Database\Eloquent\Factories\HasFactory;
 	use Illuminate\Foundation\Auth\User as Authenticatable;
 	use Illuminate\Notifications\Notifiable;
 	use Laravel\Sanctum\HasApiTokens;
 	use Illuminate\Database\Eloquent\Relations\HasMany;
     use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+    use Illuminate\Support\Facades\Storage;
 
 	use App\Models\ChatHeader;
 	use App\Models\ActionItem;
 
-// class User extends Authenticatable implements MustVerifyEmail // <-- Original if it existed
 	class User extends Authenticatable // <-- CHANGE TO THIS
 	{
 		use HasApiTokens, HasFactory, Notifiable;
@@ -29,6 +28,7 @@
 			'name',
 			'email',
 			'password',
+            'avatar',
 		];
 
 		/**
@@ -50,6 +50,15 @@
 			'email_verified_at' => 'datetime',
 			'password' => 'hashed', // Use 'hashed' for Laravel 10+
 		];
+
+        public function getAvatarUrlAttribute()
+        {
+            if ($this->avatar && Storage::disk('public')->exists($this->avatar)) {
+                return Storage::disk('public')->url($this->avatar);
+            }
+            // Return a default avatar from a placeholder service
+            return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=random';
+        }
 
 		public function chatHeaders()
 		{
@@ -86,7 +95,7 @@
             return $this->hasMany(MessageRecipient::class, 'recipient_id');
         }
 
-        public function files(): HasMany // <-- ADD THIS METHOD
+        public function files(): HasMany
         {
             return $this->hasMany(File::class);
         }
