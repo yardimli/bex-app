@@ -16,9 +16,9 @@
 @guest
 	@if (Route::has('login'))
 		{{-- MODIFIED: Replaced text link with an icon button for Login. --}}
-		<a href="{{ route('login') }}" class="btn btn-ghost btn-circle" title="Login">
-			<i class="bi bi-box-arrow-in-right text-xl"></i>
-		</a>
+        <a href="{{ route('login') }}" class="btn btn-ghost btn-circle" title="Login">
+            <i class="bi bi-box-arrow-in-right text-xl"></i>
+        </a>
 	@endif
 	@if (Route::has('register'))
 		{{-- MODIFIED: Replaced text link with an icon button for Register. --}}
@@ -31,8 +31,7 @@
 	<div class="dropdown dropdown-end">
 		<div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
 			<div class="w-10 rounded-full">
-				{{-- Placeholder for a user avatar, can be replaced with a real one --}}
-				<i class="bi bi-person-circle text-3xl"></i>
+                <img id="user-avatar-header" src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}'s avatar" />
 			</div>
 		</div>
 		<ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
