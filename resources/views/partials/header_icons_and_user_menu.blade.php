@@ -29,9 +29,22 @@
 @else
 	{{-- Logged in User Dropdown --}}
 	<div class="dropdown dropdown-end">
+        @php
+            // Determine which avatar to display in the header
+            $avatarUrl = Auth::user()->avatar_url; // Default to the user's personal avatar
+            $avatarAlt = Auth::user()->name . "'s avatar";
+
+            if ($currentTeamId) {
+                $currentTeam = $userTeams->firstWhere('id', $currentTeamId);
+                if ($currentTeam) {
+                    $avatarUrl = $currentTeam->avatar_url; // If a team is active, use its avatar
+                    $avatarAlt = $currentTeam->name . "'s avatar";
+                }
+            }
+        @endphp
 		<div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
 			<div class="w-10 rounded-full">
-                <img id="user-avatar-header" src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}'s avatar" />
+                <img id="user-avatar-header" src="{{ $avatarUrl }}" alt="{{ $avatarAlt }}" />
 			</div>
 		</div>
 		<ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
