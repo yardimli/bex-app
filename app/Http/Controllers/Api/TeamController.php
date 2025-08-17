@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class TeamController extends Controller
 {
@@ -66,6 +67,41 @@ class TeamController extends Controller
 
         return response()->json($member->load('user'), 201);
     }
+
+    public function updateAvatar(Request $request, Team $team)
+    {
+        // Authorization: Only the owner can update the avatar.
+        if (Auth::id() !== $team->owner_id) {
+            return response()->json(['error' => 'Only the team owner can update the avatar.'], 403);
+        }
+
+        $request->validate([
+            'avatar' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
+        ]);
+
+        if (!$request->hasFile('avatar')) {
+            return response()->json(['success' => false, 'message' => 'No avatar file received.'], 400);
+        }
+
+        // Delete old avatar if it exists
+        if ($team->avatar) {
+            Storage::disk('public')->delete($team->avatar);
+        }
+
+        $file = $request->file('avatar');
+        $filename = 'team-avatar-' . $team->id . '-' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+        // Store in a dedicated folder for team avatars
+        $path = $file->storeAs('team-avatars', $filename, 'public');
+
+        $team->update(['avatar' => $path]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Team avatar updated successfully.',
+            'avatar_url' => $team->avatar_url, // Use the accessor from the model
+        ]);
+    }
+
 
     public function userTeams()
     {

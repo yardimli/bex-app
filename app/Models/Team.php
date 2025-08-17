@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Storage;
 
 class Team extends Model
 {
@@ -14,8 +15,18 @@ class Team extends Model
         'name',
         'description',
         'owner_id',
+        'avatar',
     ];
 
+    protected $appends = ['avatar_url'];
+    public function getAvatarUrlAttribute()
+    {
+        if ($this->avatar && Storage::disk('public')->exists($this->avatar)) {
+            return Storage::disk('public')->url($this->avatar);
+        }
+        // Return a default avatar from a placeholder service with the team's name
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=random&color=fff';
+    }
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');

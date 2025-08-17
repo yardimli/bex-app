@@ -105,6 +105,7 @@
 			// Team API
 			Route::get('/user/teams', [ApiTeamController::class, 'userTeams'])->name('user.teams');
 			Route::post('/teams', [ApiTeamController::class, 'store'])->name('teams.store');
+            Route::post('/teams/{team}/avatar', [ApiTeamController::class, 'updateAvatar'])->name('teams.avatar.update')->where('team', '[0-9]+');
 			Route::post('/teams/{team}/members', [ApiTeamController::class, 'addMember'])->name('teams.members.store')->where('team', '[0-9]+');
 			// MODIFIED: Corrected regex from '[0-g]+' to '[0-9]+'
 			Route::get('/teams/{team}/members', [ApiTeamController::class, 'getMembers'])->name('teams.members.index')->where('team', '[0-9]+');

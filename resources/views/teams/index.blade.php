@@ -1,7 +1,29 @@
 {{-- resources/views/teams/index.blade.php --}}
 
 @extends('layouts.app')
-
+@push('styles')
+    <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.1/dist/cropper.css" />
+    <style>
+        /* Make the image container responsive and prevent modal overflow */
+        .img-container {
+            max-height: 60vh; /* Limit height to 60% of the viewport height */
+            width: 100%;
+            background-color: #f7f7f7;
+            overflow: hidden; /* Hide parts of the image that overflow the container */
+        }
+        .img-container img {
+            max-width: 100%;
+        }
+        /* Make the Cropper.js preview circular */
+        .cropper-view-box,
+        .cropper-face {
+            border-radius: 50%;
+        }
+        .cropper-dashed, .cropper-point, .cropper-line {
+            display: none;
+        }
+    </style>
+@endpush
 @section('content')
     <div class="p-4 flex flex-col h-full gap-4">
         @include('partials.page_header')
@@ -64,8 +86,30 @@
         </div>
         <form method="dialog" class="modal-backdrop"><button>close</button></form>
     </dialog>
+
+    <!-- Team Avatar Cropping Modal -->
+    <dialog id="teamAvatarCropModal" class="modal">
+        <div class="modal-box w-11/12 max-w-lg flex flex-col max-h-[85vh]">
+            {{-- Header --}}
+            <h3 class="font-bold text-lg flex-shrink-0">Crop Team Avatar</h3>
+            {{-- Main content area that grows and scrolls --}}
+            <div class="py-4 flex-grow min-h-0 overflow-y-auto">
+                <div class="img-container">
+                    <img id="team-image-to-crop" src="">
+                </div>
+            </div>
+            {{-- Footer with actions that stays at the bottom --}}
+            <div class="modal-action flex-shrink-0">
+                <form method="dialog">
+                    <button class="btn btn-ghost" id="cancel-team-crop-btn">Cancel</button>
+                </form>
+                <button class="btn btn-primary" id="crop-and-upload-team-btn">Crop & Upload</button>
+            </div>
+        </div>
+    </dialog>
 @endsection
 
 @push('scripts')
+    <script src="https://unpkg.com/cropperjs@1.6.1/dist/cropper.js"></script>
     <script src="{{ asset('js/teams.js') }}"></script>
 @endpush
