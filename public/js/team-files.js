@@ -1,7 +1,7 @@
 // public/js/team-files.js:
 
 $(document).ready(function() {
-    // MODIFIED: Get dialog element
+    // Get dialog element
     const teamFilesModal = document.getElementById('teamFilesModal');
     if (!teamFilesModal) {
         return; // Don't run if the modal isn't on the page
@@ -9,10 +9,23 @@ $(document).ready(function() {
 
     const teamFilesList = $('#team-files-modal-list');
     const teamNameDisplay = $('#team-files-modal-team-name');
+    const teamAvatarImg = $('#team-files-modal-avatar');
     const detailsPane = $('#team-files-modal-details-pane');
-    const filterLinks = $('#team-files-modal-filters a'); // MODIFIED: Target 'a' tags inside
+    const filterLinks = $('#team-files-modal-filters a'); // Target 'a' tags inside
     const searchInput = $('#team-files-modal-search');
     let debounceTimer;
+    let userTeamsData = []; //To cache all team data
+
+    // Function to fetch and cache team data on load
+    function loadUserTeams() {
+        $.get('/api/user/teams', function(response) {
+            if (response.teams) {
+                userTeamsData = response.teams;
+            }
+        }).fail(function() {
+            console.error("Could not load user teams data for the workspace modal.");
+        });
+    }
 
     function getFileIcon(mimeType) {
         if (!mimeType) return 'bi-file-earmark-fill text-base-content/50';
@@ -79,24 +92,51 @@ $(document).ready(function() {
             });
     }
 
-    // MODIFIED: Changed from Bootstrap event to a click handler on the trigger button
+    // Rewrote the click handler to use cached team data
     $('#teamWorkspaceButton').on('click', function() {
         const currentTeamId = $('meta[name="current-team-id"]').attr('content');
-        const teamLink = $(`#account-switcher-submenu a[data-team-id="${currentTeamId}"]`);
-        const teamName = teamLink.length ? teamLink.find('span').first().text() : 'Your Team';
+
+        // Reset to a loading state immediately
+        teamNameDisplay.text('Loading...');
+        teamAvatarImg.attr('src', ''); // Clear the image
+        $('#team-files-modal-loader').show();
+        teamFilesList.empty();
+        detailsPane.html('');
+
+        teamFilesModal.showModal(); // Show modal immediately with loading state
 
         if (currentTeamId && currentTeamId !== '0') {
-            teamNameDisplay.text(teamName);
-            searchInput.val('');
-            filterLinks.filter('[data-filter="recent"]').trigger('click');
+            // Fetch all user teams data to find the current one
+            $.get('/api/user/teams', function(response) {
+                if (response.teams) {
+                    const currentTeam = response.teams.find(team => team.id == currentTeamId);
+                    if (currentTeam) {
+                        // Data found, populate the modal header
+                        teamNameDisplay.text(currentTeam.name);
+                        teamAvatarImg.attr('src', currentTeam.avatar_url);
+                        teamAvatarImg.attr('alt', currentTeam.name + "'s Avatar");
+
+                        // Now load the files for this team
+                        searchInput.val('');
+                        filterLinks.removeClass('active');
+                        filterLinks.filter('[data-filter="recent"]').addClass('active');
+                        loadTeamFiles(currentTeamId, '', 'recent');
+                    } else {
+                        // This case is unlikely but good to handle
+                        teamNameDisplay.text('Error: Team not found');
+                    }
+                }
+            }).fail(function() {
+                teamNameDisplay.text('Error loading team data');
+            });
         } else {
+            // Handle the "No Team Selected" case
             teamNameDisplay.text('No Team Selected');
+            teamAvatarImg.attr('src', 'https://ui-avatars.com/api/?name=?');
+            $('#team-files-modal-loader').hide();
             teamFilesList.html('<div class="text-center text-base-content/70 p-4">Please switch to a team to view its workspace.</div>');
-            detailsPane.html('');
             filterLinks.removeClass('active');
         }
-        // MODIFIED: Use native showModal()
-        teamFilesModal.showModal();
     });
 
     filterLinks.on('click', function(e) {
