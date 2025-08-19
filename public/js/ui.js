@@ -325,27 +325,27 @@ $(document).ready(function () {
 	});
 
 	// --- Summarize Content Logic ---
-	function redirectToChatWithSummarizationData(data) {
-		const chatUrl = '/chat';
-		let redirectUrl;
+    function redirectToChatWithSummarizationData(data) {
+        const chatUrl = '/chat';
+        let redirectUrl;
 
-		if (data.context_key) {
-			redirectUrl = `${chatUrl}?summarize_key=${encodeURIComponent(data.context_key)}&prompt_text=${encodeURIComponent(data.prompt_text || '')}`;
-		} else if (data.full_text_for_prompt) {
-			const promptText = (data.prompt_text || '') + data.full_text_for_prompt;
-			redirectUrl = `${chatUrl}?prompt=${encodeURIComponent(promptText)}`;
-		} else {
-			alert('Error: Could not prepare summarization data.');
-			return;
-		}
+        if (data.context_key) {
+            // This is now the ONLY supported method for summarization redirects.
+            redirectUrl = `${chatUrl}?summarize_key=${encodeURIComponent(data.context_key)}`;
+        } else {
+            // This else block now catches any summarization attempt that fails to produce a context key.
+            alert('Error: Could not prepare summarization data.');
+            return;
+        }
 
-		if (summarizeContentModal) summarizeContentModal.close(); // MODIFIED: DaisyUI close method
-		setTimeout(() => {
-			window.location.href = redirectUrl;
-		}, 150);
-	}
+        if (summarizeContentModal) summarizeContentModal.close(); // MODIFIED: DaisyUI close method
+        setTimeout(() => {
+            window.location.href = redirectUrl;
+        }, 150);
+    }
 
-	$('#summarizeWebButton').on('click', function () {
+
+    $('#summarizeWebButton').on('click', function () {
 		const url = $('#summarizeUrlInput').val().trim();
 		if (!url) {
 			alert('Please enter a URL.');
@@ -383,19 +383,40 @@ $(document).ready(function () {
 		});
 	});
 
-	$('#summarizeTextButton').on('click', function () {
-		const text = $('#summarizeTextInput').val().trim();
-		if (!text) {
-			alert('Please paste some text to summarize.');
-			return;
-		}
-		const promptText = `Summarize the following text:\n\n${text}`;
-		const redirectUrl = `/chat?prompt=${encodeURIComponent(promptText)}`;
-		if (summarizeContentModal) summarizeContentModal.close(); // MODIFIED: DaisyUI close method
-		setTimeout(() => {
-			window.location.href = redirectUrl;
-		}, 150);
-	});
+    $('#summarizeTextButton').on('click', function () {
+        const text = $('#summarizeTextInput').val().trim();
+        if (!text) {
+            alert('Please paste some text to summarize.');
+            return;
+        }
+
+        const button = $(this);
+        const originalButtonText = button.html();
+        button.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span> Processing...');
+
+        $.ajax({
+            url: '/api/summarize/text',
+            method: 'POST',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                text: text
+            },
+            dataType: 'json',
+            success: function (response) {
+                if (response.success) {
+                    redirectToChatWithSummarizationData(response);
+                } else {
+                    alert('Error: ' + (response.error || 'Could not process the text.'));
+                    button.prop('disabled', false).html(originalButtonText);
+                }
+            },
+            error: function (jqXHR) {
+                const errorMsg = jqXHR.responseJSON?.error || 'An unknown error occurred.';
+                alert('Error: ' + errorMsg);
+                button.prop('disabled', false).html(originalButtonText);
+            }
+        });
+    });
 
 	$('#summarizeFileButton').on('click', function () {
 		const fileInput = $('#summarizeFileInput');

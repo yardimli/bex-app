@@ -139,6 +139,7 @@
 			// Summarization Helper API
 			Route::post('/summarize/upload', [UtilityController::class, 'processFileUploadForSummarization'])->name('summarize.upload');
 			Route::post('/summarize/url', [UtilityController::class, 'processUrlForSummarization'])->name('summarize.url');
+            Route::post('/summarize/text', [UtilityController::class, 'processTextForSummarization'])->name('summarize.text');
 
             //Usage Log API
             Route::get('/usage-logs', [UsageController::class, 'getUsageLogs'])->name('usage-logs.index');

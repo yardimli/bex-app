@@ -29,47 +29,54 @@ class ChatController extends Controller
 	 * @param ChatHeader|null $chatHeader
 	 * @return \Illuminate\Contracts\View\View
 	 */
-	public function show(Request $request, $chatHeaderId = null)
-	{
-		$user = Auth::user();
-		if (!$user) {
-			return redirect()->route('login');
-		}
+    public function show(Request $request, $chatHeaderId = null)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
 
         $userTeams = $user->teams()->get();
         $currentTeamId = session('current_team_id');
 
         $chatHeader = null;
-		if ($chatHeaderId) {
-			$chatHeader = ChatHeader::where('id', $chatHeaderId)
-				->where('user_id', $user->id)
-				->first();
-			if (!$chatHeader) {
-				return redirect()->route('chat.show')->with('error', 'Chat not found or was deleted.');
-			}
-		}
+        if ($chatHeaderId) {
+            $chatHeader = ChatHeader::where('id', $chatHeaderId)
+                ->where('user_id', $user->id)
+                ->first();
+            if (!$chatHeader) {
+                return redirect()->route('chat.show')->with('error', 'Chat not found or was deleted.');
+            }
+        }
 
-		$messages = $chatHeader ? $chatHeader->messages()->get() : collect();
+        $messages = $chatHeader ? $chatHeader->messages()->get() : collect();
 
-		$initialPrompt = null;
-		if (!$chatHeader) { // Only process initial prompts for new chats
-			if ($request->has('prompt')) {
-				$initialPrompt = trim($request->input('prompt'));
-			} elseif ($request->has('summarize_key') && $request->has('prompt_text')) {
-				$sessionKey = $request->input('summarize_key');
-				$prompt_text = $request->input('prompt_text');
-				if (session()->has($sessionKey)) {
-					$fullText = session($sessionKey);
-					$initialPrompt = $prompt_text;
-					session(['pending_full_text_for_chat' => $fullText]);
-					session()->forget($sessionKey); // Clean up original key
-				} else {
-					Log::warning("Summarize key '{$sessionKey}' not found in session.");
-					// Optionally, set an error message or a default prompt
-					$initialPrompt = $prompt_text . "[Error: Content for summarization not found. Please try again.]";
-				}
-			}
-		}
+        $initialPrompt = null;
+        if (!$chatHeader) { // Only process initial prompts for new chats
+            if ($request->has('prompt')) {
+                $initialPrompt = trim($request->input('prompt'));
+            } elseif ($request->has('summarize_key')) { // MODIFIED: No longer need to check for prompt_text
+                $sessionKey = $request->input('summarize_key');
+                if (session()->has($sessionKey)) {
+                    // MODIFIED: Retrieve the entire data array from the session
+                    $summaryData = session($sessionKey);
+
+                    if (is_array($summaryData) && isset($summaryData['prompt_text']) && isset($summaryData['full_text'])) {
+                        $initialPrompt = $summaryData['prompt_text'] . "\n\n" . $summaryData['full_text'];
+                    } else {
+                        // Fallback in case the session data is malformed
+                        $initialPrompt = "[Error: Could not load summarization content. Please try again.]";
+                        Log::warning("Summarize key '{$sessionKey}' found, but session data was malformed.");
+                    }
+
+                    session()->forget($sessionKey); // Clean up original key
+                } else {
+                    Log::warning("Summarize key '{$sessionKey}' not found in session.");
+                    // MODIFIED: Simplified error message as prompt_text is no longer in the URL
+                    $initialPrompt = "[Error: Content for summarization not found. Please try again.]";
+                }
+            }
+        }
 
 		return view('pages.chat', [
 			'activeChat' => $chatHeader,
@@ -95,7 +102,6 @@ class ChatController extends Controller
 			'personality_tone' => 'nullable|string|in:professional,witty,motivational,friendly,poetic,sarcastic',
             'attached_files' => 'nullable|array',
             'attached_files.*' => 'integer|exists:files,id',
-            'context_key' => 'nullable|string|starts_with:context_text_',
 		]);
 
 
@@ -105,20 +111,10 @@ class ChatController extends Controller
 		$chatHeaderId = $request->input('chat_header_id');
 		$selectedModel = $request->input('llm_model');
         $attachedFileIds = $request->input('attached_files', []);
-        $contextKey = $request->input('context_key');
 		$chatHeader = null;
 		$isNewChat = false;
 
         $actualUserMessageForLlm = $userPrompt;
-        if (empty($chatHeaderId) && session()->has('pending_full_text_for_chat')) {
-            $fullTextFromSession = session('pending_full_text_for_chat');
-            $actualUserMessageForLlm = $userPrompt . "\n\n" . $fullTextFromSession;
-
-            session()->forget('pending_full_text_for_chat'); // Clean up
-            Log::info("Using full text from session for initial summarization message. Original input length: " . strlen($userPrompt) . ", Full text length: " . strlen($actualUserMessageForLlm));
-        }
-		// --- End check for pending full text ---
-
         // --- Process Attached Files ---
         $fileContextText = '';
         $validatedFileIds = [];
