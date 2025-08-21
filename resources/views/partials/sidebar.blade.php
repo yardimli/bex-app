@@ -31,7 +31,10 @@
 	<ul class="menu p-0 [&_li>*]:rounded-md">
 		<li><button class="btn btn-outline w-full mb-2 justify-start" id="transcribeButton"><i class="bi bi-mic-fill me-2"></i> Transcribe</button></li>
 		<li><button class="btn btn-outline w-full mb-2 justify-start" id="summarizeButton"><i class="bi bi-file-text-fill me-2"></i> Summarize</button></li>
-		<li><button class="btn btn-outline w-full justify-start" id="teamWorkspaceButton"><i class="bi bi-people-fill me-2"></i> Your Team Workspace</button></li>
+        @php
+            $isTeamContext = session('current_team_id');
+        @endphp
+        <li><button class="btn btn-outline w-full justify-start" id="teamWorkspaceButton"><i class="bi {{ $isTeamContext ? 'bi-people-fill' : 'bi-person-workspace' }} me-2"></i> {{ $isTeamContext ? 'Your Team Workspace' : 'My Workspace' }}</button></li>
 	</ul>
 
 	<div class="mt-auto"> <!-- Footer elements if any --> </div>

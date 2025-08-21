@@ -20,7 +20,7 @@ class FileController extends Controller
     public function userFiles()
     {
         $user = Auth::user();
-        $files = $user->files()->with('owner','sharedWithTeams:id,name')->orderBy('created_at', 'desc')->get();
+        $files = $user->files()->with('sharedWithTeams', 'owner')->orderBy('created_at', 'desc')->get();
         return response()->json($files);
     }
 

@@ -15,12 +15,20 @@ $(document).ready(function() {
     const searchInput = $('#team-files-modal-search');
     let debounceTimer;
     let userTeamsData = []; //To cache all team data
+    let userData = {};
 
     // Function to fetch and cache team data on load
     function loadUserTeams() {
         $.get('/api/user/teams', function(response) {
             if (response.teams) {
                 userTeamsData = response.teams;
+            }
+            // ADDED: Cache user data
+            if (response.user_name) {
+                userData = {
+                    name: response.user_name,
+                    avatar_url: response.user_avatar_url
+                };
             }
         }).fail(function() {
             console.error("Could not load user teams data for the workspace modal.");
@@ -36,35 +44,23 @@ $(document).ready(function() {
         return 'bi-file-earmark-fill text-base-content/50';
     }
 
+    // MODIFIED: renderTeamFileItem to handle both team and personal files
     function renderTeamFileItem(file) {
         let previewButtonHtml = '';
         if (file.mime_type.startsWith('image/') || file.mime_type === 'application/pdf') {
             // MODIFIED: Use DaisyUI button classes
             previewButtonHtml = `<button class="btn btn-sm btn-outline btn-info preview-btn" title="Preview" data-file-id="${file.id}" data-mime-type="${file.mime_type}"><i class="bi bi-eye-fill"></i></button>`;
         }
-
         const favoriteIconClass = file.is_favorited ? 'bi-heart-fill text-error' : 'bi-heart';
-        const favoriteButtonHtml = `
-            <button class="btn btn-sm btn-ghost favorite-btn" title="Favorite" data-file-id="${file.id}">
-                <i class="bi ${favoriteIconClass}"></i>
-            </button>`;
+        const favoriteButtonHtml = ` <button class="btn btn-sm btn-ghost favorite-btn" title="Favorite" data-file-id="${file.id}"> <i class="bi ${favoriteIconClass}"></i> </button>`;
 
-        // MODIFIED: Replaced Bootstrap structure with DaisyUI/Tailwind
-        return `
-            <a href="#" class="flex items-center justify-between p-3 bg-base-100 hover:bg-base-200 rounded-lg file-item" data-id="${file.id}">
-                <div class="flex items-center min-w-0 gap-4">
-                    <i class="bi ${getFileIcon(file.mime_type)} text-3xl"></i>
-                    <div class="text-truncate">
-                        <strong class="block text-truncate">${$('<div>').text(file.original_filename).html()}</strong>
-                        <small class="text-base-content/60">Shared by ${$('<div>').text(file.owner.name).html()} on ${new Date(file.pivot.shared_at).toLocaleDateString()}</small>
-                    </div>
-                </div>
-                <div class="flex items-center flex-shrink-0 gap-2">
-                     ${favoriteButtonHtml}
-                    ${previewButtonHtml}
-                    <a href="/api/files/${file.id}/download" class="btn btn-sm btn-outline" title="Download"><i class="bi bi-download"></i></a>
-                </div>
-            </a>`;
+        // ADDED: Conditional logic for shared/uploaded info
+        const sharedInfo = file.pivot
+            ? `Shared by ${$('<div>').text(file.owner.name).html()} on ${new Date(file.pivot.shared_at).toLocaleDateString()}`
+            : `Uploaded on ${new Date(file.created_at).toLocaleDateString()}`;
+
+        // MODIFIED: Replaced Bootstrap structure with DaisyUI/Tailwind and used sharedInfo
+        return ` <a href="#" class="flex items-center justify-between p-3 bg-base-100 hover:bg-base-200 rounded-lg file-item" data-id="${file.id}"> <div class="flex items-center min-w-0 gap-4"> <i class="bi ${getFileIcon(file.mime_type)} text-3xl"></i> <div class="text-truncate"> <strong class="block text-truncate">${$('<div>').text(file.original_filename).html()}</strong> <small class="text-base-content/60">${sharedInfo}</small> </div> </div> <div class="flex items-center flex-shrink-0 gap-2"> ${favoriteButtonHtml} ${previewButtonHtml} <a href="/api/files/${file.id}/download" class="btn btn-sm btn-outline" title="Download"><i class="bi bi-download"></i></a> </div> </a>`;
     }
 
     function loadTeamFiles(teamId, searchTerm = '', filterType = 'recent') {
@@ -93,78 +89,104 @@ $(document).ready(function() {
     }
 
     // Rewrote the click handler to use cached team data
+    function loadWorkspaceFiles(contextId, searchTerm = '', filterType = 'recent') {
+        // MODIFIED: Use DaisyUI spinner
+        teamFilesList.html('<div class="flex justify-center items-center h-full"><span class="loading loading-spinner loading-lg"></span></div>');
+        detailsPane.html('Select a file to view details.');
+
+        // ADDED: Determine API endpoint and data based on context
+        const isPersonal = contextId === 'personal';
+        const apiUrl = isPersonal ? '/api/user/files' : `/api/teams/${contextId}/files`;
+        // NOTE: The personal files endpoint doesn't support search/filter, so we only send that data for teams.
+        const requestData = isPersonal ? {} : { search: searchTerm, filter: filterType };
+
+        $.get(apiUrl, requestData)
+            .done(function(files) {
+                teamFilesList.empty();
+                if (files.length > 0) {
+                    files.forEach(file => teamFilesList.append(renderTeamFileItem(file)));
+                } else {
+                    if (searchTerm) {
+                        teamFilesList.html(`<div class="text-center text-base-content/70 p-4">No files found matching "<strong>${$('<div>').text(searchTerm).html()}</strong>".</div>`);
+                    } else if (filterType === 'favorites' && !isPersonal) {
+                        teamFilesList.html('<div class="text-center text-base-content/70 p-4">You have not favorited any files in this team yet.</div>');
+                    } else if (isPersonal) {
+                        teamFilesList.html('<div class="text-center text-base-content/70 p-4">You have not uploaded any files yet.</div>');
+                    } else {
+                        teamFilesList.html('<div class="text-center text-base-content/70 p-4">No files have been shared with this team yet.</div>');
+                    }
+                }
+            })
+            .fail(function() {
+                teamFilesList.html('<div class="text-center text-error p-4">Could not load files. Please try again later.</div>');
+            });
+    }
+
+    // MODIFIED: Rewrote the click handler to use cached data and support both contexts
     $('#teamWorkspaceButton').on('click', function() {
         const currentTeamId = $('meta[name="current-team-id"]').attr('content');
+        const isPersonalContext = !currentTeamId || currentTeamId === '0';
+        const modalTitle = $('#team-files-modal-title');
 
         // Reset to a loading state immediately
         teamNameDisplay.text('Loading...');
-        teamAvatarImg.attr('src', ''); // Clear the image
-        $('#team-files-modal-loader').show();
-        teamFilesList.empty();
-        detailsPane.html('');
+        teamAvatarImg.attr('src', 'https://ui-avatars.com/api/?name=?');
+        teamAvatarImg.attr('alt', 'Loading Avatar');
+        teamFilesList.html('<div class="flex justify-center items-center h-full" id="team-files-modal-loader"><span class="loading loading-spinner loading-lg"></span></div>');
+        detailsPane.html('Select a file to view details.');
+        teamFilesModal.showModal();
 
-        teamFilesModal.showModal(); // Show modal immediately with loading state
+        searchInput.val('');
+        filterLinks.removeClass('active');
+        filterLinks.filter('[data-filter="recent"]').addClass('active');
 
-        if (currentTeamId && currentTeamId !== '0') {
-            // Fetch all user teams data to find the current one
-            $.get('/api/user/teams', function(response) {
-                if (response.teams) {
-                    const currentTeam = response.teams.find(team => team.id == currentTeamId);
-                    if (currentTeam) {
-                        // Data found, populate the modal header
-                        teamNameDisplay.text(currentTeam.name);
-                        teamAvatarImg.attr('src', currentTeam.avatar_url);
-                        teamAvatarImg.attr('alt', currentTeam.name + "'s Avatar");
-
-                        // Now load the files for this team
-                        searchInput.val('');
-                        filterLinks.removeClass('active');
-                        filterLinks.filter('[data-filter="recent"]').addClass('active');
-                        loadTeamFiles(currentTeamId, '', 'recent');
-                    } else {
-                        // This case is unlikely but good to handle
-                        teamNameDisplay.text('Error: Team not found');
-                    }
-                }
-            }).fail(function() {
-                teamNameDisplay.text('Error loading team data');
-            });
+        if (isPersonalContext) {
+            // PERSONAL CONTEXT
+            modalTitle.text('My Workspace');
+            if (userData.name) {
+                teamNameDisplay.text(userData.name);
+                teamAvatarImg.attr('src', userData.avatar_url);
+                teamAvatarImg.attr('alt', userData.name + "'s Avatar");
+                loadWorkspaceFiles('personal', '', 'recent');
+            } else {
+                teamNameDisplay.text('Error loading user data');
+            }
         } else {
-            // Handle the "No Team Selected" case
-            teamNameDisplay.text('No Team Selected');
-            teamAvatarImg.attr('src', 'https://ui-avatars.com/api/?name=?');
-            $('#team-files-modal-loader').hide();
-            teamFilesList.html('<div class="text-center text-base-content/70 p-4">Please switch to a team to view its workspace.</div>');
-            filterLinks.removeClass('active');
+            // TEAM CONTEXT
+            modalTitle.text('Team Workspace');
+            const currentTeam = userTeamsData.find(team => team.id == currentTeamId);
+            if (currentTeam) {
+                teamNameDisplay.text(currentTeam.name);
+                teamAvatarImg.attr('src', currentTeam.avatar_url);
+                teamAvatarImg.attr('alt', currentTeam.name + "'s Avatar");
+                loadWorkspaceFiles(currentTeamId, '', 'recent');
+            } else {
+                teamNameDisplay.text('Error: Team not found');
+            }
         }
     });
 
+    // MODIFIED: Filter and Search handlers to check context
     filterLinks.on('click', function(e) {
         e.preventDefault();
         if ($(this).hasClass('disabled')) return;
-
         filterLinks.removeClass('active');
         $(this).addClass('active');
-
         const filter = $(this).data('filter');
         const currentTeamId = $('meta[name="current-team-id"]').attr('content');
-
-        if (currentTeamId && currentTeamId !== '0') {
-            loadTeamFiles(currentTeamId, searchInput.val(), filter);
-        }
+        const contextId = (!currentTeamId || currentTeamId === '0') ? 'personal' : currentTeamId;
+        loadWorkspaceFiles(contextId, searchInput.val(), filter);
     });
 
     searchInput.on('keyup', function() {
         clearTimeout(debounceTimer);
         const currentTeamId = $('meta[name="current-team-id"]').attr('content');
+        const contextId = (!currentTeamId || currentTeamId === '0') ? 'personal' : currentTeamId;
         const searchValue = $(this).val();
         const activeFilter = filterLinks.filter('.active').data('filter') || 'recent';
-
-        if (currentTeamId && currentTeamId !== '0') {
-            debounceTimer = setTimeout(() => {
-                loadTeamFiles(currentTeamId, searchValue, activeFilter);
-            }, 400);
-        }
+        debounceTimer = setTimeout(() => {
+            loadWorkspaceFiles(contextId, searchValue, activeFilter);
+        }, 400);
     });
 
     teamFilesList.on('click', '.file-item', function(e) {
@@ -172,32 +194,26 @@ $(document).ready(function() {
         if ($(e.target).closest('.btn').length) {
             return;
         }
-
         teamFilesList.find('.file-item').removeClass('bg-base-300'); // Use a visual indicator class
         $(this).addClass('bg-base-300');
-
         const fileName = $(this).find('strong').text().trim();
-        detailsPane.html(`
-            <h5 class="font-bold text-truncate">${$('<div>').text(fileName).html()}</h5>
-            <p class="text-base-content/70 text-sm mt-2">Use the <i class="bi bi-eye-fill"></i> Preview or <i class="bi bi-download"></i> Download buttons to access the file.</p>
-        `);
+        detailsPane.html(` <h5 class="font-bold text-truncate">${$('<div>').text(fileName).html()}</h5> <p class="text-base-content/70 text-sm mt-2">Use the <i class="bi bi-eye-fill"></i> Preview or <i class="bi bi-download"></i> Download buttons to access the file.</p> `);
     });
 
     teamFilesList.on('click', '.favorite-btn', function(e) {
         e.preventDefault();
         e.stopPropagation(); // Prevent the file details from showing
-
         const button = $(this);
         const fileId = button.data('file-id');
         const icon = button.find('i');
-
         // Optimistically update UI
         icon.toggleClass('bi-heart bi-heart-fill text-error');
-
         $.ajax({
             url: `/api/files/${fileId}/toggle-favorite`,
             method: 'POST',
-            data: { _token: $('meta[name="csrf-token"]').attr('content') },
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
             dataType: 'json',
             success: function(response) {
                 // Correct the UI based on the actual server response
@@ -214,4 +230,7 @@ $(document).ready(function() {
             }
         });
     });
+
+    // Initial Load
+    loadUserTeams();
 });

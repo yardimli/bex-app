@@ -110,6 +110,8 @@ class TeamController extends Controller
         return response()->json([
             'teams' => $teams,
             'user_id' => $user->id,
+            'user_name' => $user->name,
+            'user_avatar_url' => $user->avatar_url,
             'current_team_id' => session('current_team_id', $teams->first()->id ?? null)
         ]);
     }

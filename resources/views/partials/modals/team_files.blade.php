@@ -1,14 +1,14 @@
 {{-- Converted from Bootstrap modal to DaisyUI dialog --}}
 <dialog id="teamFilesModal" class="modal">
     <div class="modal-box w-11/12 max-w-6xl">
-        <h3 class="font-bold text-lg">Team Workspace</h3>
+        <h3 class="font-bold text-lg">Workspace</h3>
         <div class="py-4">
             <div class="flex flex-col md:flex-row gap-6">
                 <div class="md:w-1/4">
                     <div class="text-center mb-4">
                         <div class="avatar">
                             <div class="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                                <img id="team-files-modal-avatar" src="https://ui-avatars.com/api/?name=Team" alt="Team Avatar" />
+                                <img id="team-files-modal-avatar" src="https://ui-avatars.com/api/?name=Team" alt="Workspace Avatar" />
                             </div>
                         </div>
                         <h4 class="font-semibold mt-2" id="team-files-modal-team-name">Your Team</h4>
