@@ -140,6 +140,7 @@
 			Route::post('/summarize/upload', [UtilityController::class, 'processFileUploadForSummarization'])->name('summarize.upload');
 			Route::post('/summarize/url', [UtilityController::class, 'processUrlForSummarization'])->name('summarize.url');
             Route::post('/summarize/text', [UtilityController::class, 'processTextForSummarization'])->name('summarize.text');
+            Route::post('/summarize/file-id', [UtilityController::class, 'processFileIdForSummarization'])->name('summarize.file-id');
 
             //Usage Log API
             Route::get('/usage-logs', [UsageController::class, 'getUsageLogs'])->name('usage-logs.index');
