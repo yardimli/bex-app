@@ -1016,5 +1016,67 @@ PROMPT;
             return self::$llmListCache;
         }
 
+        public static function transcribeAudio(UploadedFile $file, string $language = 'en'): array
+        {
+            set_time_limit(600); // Allow up to 10 minutes for transcription
+            session_write_close();
+
+            // This is the DEDICATED endpoint for transcription.
+            $transcription_base_url = env('OPEN_ROUTER_BASE_AUDIO', 'https://openrouter.ai/api/v1/audio/transcriptions');
+            $api_key = self::getOpenRouterKey();
+
+            // This endpoint uses transcription-specific models like Whisper.
+            // The name does NOT have a "provider/" prefix.
+            $model = env('WHISPER_MODEL', 'whisper-large-v3');
+            Log::debug('TRANSCRIBE DEBUG: Attempting to POST to this URL: ' . $transcription_base_url);
+            if (empty($api_key)) {
+                Log::error("OpenRouter API Key is not configured for transcription.");
+                return ['success' => false, 'error' => 'API key not configured'];
+            }
+
+            try {
+                Log::info("Attempting transcription with Whisper.", [
+                    'model' => $model,
+                    'filename' => $file->getClientOriginalName(),
+                    'language' => $language
+                ]);
+
+                // NEW: Using Laravel's Http facade for the request
+                $response = Http::withToken($api_key)
+                    ->timeout(580)
+                    ->withHeaders([
+                        'HTTP-Referer' => env('APP_URL', 'http://localhost'),
+                        'X-Title' => env('APP_NAME', 'Laravel'),
+                    ])
+                    ->attach(
+                        'file', fopen($file->getRealPath(), 'r'), $file->getClientOriginalName()
+                    )
+                    ->post($transcription_base_url, [
+                        'model' => $model,
+                        'language' => $language,
+                    ]);
+
+                // Check for client or server errors
+                $response->throw();
+
+                $result = $response->json();
+
+                if (!isset($result['text'])) {
+                    throw new \Exception('Transcription result did not contain text.');
+                }
+
+                return ['success' => true, 'text' => $result['text']];
+
+            } catch (\Illuminate\Http\Client\RequestException $e) {
+                $statusCode = $e->response->status();
+                $errorBody = $e->response->body();
+                Log::error("Laravel HTTP Request Exception during transcription: Status {$statusCode} - " . $errorBody);
+                return ['success' => false, 'error' => "HTTP Error: " . $errorBody];
+            } catch (\Exception $e) {
+                Log::error("General Exception during transcription: " . $e->getMessage());
+                return ['success' => false, 'error' => "An error occurred: " . $e->getMessage()];
+            }
+        }
+
 
 	}

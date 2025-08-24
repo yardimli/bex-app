@@ -166,4 +166,35 @@ class UtilityController extends Controller
             return response()->json(['success' => false, 'error' => 'An internal error occurred while processing the file.'], 500);
         }
     }
+
+    public function transcribeAudio(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            // Common audio and video formats. Adjust max size as needed.
+            'file' => 'required|file|mimes:mp3,mp4,mpeg,mpga,m4a,wav,webm|max:25600', // 25MB limit
+            'language' => 'nullable|string|size:2', // ISO-639-1 format
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'error' => $validator->errors()->first()], 422);
+        }
+
+        try {
+            $file = $request->file('file');
+            $language = $request->input('language', 'en');
+
+            $result = MyHelper::transcribeAudio($file);
+
+            if (!$result['success']) {
+                // The helper function provides the error message
+                return response()->json($result, 500);
+            }
+
+            return response()->json($result);
+
+        } catch (\Exception $e) {
+            Log::error('Audio transcription processing error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'error' => 'Failed to process audio file: ' . $e->getMessage()], 500);
+        }
+    }
 }

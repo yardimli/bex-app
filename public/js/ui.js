@@ -948,4 +948,160 @@ $(document).ready(function () {
 			if (pdfPreviewModal) pdfPreviewModal.showModal(); // MODIFIED
 		}
 	});
+
+    // --- Transcription Logic ---
+    const recordingModal = document.getElementById('recordingModal');
+    const transcriptionResultModal = document.getElementById('transcriptionResultModal');
+    const transcribeFileInput = $('#transcribe-file-input');
+    let mediaRecorder;
+    let audioChunks = [];
+    let recordingTimerInterval;
+
+    function handleTranscription(formData) {
+        const uploadBtn = $('#transcribe-upload-btn');
+        const recordBtn = $('#transcribe-record-btn');
+        const originalUploadText = uploadBtn.html();
+        const originalRecordText = recordBtn.html();
+
+        // Show loading state on both buttons
+        uploadBtn.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span> Processing...');
+        recordBtn.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span> Processing...');
+
+        $.ajax({
+            url: '/api/transcribe/upload',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function (response) {
+                if (response.success) {
+                    $('#transcription-output').val(response.text);
+                    if (transcribeModal) transcribeModal.close();
+                    if (recordingModal) recordingModal.close();
+                    if (transcriptionResultModal) transcriptionResultModal.showModal();
+                } else {
+                    alert('Transcription failed: ' + (response.error || 'An unknown error occurred.'));
+                }
+            },
+            error: function (jqXHR) {
+                const errorMsg = jqXHR.responseJSON?.error || 'An error occurred during transcription.';
+                alert('Error: ' + errorMsg);
+            },
+            complete: function () {
+                uploadBtn.prop('disabled', false).html(originalUploadText);
+                recordBtn.prop('disabled', false).html(originalRecordText);
+            }
+        });
+    }
+
+    // 1. Upload from file
+    $('#transcribe-upload-btn').on('click', function () {
+        transcribeFileInput.click();
+    });
+
+    transcribeFileInput.on('change', function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+        formData.append('language', $('#transcribeInputLanguage').val());
+
+        handleTranscription(formData);
+
+        // Reset file input for next use
+        $(this).val('');
+    });
+
+    // 2. Record from device
+    $('#transcribe-record-btn').on('click', async function () {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert('Your browser does not support audio recording.');
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            if (transcribeModal) transcribeModal.close();
+            if (recordingModal) recordingModal.showModal();
+
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const audioFile = new File([audioBlob], "recording.webm", { type: 'audio/webm' });
+
+                const formData = new FormData();
+                formData.append('file', audioFile);
+                formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+                formData.append('language', $('#transcribeInputLanguage').val());
+
+                handleTranscription(formData);
+
+                // Clean up stream
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            mediaRecorder.start();
+            startRecordingTimer();
+
+        } catch (err) {
+            console.error("Error accessing microphone:", err);
+            alert('Could not access microphone. Please check your browser permissions.');
+        }
+    });
+
+    function startRecordingTimer() {
+        let seconds = 0;
+        const timerElement = $('#recording-timer');
+        timerElement.text('00:00');
+        recordingTimerInterval = setInterval(() => {
+            seconds++;
+            const min = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const sec = (seconds % 60).toString().padStart(2, '0');
+            timerElement.text(`${min}:${sec}`);
+        }, 1000);
+    }
+
+    function stopRecordingTimer() {
+        clearInterval(recordingTimerInterval);
+    }
+
+    $('#stop-recording-btn').on('click', function () {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            stopRecordingTimer();
+        }
+    });
+
+    $('#cancel-recording-btn').on('click', function () {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            // Don't trigger onstop, just stop the tracks and close
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            mediaRecorder = null;
+            stopRecordingTimer();
+        }
+        if (recordingModal) recordingModal.close();
+        if (transcribeModal) transcribeModal.showModal(); // Re-open original modal
+    });
+
+    // 3. Result Modal Logic
+    $('#copy-transcription-btn').on('click', function () {
+        const textArea = $('#transcription-output');
+        textArea.select();
+        document.execCommand('copy');
+        const button = $(this);
+        const originalHtml = button.html();
+        button.html('<i class="bi bi-check-lg"></i> Copied!');
+        setTimeout(() => {
+            button.html(originalHtml);
+        }, 2000);
+    });
 });

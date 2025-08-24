@@ -121,6 +121,48 @@
 @include('partials.modals.group_chat_setup')
 
 
+{{-- Recording UI Modal --}}
+<dialog id="recordingModal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Recording Audio...</h3>
+        <div class="py-8 text-center">
+            <div class="flex items-center justify-center gap-4">
+                <span class="relative flex h-6 w-6">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-6 w-6 bg-error"></span>
+                </span>
+                <span id="recording-timer" class="font-mono text-2xl">00:00</span>
+            </div>
+            <p class="text-sm text-base-content/70 mt-4">Click stop to finish your recording.</p>
+        </div>
+        <div class="modal-action">
+            <button class="btn btn-ghost" id="cancel-recording-btn">Cancel</button>
+            <button class="btn btn-primary" id="stop-recording-btn">
+                <i class="bi bi-stop-circle-fill"></i> Stop & Transcribe
+            </button>
+        </div>
+    </div>
+</dialog>
+
+{{-- Transcription Result Modal --}}
+<dialog id="transcriptionResultModal" class="modal">
+    <div class="modal-box w-11/12 max-w-3xl">
+        <h3 class="font-bold text-lg">Transcription Result</h3>
+        <div class="py-4">
+            <textarea id="transcription-output" class="textarea textarea-bordered w-full h-64" readonly></textarea>
+        </div>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn btn-sm btn-ghost">Close</button>
+                <button type="button" class="btn btn-sm btn-primary" id="copy-transcription-btn">
+                    <i class="bi bi-clipboard"></i> Copy Text
+                </button>
+            </form>
+        </div>
+    </div>
+</dialog>
+
+
 <dialog id="confirmationModal" class="modal">
     <div class="modal-box">
         <h3 class="font-bold text-lg" id="confirmationModalTitle">Confirm Action</h3>
