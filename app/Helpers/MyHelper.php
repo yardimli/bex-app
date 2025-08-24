@@ -1016,65 +1016,107 @@ PROMPT;
             return self::$llmListCache;
         }
 
-        public static function transcribeAudio(UploadedFile $file, string $language = 'en'): array
+        public static function transcribeAudio(UploadedFile $file): array
         {
-            set_time_limit(600); // Allow up to 10 minutes for transcription
-            session_write_close();
-
-            // This is the DEDICATED endpoint for transcription.
-            $transcription_base_url = env('OPEN_ROUTER_BASE_AUDIO', 'https://openrouter.ai/api/v1/audio/transcriptions');
-            $api_key = self::getOpenRouterKey();
-
-            // This endpoint uses transcription-specific models like Whisper.
-            // The name does NOT have a "provider/" prefix.
-            $model = env('WHISPER_MODEL', 'whisper-large-v3');
-            Log::debug('TRANSCRIBE DEBUG: Attempting to POST to this URL: ' . $transcription_base_url);
-            if (empty($api_key)) {
-                Log::error("OpenRouter API Key is not configured for transcription.");
-                return ['success' => false, 'error' => 'API key not configured'];
-            }
+            // Set a long timeout for potentially large audio files
+            // Note: The Http facade's timeout is separate from PHP's time limit
+            set_time_limit(600);
 
             try {
-                Log::info("Attempting transcription with Whisper.", [
-                    'model' => $model,
-                    'filename' => $file->getClientOriginalName(),
-                    'language' => $language
-                ]);
-
-                // NEW: Using Laravel's Http facade for the request
-                $response = Http::withToken($api_key)
-                    ->timeout(580)
-                    ->withHeaders([
-                        'HTTP-Referer' => env('APP_URL', 'http://localhost'),
-                        'X-Title' => env('APP_NAME', 'Laravel'),
-                    ])
-                    ->attach(
-                        'file', fopen($file->getRealPath(), 'r'), $file->getClientOriginalName()
-                    )
-                    ->post($transcription_base_url, [
-                        'model' => $model,
-                        'language' => $language,
-                    ]);
-
-                // Check for client or server errors
-                $response->throw();
-
-                $result = $response->json();
-
-                if (!isset($result['text'])) {
-                    throw new \Exception('Transcription result did not contain text.');
+                $apiKey = env('OPEN_ROUTER_KEY');
+                if (!$apiKey) {
+                    throw new \Exception('OPENROUTER_API_KEY is not set in your .env file.');
                 }
 
-                return ['success' => true, 'text' => $result['text']];
+                // 1. Read file contents and Base64 encode it
+                $fileContents = file_get_contents($file->getRealPath());
+                if ($fileContents === false) {
+                    throw new \Exception("Failed to read file contents from: " . $file->getClientOriginalName());
+                }
+                $base64Audio = base64_encode($fileContents);
 
-            } catch (\Illuminate\Http\Client\RequestException $e) {
-                $statusCode = $e->response->status();
-                $errorBody = $e->response->body();
-                Log::error("Laravel HTTP Request Exception during transcription: Status {$statusCode} - " . $errorBody);
-                return ['success' => false, 'error' => "HTTP Error: " . $errorBody];
+                // 2. Determine the audio format from the file extension
+                // The API expects a simple string like "wav", "mp3", etc., not a full MIME type.
+                $extension = strtolower($file->getClientOriginalExtension());
+                $supportedFormats = ['wav', 'mp3', 'flac', 'm4a', 'ogg'];
+                if (!in_array($extension, $supportedFormats)) {
+                    // Default to 'wav' or throw an error if you want to be strict
+                    // throw new \Exception("Unsupported audio file extension: {$extension}");
+                    $format = 'wav'; // Let's be optimistic and default
+                } else {
+                    $format = $extension;
+                }
+
+                // 3. Construct the exact payload structure from the Python example
+                $payload = [
+                    'model' => 'google/gemini-2.5-flash',
+                    'messages' => [
+                        [
+                            'role' => 'user',
+                            // The 'content' key MUST be an array of objects
+                            'content' => [
+                                [
+                                    'type' => 'text',
+                                    'text' => 'Please transcribe this audio file.',
+                                ],
+                                [
+                                    'type' => 'input_audio',
+                                    'input_audio' => [
+                                        'data' => $base64Audio,
+                                        'format' => $format, // Use the derived format
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ];
+
+                Log::info("Attempting transcription with OpenRouter.", [
+                    'model' => $payload['model'],
+                    'filename' => $file->getClientOriginalName(),
+                    'format' => $format,
+                ]);
+
+                // 4. Make the direct API call using Laravel's Http facade
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type' => 'application/json',
+                    'X-Title' => 'Your-App-Name', // Optional: Good practice for OpenRouter
+                ])->timeout(600) // Set a request timeout in seconds
+                ->post('https://openrouter.ai/api/v1/chat/completions', $payload);
+
+                // 5. Handle the response
+                if (!$response->successful()) {
+                    Log::error('OpenRouter API request failed', [
+                        'status' => $response->status(),
+                        'body' => $response->body()
+                    ]);
+                    throw new \Exception("API request failed with status {$response->status()}: " . $response->json('error.message', $response->body()));
+                }
+
+                $responseData = $response->json();
+
+                // Extract the transcribed text from the response structure
+                $transcription = data_get($responseData, 'choices.0.message.content');
+
+                if (is_null($transcription)) {
+                    Log::error('Could not find transcription in API response.', [
+                        'response' => $responseData
+                    ]);
+                    throw new \Exception('Transcription content was not found in the API response.');
+                }
+
+                // Optional: Check for failure indicators in the response text
+                if (stripos($transcription, 'provide the audio') !== false || stripos($transcription, 'unable to process') !== false) {
+                    Log::error("Gemini transcription failed: Model did not process the audio.", ['response' => $transcription]);
+                    throw new \Exception("The AI model responded without processing the audio. The file type may be unsupported.");
+                }
+
+                return ['success' => true, 'text' => trim($transcription)];
+
             } catch (\Exception $e) {
-                Log::error("General Exception during transcription: " . $e->getMessage());
-                return ['success' => false, 'error' => "An error occurred: " . $e->getMessage()];
+                Log::error("Exception during audio transcription: " . $e->getMessage());
+                return ['success' => false, 'error' => $e->getMessage()];
             }
         }
 
