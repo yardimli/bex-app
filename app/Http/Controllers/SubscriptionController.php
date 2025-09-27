@@ -116,6 +116,7 @@
 			return view('pages.subscription.manage', [
 				'userTeams' => $userTeams,
 				'currentTeamId' => $currentTeamId,
+				'subscription' => $subscription,
 			]);
 		}
 
