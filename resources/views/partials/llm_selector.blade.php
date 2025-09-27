@@ -32,7 +32,7 @@
             <li><a>No models available</a></li>
         @endif
         {{-- End of modified section --}}
-        <li><hr class="my-1"></li>
+{{--        <li><hr class="my-1"></li>--}}
         <li><a id="settingsButtonFromDropdown"><i class="bi bi-gear-fill me-2"></i> Model Settings</a></li>
     </ul>
 </div>
