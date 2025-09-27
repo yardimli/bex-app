@@ -16,9 +16,9 @@
 @guest
 	@if (Route::has('login'))
 		{{-- MODIFIED: Replaced text link with an icon button for Login. --}}
-        <a href="{{ route('login') }}" class="btn btn-ghost btn-circle" title="Login">
-            <i class="bi bi-box-arrow-in-right text-xl"></i>
-        </a>
+		<a href="{{ route('login') }}" class="btn btn-ghost btn-circle" title="Login">
+			<i class="bi bi-box-arrow-in-right text-xl"></i>
+		</a>
 	@endif
 	@if (Route::has('register'))
 		{{-- MODIFIED: Replaced text link with an icon button for Register. --}}
@@ -29,22 +29,22 @@
 @else
 	{{-- Logged in User Dropdown --}}
 	<div class="dropdown dropdown-end">
-        @php
-            // Determine which avatar to display in the header
-            $avatarUrl = Auth::user()->avatar_url; // Default to the user's personal avatar
-            $avatarAlt = Auth::user()->name . "'s avatar";
+		@php
+			// Determine which avatar to display in the header
+			$avatarUrl = Auth::user()->avatar_url; // Default to the user's personal avatar
+			$avatarAlt = Auth::user()->name . "'s avatar";
 
-            if ($currentTeamId) {
-                $currentTeam = $userTeams->firstWhere('id', $currentTeamId);
-                if ($currentTeam) {
-                    $avatarUrl = $currentTeam->avatar_url; // If a team is active, use its avatar
-                    $avatarAlt = $currentTeam->name . "'s avatar";
-                }
-            }
-        @endphp
+			if ($currentTeamId) {
+					$currentTeam = $userTeams->firstWhere('id', $currentTeamId);
+					if ($currentTeam) {
+							$avatarUrl = $currentTeam->avatar_url; // If a team is active, use its avatar
+							$avatarAlt = $currentTeam->name . "'s avatar";
+					}
+			}
+		@endphp
 		<div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
 			<div class="w-10 rounded-full">
-                <img id="user-avatar-header" src="{{ $avatarUrl }}" alt="{{ $avatarAlt }}" />
+				<img id="user-avatar-header" src="{{ $avatarUrl }}" alt="{{ $avatarAlt }}" />
 			</div>
 		</div>
 		<ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
@@ -70,6 +70,8 @@
 			<li><a href="{{ route('files.index') }}">My Files</a></li>
 			<li><a href="{{ route('profile.edit') }}">Profile</a></li>
 			<li><a href="{{ route('teams.index') }}">Teams</a></li>
+			{{-- ADDED: Subscription link in the user dropdown menu. --}}
+			<li><a href="{{ route('subscription.manage') }}">Subscription</a></li>
 			<div class="divider my-1"></div>
 			<li>
 				<details>

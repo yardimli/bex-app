@@ -58,6 +58,8 @@
 			Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');
 			Route::get('/messages', [MessageController::class, 'index'])->name('messages.inbox');
 			Route::get('/files', [FileController::class, 'index'])->name('files.index');
+			// ADDED: Route for the new subscription management page.
+			Route::get('/subscription', [SubscriptionController::class, 'manage'])->name('subscription.manage');
 			Route::get('/chat/{chatHeaderId?}', [ChatController::class, 'show'])
 				->where('chatHeaderId', '[0-9]+')
 				->name('chat.show');
@@ -70,6 +72,9 @@
 			Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar.update'); //
 			Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
 			Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+			// ADDED: Routes for canceling and resuming a subscription.
+			Route::post('/subscription/cancel', [SubscriptionController::class, 'cancelSubscription'])->name('subscription.cancel.post');
+			Route::post('/subscription/resume', [SubscriptionController::class, 'resumeSubscription'])->name('subscription.resume.post');
 
 
 			// API Routes (Prefixed with /api and protected by auth)
@@ -138,7 +143,7 @@
 				Route::get('/files/{file}/download', [ApiFileController::class, 'download'])->name('files.download')->where('file', '[0-9]+');
 				Route::get('/files/{file}/preview', [ApiFileController::class, 'preview'])->name('files.preview')->where('file', '[0-9]+');
 				Route::post('/files/{file}/share', [ApiFileController::class, 'share'])->name('files.share')->where('file', '[0-9]+');
-				Route::post('/files/{file}/toggle-favorite', [ApiFileController::class, 'toggleFavorite'])->name('files.toggle-favorite')->where('file', '[0-9]+');
+				Route::post('/files/{file}/toggle-favorite', [ApiFileController::class, 'toggleFavorite'])->name('files.toggle-favorite')->where('file', '[0-g]+');
 				Route::delete('/files/{file}/teams/{team}', [ApiFileController::class, 'revokeShare'])->name('files.revoke')->where(['file' => '[0-9]+', 'team' => '[0-9]+']);
 
 				// Summarization Helper API
