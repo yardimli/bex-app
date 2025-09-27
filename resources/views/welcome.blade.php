@@ -14,7 +14,6 @@
 	<link rel="manifest" href="/images/site.webmanifest">
 	@vite('resources/css/app.css')
 	<style>
-      /* Simple animation for hero section */
       .fade-in-up {
           animation: fadeInUp 1s ease-out forwards;
           opacity: 0;
@@ -94,59 +93,49 @@
 				<p class="text-lg mt-4">Choose the plan that's right for you. More members means more savings.</p>
 			</div>
 			
-			<div class="max-w-4xl mx-auto">
+			<div class="max-w-2xl mx-auto">
 				<div class="text-center mb-6">
-					<input type="checkbox" class="toggle toggle-primary" id="billing-toggle" checked />
-					<span class="ml-4 font-semibold">Monthly</span>
-					<span class="mx-2">/</span>
-					<span class="font-semibold">Yearly (Save 28%)</span>
+					<span class="font-semibold mr-4">Bill Monthly</span>
+					<input type="checkbox" class="toggle toggle-primary" id="billing-toggle" />
+					<span class="ml-4 font-semibold">Bill Yearly (Save up to 30%)</span>
 				</div>
 				
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-					{{-- Individual Plan --}}
-					<div class="card bg-base-100 shadow-xl">
-						<div class="card-body">
-							<h3 class="card-title text-2xl">Individual</h3>
-							<p>For freelancers and solo power users.</p>
-							<div class="my-4">
-								<span class="text-5xl font-extrabold" id="individual-price">$6.99</span>
-								<span class="text-xl" id="individual-period">/ month</span>
+				{{-- MODIFIED: Replaced the two-card layout with a single, unified pricing card --}}
+				<div class="card bg-base-100 shadow-xl border-2 border-primary">
+					<div class="card-body">
+						<div class="flex justify-between items-start">
+							<div>
+								<h3 class="card-title text-2xl" id="plan-title">Individual Plan</h3>
+								<p id="plan-description">For solo power users.</p>
 							</div>
-							<ul class="space-y-2">
-								<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Unlimited Personal Chats</li>
-								<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> 10GB File Storage</li>
-								<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Document Summarization</li>
-								<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Audio Transcription</li>
-							</ul>
-							<div class="card-actions mt-6">
-								<a href="{{ route('register') }}" class="btn btn-primary w-full">Get Started</a>
-							</div>
+							<div class="badge badge-primary badge-lg">POPULAR</div>
 						</div>
-					</div>
-					
-					{{-- Team Plan --}}
-					<div class="card bg-base-100 shadow-xl border-2 border-primary">
-						<div class="card-body">
-							<h3 class="card-title text-2xl">Team</h3>
-							<p>For collaborative teams of any size.</p>
-							<div class="my-4">
-								<span class="text-5xl font-extrabold" id="team-price-per-user">$6.49</span>
-								<span class="text-xl" id="team-period">/ user / month</span>
-							</div>
-							<div class="my-4">
-								<label for="team-slider" class="label">Number of Team Members: <span id="team-size-label" class="font-bold">2</span></label>
-								<input type="range" min="2" max="100" value="2" class="range range-primary" id="team-slider" />
-							</div>
-							<p class="text-center font-bold text-xl">Total: <span id="team-total-price">$12.98</span> / month</p>
-							<ul class="space-y-2 mt-4">
-								<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> All Individual Features</li>
-								<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Unlimited Group Chats</li>
-								<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Shared Team Workspace</li>
-								<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Centralized Billing</li>
-							</ul>
-							<div class="card-actions mt-6">
-								<a href="{{ route('register') }}" class="btn btn-primary w-full">Choose Team Plan</a>
-							</div>
+						
+						<div class="mt-4">
+							<label for="quantity-slider" class="label">Number of Users: <span class="font-bold" id="quantity-label">1</span></label>
+							<input type="range" min="1" max="100" value="1" class="range range-primary" id="quantity-slider" />
+						</div>
+						
+						<div class="my-4 text-center">
+							<p class="text-xl">
+								<span class="text-5xl font-extrabold" id="price-per-user">$6.99</span>
+								<span id="period">/ user / month</span>
+							</p>
+							<p class="text-2xl font-bold mt-4">
+								Total: <span id="total-price">$6.99</span> <span id="total-period">/ month</span>
+							</p>
+						</div>
+						
+						<ul class="space-y-2 mt-4">
+							<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Unlimited Personal & Group Chats</li>
+							<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Document Summarization & Analysis</li>
+							<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Audio Transcription</li>
+							<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Shared Team Workspace (2+ users)</li>
+							<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Centralized Billing (2+ users)</li>
+						</ul>
+						
+						<div class="card-actions mt-6">
+							<a href="{{ route('register') }}" class="btn btn-primary w-full">Get Started</a>
 						</div>
 					</div>
 				</div>
@@ -162,51 +151,72 @@
 	</footer>
 </div>
 
+{{-- MODIFIED: Added JavaScript logic for the new unified pricing card --}}
 <script>
 	document.addEventListener('DOMContentLoaded', function () {
+		// --- DOM Elements ---
 		const billingToggle = document.getElementById('billing-toggle');
-		const teamSlider = document.getElementById('team-slider');
+		const quantitySlider = document.getElementById('quantity-slider');
 		
-		const individualPriceEl = document.getElementById('individual-price');
-		const individualPeriodEl = document.getElementById('individual-period');
+		const planTitle = document.getElementById('plan-title');
+		const planDescription = document.getElementById('plan-description');
+		const quantityLabel = document.getElementById('quantity-label');
+		const pricePerUserEl = document.getElementById('price-per-user');
+		const periodEl = document.getElementById('period');
+		const totalPriceEl = document.getElementById('total-price');
+		const totalPeriodEl = document.getElementById('total-period');
 		
-		const teamPricePerUserEl = document.getElementById('team-price-per-user');
-		const teamPeriodEl = document.getElementById('team-period');
-		const teamSizeLabelEl = document.getElementById('team-size-label');
-		const teamTotalPriceEl = document.getElementById('team-total-price');
-		
-		const prices = {
-			individual: { monthly: 6.99, yearly: 4.99 },
-			team: { monthly: 6.99, yearly: 4.99 }
+		// --- Pricing Tiers (MUST match Stripe) ---
+		const monthlyTiers = {
+			1: 6.99, 2: 6.49, 11: 5.99, 51: 5.49, 101: 4.99
+		};
+		const yearlyTiers = { // Example yearly prices
+			1: 4.99, 2: 4.49, 11: 3.99, 51: 3.49, 101: 2.99
 		};
 		
-		function updatePrices() {
-			const isMonthly = billingToggle.checked;
-			const teamSize = parseInt(teamSlider.value, 10);
-			
-			// Individual Pricing
-			const individualPrice = isMonthly ? prices.individual.monthly : prices.individual.yearly;
-			individualPriceEl.textContent = `$${individualPrice.toFixed(2)}`;
-			individualPeriodEl.textContent = isMonthly ? '/ month' : '/ month (billed yearly)';
-			
-			// Team Pricing
-			const baseTeamPrice = isMonthly ? prices.team.monthly : prices.team.yearly;
-			// Cheaper per user for more members (example discount logic)
-			const discountFactor = 1 - (Math.min(teamSize, 50) * 0.005); // up to 25% discount
-			const teamPricePerUser = baseTeamPrice * discountFactor;
-			const teamTotalPrice = teamPricePerUser * teamSize;
-			
-			teamPricePerUserEl.textContent = `$${teamPricePerUser.toFixed(2)}`;
-			teamPeriodEl.textContent = isMonthly ? '/ user / month' : '/ user / month';
-			teamSizeLabelEl.textContent = teamSize;
-			teamTotalPriceEl.textContent = `$${teamTotalPrice.toFixed(2)}`;
+		function getPriceForQuantity(quantity, tiers) {
+			let price = 0;
+			if (quantity >= 101) price = tiers[101];
+			else if (quantity >= 51) price = tiers[51];
+			else if (quantity >= 11) price = tiers[11];
+			else if (quantity >= 2) price = tiers[2];
+			else if (quantity >= 1) price = tiers[1];
+			return price;
 		}
 		
-		billingToggle.addEventListener('change', updatePrices);
-		teamSlider.addEventListener('input', updatePrices);
+		function updateUI() {
+			const quantity = parseInt(quantitySlider.value, 10);
+			const isYearly = billingToggle.checked;
+			
+			// 1. Determine correct price per user
+			const tiers = isYearly ? yearlyTiers : monthlyTiers;
+			const pricePerUser = getPriceForQuantity(quantity, tiers);
+			const totalPrice = pricePerUser * quantity;
+			
+			// 2. Update UI Text
+			quantityLabel.textContent = quantity;
+			pricePerUserEl.textContent = `$${pricePerUser.toFixed(2)}`;
+			totalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
+			
+			const billingPeriodString = isYearly ? 'year' : 'month';
+			periodEl.textContent = quantity > 1 ? `/ user / ${billingPeriodString}` : `/ ${billingPeriodString}`;
+			totalPeriodEl.textContent = `/ ${billingPeriodString}`;
+			
+			if (quantity === 1) {
+				planTitle.textContent = 'Individual Plan';
+				planDescription.textContent = 'For solo power users.';
+			} else {
+				planTitle.textContent = 'Team Plan';
+				planDescription.textContent = `For your team of ${quantity}.`;
+			}
+		}
 		
-		// Initial calculation
-		updatePrices();
+		// --- Event Listeners ---
+		billingToggle.addEventListener('change', updateUI);
+		quantitySlider.addEventListener('input', updateUI);
+		
+		// --- Initial Load ---
+		updateUI();
 	});
 </script>
 </body>
