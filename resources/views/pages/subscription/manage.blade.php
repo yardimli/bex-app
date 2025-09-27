@@ -61,7 +61,8 @@
 										@else
 											<tr>
 												<th>Next Billing Date</th>
-												<td>{{ $subscription->upcomingInvoice()->created->toFormattedDateString() }}</td>
+												{{-- MODIFIED: Changed ->created to ->date() to get a Carbon instance. --}}
+												<td>{{ $subscription->upcomingInvoice()->date()->toFormattedDateString() }}</td>
 											</tr>
 										@endif
 										</tbody>
@@ -106,7 +107,8 @@
 		<dialog id="cancelSubscriptionModal" class="modal">
 			<div class="modal-box">
 				<h3 class="font-bold text-lg">Confirm Subscription Cancellation</h3>
-				<p class="py-4">Are you sure you want to cancel? Your subscription will remain active until the end of the current billing period on {{ $subscription->upcomingInvoice()->created->toFormattedDateString() }}.</p>
+				{{-- MODIFIED: Changed ->created to ->date() here as well for consistency and correctness. --}}
+				<p class="py-4">Are you sure you want to cancel? Your subscription will remain active until the end of the current billing period on {{ $subscription->upcomingInvoice()->date()->toFormattedDateString() }}.</p>
 				<div class="modal-action">
 					<form method="dialog">
 						<button class="btn">Nevermind</button>
