@@ -7,6 +7,15 @@
 		<i class="bi bi-plus-lg me-1"></i> New Chat
 	</a>
 	
+	<div class="lg:hidden mb-3">
+		<h2 class="menu-title">Account</h2>
+		@include('partials.account_switcher')
+	</div>
+	
+	<div class="lg:hidden mb-3">
+		@include('partials.llm_selector', ['buttonClass' => 'w-full'])
+	</div>
+	
 	<label class="input input-bordered flex items-center gap-2 mb-3">
 		<i class="bi bi-search"></i>
 		<input type="text" id="chat-search-input" class="grow" placeholder="Search Chats" />
