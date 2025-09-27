@@ -1,28 +1,41 @@
 <?php
 
-namespace App\Http\Controllers;
+	namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+	use Illuminate\Http\Request;
+// ADDED: Import the Auth facade to get the authenticated user.
+	use Illuminate\Support\Facades\Auth;
 
-class HomeController extends Controller
-{
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
+	class HomeController extends Controller
+	{
+		/**
+		 * Create a new controller instance.
+		 *
+		 * @return void
+		 */
+		public function __construct()
+		{
+			$this->middleware('auth');
+		}
 
-    /**
-     * Show the application dashboard.
-     *
-     * @return \Illuminate\Contracts\Support\Renderable
-     */
-    public function index()
-    {
-        return view('home');
-    }
-}
+		/**
+		 * Show the application dashboard.
+		 *
+		 * @return \Illuminate\Contracts\Support\Renderable
+		 */
+		public function index()
+		{
+			// MODIFIED: The controller now fetches the necessary data for the shared header partial.
+			$user = Auth::user();
+			// Get all teams the user is a member of.
+			$userTeams = $user->teams()->get();
+			// Get the ID of the currently active team from the session.
+			$currentTeamId = session('current_team_id');
+
+			// Pass the user's teams and the current team ID to the view.
+			return view('home', [
+				'userTeams' => $userTeams,
+				'currentTeamId' => $currentTeamId,
+			]);
+		}
+	}
