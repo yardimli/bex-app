@@ -1,0 +1,13 @@
+add a packages page with strip checkout (sandbox) for subscribing to monthly plans,
+the plans should be upto N members and have token limits
+add a page for managing subscription once subscribed
+add single sign on with google
+add landing page for website
+
+on llm dropdown show filtered list with select ai models
+center usage modal vertically and horizontally
+on chat history add date and time
+in speech to text after showing the results have a button to start a summarization chat with the resulting text
+dark/light mode switch not working right away need to refresh the page
+avatar thumbnails should be resized to speed up loading
+
