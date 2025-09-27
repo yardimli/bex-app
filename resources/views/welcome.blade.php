@@ -100,7 +100,6 @@
 					<span class="ml-4 font-semibold">Bill Yearly (Save up to 30%)</span>
 				</div>
 				
-				{{-- MODIFIED: Replaced the two-card layout with a single, unified pricing card --}}
 				<div class="card bg-base-100 shadow-xl border-2 border-primary">
 					<div class="card-body">
 						<div class="flex justify-between items-start">
@@ -151,7 +150,6 @@
 	</footer>
 </div>
 
-{{-- MODIFIED: Added JavaScript logic for the new unified pricing card --}}
 <script>
 	document.addEventListener('DOMContentLoaded', function () {
 		// --- DOM Elements ---
@@ -170,8 +168,9 @@
 		const monthlyTiers = {
 			1: 6.99, 2: 6.49, 11: 5.99, 51: 5.49, 101: 4.99
 		};
-		const yearlyTiers = { // Example yearly prices
-			1: 4.99, 2: 4.49, 11: 3.99, 51: 3.49, 101: 2.99
+		// MODIFIED: Updated yearlyTiers with the new yearly prices.
+		const yearlyTiers = {
+			1: 69.90, 2: 64.90, 11: 59.90, 51: 54.90, 101: 49.90
 		};
 		
 		function getPriceForQuantity(quantity, tiers) {
@@ -188,26 +187,25 @@
 			const quantity = parseInt(quantitySlider.value, 10);
 			const isYearly = billingToggle.checked;
 			
-			// 1. Determine correct price per user
 			const tiers = isYearly ? yearlyTiers : monthlyTiers;
 			const pricePerUser = getPriceForQuantity(quantity, tiers);
 			const totalPrice = pricePerUser * quantity;
 			
-			// 2. Update UI Text
 			quantityLabel.textContent = quantity;
 			pricePerUserEl.textContent = `$${pricePerUser.toFixed(2)}`;
 			totalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
 			
 			const billingPeriodString = isYearly ? 'year' : 'month';
-			periodEl.textContent = quantity > 1 ? `/ user / ${billingPeriodString}` : `/ ${billingPeriodString}`;
 			totalPeriodEl.textContent = `/ ${billingPeriodString}`;
 			
 			if (quantity === 1) {
 				planTitle.textContent = 'Individual Plan';
 				planDescription.textContent = 'For solo power users.';
+				periodEl.textContent = `/ ${billingPeriodString}`;
 			} else {
 				planTitle.textContent = 'Team Plan';
 				planDescription.textContent = `For your team of ${quantity}.`;
+				periodEl.textContent = `/ user / ${billingPeriodString}`;
 			}
 		}
 		
