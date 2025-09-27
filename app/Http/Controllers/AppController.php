@@ -1,7 +1,7 @@
 <?php
 
 	namespace App\Http\Controllers;
-    use App\Helpers\MyHelper;
+	use App\Helpers\MyHelper;
 	use Illuminate\Http\Request;
 	use Illuminate\Support\Facades\Auth;
 
@@ -12,17 +12,18 @@
 			$user = Auth::user();
 			if ($user) {
 				$chatHeaders = $user->chatHeaders()->orderBy('updated_at', 'desc')->get();
-                $userTeams = $user->teams()->get();
-                $currentTeamId = session('current_team_id');
-                $llms = MyHelper::getLlmList();
+				$userTeams = $user->teams()->get();
+				$currentTeamId = session('current_team_id');
+				// MODIFIED: Use the new helper function to get the verified and grouped model list.
+				$llms = MyHelper::getVerifiedGroupedModels();
 
-                return view('pages.dashboard', [
+				return view('pages.dashboard', [
 					'chatHeaders' => $chatHeaders,
 					'activeChat' => null, // Pass the active chat object (or null)
 					'messages' => null,
-                    'userTeams' => $userTeams,
-                    'currentTeamId' => $currentTeamId,
-                    'llms' => $llms,
+					'userTeams' => $userTeams,
+					'currentTeamId' => $currentTeamId,
+					'llms' => $llms,
 				]);
 
 			} else {

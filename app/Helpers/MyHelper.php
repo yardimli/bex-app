@@ -15,6 +15,7 @@
 	use Illuminate\Support\Facades\Session;
 	use Illuminate\Support\Facades\Storage;
 	use Illuminate\Support\Facades\Validator;
+	use Illuminate\Support\Facades\Cache; // Added for caching API responses
 
 	use Ahc\Json\Fixer;
 	use Illuminate\Support\Str;
@@ -26,8 +27,8 @@
 	use Google\Cloud\TextToSpeech\V1\TextToSpeechClient;
 	use Google\Cloud\TextToSpeech\V1\VoiceSelectionParams;
 	use Exception;
-    use App\Models\File as FileModel;
-    use App\Models\Llm;
+	use App\Models\File as FileModel;
+	use App\Models\Llm;
 	use PhpOffice\PhpWord\IOFactory;
 	use Spatie\PdfToText\Pdf;
 	use Symfony\Component\DomCrawler\Crawler;
@@ -35,61 +36,185 @@
 
 	class MyHelper
 	{
-        private static $llmListCache = null;
-        public static function extractTextFromFile(FileModel $file): string
-        {
-            if (!Storage::exists($file->path)) {
-                throw new \Exception("File not found on disk at path: {$file->path}");
-            }
+		private static $llmListCache = null;
 
-            $filePath = Storage::path($file->path);
-            $mimeType = $file->mime_type;
-            $text = '';
+		/**
+		 * NEW: Provides a static, curated list of LLMs grouped for the UI dropdown.
+		 * This defines the desired appearance and selection of models.
+		 *
+		 * @return array The structured list of models.
+		 */
+		public static function getStaticGroupedModels(): array
+		{
+			// This structure is based on the user-provided image for the desired model list.
+			return [
+				[
+					'group' => 'Popular',
+					'models' => [
+						['id' => 'openrouter/sonoma-dusk-alpha', 'name' => 'Sonoma Dusk Alpha'],
+						['id' => 'openrouter/sonoma-sky-alpha', 'name' => 'Sonoma Sky Alpha'],
+						['id' => 'openai/gpt-4o', 'name' => 'OpenAI GPT-4o'],
+						['id' => 'anthropic/claude-3.7-sonnet', 'name' => 'Claude 3.7 Sonnet'],
+						['id' => 'anthropic/claude-3.7-sonnet:thinking', 'name' => 'Claude 3.7 Sonnet (Thinking)'],
+						['id' => 'google/gemini-2.5-pro', 'name' => 'Google: Gemini 2.5 Pro'],
+						['id' => 'deepseek/deepseek-chat-v3.1', 'name' => 'DeepSeek Chat V3.1'],
+					],
+				],
+				[
+					'group' => 'New',
+					'models' => [
+						['id' => 'anthropic/claude-sonnet-4', 'name' => 'Claude Sonnet 4'],
+						['id' => 'openai/gpt-5', 'name' => 'OpenAI GPT-5'],
+						['id' => 'openai/gpt-oss-120b', 'name' => 'OpenAI: gpt-oss-120b'],
+						['id' => 'openai/gpt-5-chat', 'name' => 'OpenAI GPT-5 Chat'],
+						['id' => 'openai/gpt-5-mini', 'name' => 'OpenAI GPT-5 mini'],
+						['id' => 'moonshotai/kimi-k2-0905', 'name' => 'MoonshotAI: Kimi K2 0905'],
+						['id' => 'z-ai/glm-4.5', 'name' => 'Z.AI: GLM 4.5'],
+					],
+				],
+				[
+					'group' => 'Other',
+					'models' => [
+						['id' => 'google/gemini-2.5-flash', 'name' => 'Gemini 2.5 Flash'],
+						['id' => 'openai/gpt-4.1', 'name' => 'OpenAI GPT-4.1'],
+						['id' => 'openai/gpt-4o-mini', 'name' => 'OpenAI GPT-4o mini'],
+					],
+				],
+				[
+					'group' => 'NSFW',
+					'models' => [
+						['id' => 'qwen/qwen3-235b-a22b-2507', 'name' => 'Qwen 3 235b'],
+						['id' => 'google/gemma-3-27b-it', 'name' => 'Gemma 3 27b'],
+						['id' => 'mistralai/mistral-medium-3.1', 'name' => 'Mistral Medium 3.1'],
+						['id' => 'mistralai/mistral-large-2411', 'name' => 'Mistral Large'],
+						['id' => 'microsoft/wizardlm-2-8x22b', 'name' => 'WizardLM 2 8x22b'],
+						['id' => 'x-ai/grok-4', 'name' => 'Grok 4'],
+					],
+				],
+			];
+		}
 
-            try {
-                if ($mimeType === 'text/plain') {
-                    $text = Storage::get($file->path);
-                } elseif ($mimeType === 'application/pdf') {
-                    // Ensure pdftotext is installed on your server
-                    $text = Pdf::getText($filePath);
-                } elseif (
-                    $mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-                    Str::endsWith($file->original_filename, '.docx') // Fallback check
-                ) {
-                    $phpWord = IOFactory::load($filePath);
-                    $sections = $phpWord->getSections();
-                    foreach ($sections as $section) {
-                        $elements = $section->getElements();
-                        foreach ($elements as $element) {
-                            // This logic can be expanded to handle tables, lists, etc.
-                            if (method_exists($element, 'getText')) {
-                                $text .= $element->getText() . "\n";
-                            } elseif ($element instanceof \PhpOffice\PhpWord\Element\TextRun) {
-                                foreach ($element->getElements() as $textElement) {
-                                    if (method_exists($textElement, 'getText')) {
-                                        $text .= $textElement->getText();
-                                    }
-                                }
-                                $text .= "\n";
-                            }
-                        }
-                    }
-                } else {
-                    // For other types like images, you might return metadata or nothing
-                    // For now, we'll treat them as unsupported for text extraction.
-                    throw new \Exception("Unsupported file type for text extraction: {$mimeType}");
-                }
-            } catch (\Exception $e) {
-                Log::error("Error extracting text from stored file: " . $e->getMessage(), [
-                    'file_id' => $file->id,
-                    'file_path' => $filePath
-                ]);
-                // Re-throw to be handled by the controller, which can inform the user.
-                throw $e;
-            }
+		/**
+		 * NEW: Fetches the static model list and verifies it against the live OpenRouter API.
+		 * The result is cached for 15 minutes to reduce API calls.
+		 *
+		 * @return array The verified and grouped list of available models.
+		 */
+		public static function getVerifiedGroupedModels(): array
+		{
+			// Cache the verified list for 15 minutes to avoid hitting the API on every page load.
+			return Cache::remember('verified_grouped_llms', now()->addMinutes(15), function () {
+				try {
+					// Fetch the list of all currently available models from OpenRouter.
+					$response = Http::timeout(30)
+						->withHeaders([
+							'HTTP-Referer' => env('APP_URL', 'http://localhost'),
+							'X-Title' => env('APP_NAME', 'Laravel'),
+						])
+						->get('https://openrouter.ai/api/v1/models');
 
-            return trim($text);
-        }
+					if (!$response->successful()) {
+						Log::error('Failed to fetch models from OpenRouter to verify availability.', [
+							'status' => $response->status(),
+							'body' => $response->body()
+						]);
+						// As a fallback, return the unfiltered static list so the UI doesn't break.
+						return self::getStaticGroupedModels();
+					}
+
+					$liveModelsData = $response->json();
+					if (empty($liveModelsData['data'])) {
+						Log::warning('OpenRouter API returned no model data.');
+						return self::getStaticGroupedModels(); // Fallback
+					}
+
+					// Create a lookup map of available model IDs for efficient checking (e.g., ['openai/gpt-4o' => true]).
+					$availableModelIds = array_flip(array_column($liveModelsData['data'], 'id'));
+
+					// Get our desired static, grouped list.
+					$staticGroupedModels = self::getStaticGroupedModels();
+
+					// Filter the static list against the live data.
+					$verifiedGroupedModels = [];
+					foreach ($staticGroupedModels as $group) {
+						$verifiedModelsInGroup = [];
+						foreach ($group['models'] as $model) {
+							// Check if the model from our static list exists in the live data.
+							if (isset($availableModelIds[$model['id']])) {
+								$verifiedModelsInGroup[] = $model;
+							}
+						}
+
+						// Only include the group in the final list if it contains at least one available model.
+						if (!empty($verifiedModelsInGroup)) {
+							$verifiedGroupedModels[] = [
+								'group' => $group['group'],
+								'models' => $verifiedModelsInGroup,
+							];
+						}
+					}
+					return $verifiedGroupedModels;
+				} catch (\Exception $e) {
+					Log::error('Exception while fetching or verifying OpenRouter models: ' . $e->getMessage());
+					// On any exception, return the static list as a safe fallback.
+					return self::getStaticGroupedModels();
+				}
+			});
+		}
+		public static function extractTextFromFile(FileModel $file): string
+		{
+			if (!Storage::exists($file->path)) {
+				throw new \Exception("File not found on disk at path: {$file->path}");
+			}
+
+			$filePath = Storage::path($file->path);
+			$mimeType = $file->mime_type;
+			$text = '';
+
+			try {
+				if ($mimeType === 'text/plain') {
+					$text = Storage::get($file->path);
+				} elseif ($mimeType === 'application/pdf') {
+					// Ensure pdftotext is installed on your server
+					$text = Pdf::getText($filePath);
+				} elseif (
+					$mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+					Str::endsWith($file->original_filename, '.docx') // Fallback check
+				) {
+					$phpWord = IOFactory::load($filePath);
+					$sections = $phpWord->getSections();
+					foreach ($sections as $section) {
+						$elements = $section->getElements();
+						foreach ($elements as $element) {
+							// This logic can be expanded to handle tables, lists, etc.
+							if (method_exists($element, 'getText')) {
+								$text .= $element->getText() . "\n";
+							} elseif ($element instanceof \PhpOffice\PhpWord\Element\TextRun) {
+								foreach ($element->getElements() as $textElement) {
+									if (method_exists($textElement, 'getText')) {
+										$text .= $textElement->getText();
+									}
+								}
+								$text .= "\n";
+							}
+						}
+					}
+				} else {
+					// For other types like images, you might return metadata or nothing
+					// For now, we'll treat them as unsupported for text extraction.
+					throw new \Exception("Unsupported file type for text extraction: {$mimeType}");
+				}
+			} catch (\Exception $e) {
+				Log::error("Error extracting text from stored file: " . $e->getMessage(), [
+					'file_id' => $file->id,
+					'file_path' => $filePath
+				]);
+				// Re-throw to be handled by the controller, which can inform the user.
+				throw $e;
+			}
+
+			return trim($text);
+		}
 
 		public static function validateJson($str)
 		{
@@ -912,212 +1037,212 @@ PROMPT;
 		}
 
 
-        public static function shouldAiReplyInGroupChat(array $chatMessages, ?string $model = null): bool
-        {
-            if (empty($chatMessages)) {
-                return false; // No messages, no reply
-            }
+		public static function shouldAiReplyInGroupChat(array $chatMessages, ?string $model = null): bool
+		{
+			if (empty($chatMessages)) {
+				return false; // No messages, no reply
+			}
 
-            $lastMessage = end($chatMessages);
+			$lastMessage = end($chatMessages);
 
-            // We only care about the last message from a user.
-            if (!$lastMessage || $lastMessage['role'] !== 'user' || empty(trim($lastMessage['content']))) {
-                return false;
-            }
+			// We only care about the last message from a user.
+			if (!$lastMessage || $lastMessage['role'] !== 'user' || empty(trim($lastMessage['content']))) {
+				return false;
+			}
 
-            $content = $lastMessage['content'];
+			$content = $lastMessage['content'];
 
-            // This single, more robust regex replaces both the old regex and the LLM call.
-            // It checks for:
-            // 1. @Bex (as a whole word, case-insensitive)
-            // 2. "Bex" at the start of the message, optionally followed by a comma.
-            // 3. "hey Bex" or "hi Bex" (as whole words, case-insensitive)
-            $pattern = '/(@Bex\b|^\s*Bex[,]?|\b(hey|hi)\s+Bex\b)/i';
+			// This single, more robust regex replaces both the old regex and the LLM call.
+			// It checks for:
+			// 1. @Bex (as a whole word, case-insensitive)
+			// 2. "Bex" at the start of the message, optionally followed by a comma.
+			// 3. "hey Bex" or "hi Bex" (as whole words, case-insensitive)
+			$pattern = '/(@Bex\b|^\s*Bex[,]?|\b(hey|hi)\s+Bex\b)/i';
 
-            if (preg_match($pattern, $content)) {
-                Log::info("AI reply decision: Yes (Programmatic check: A direct summons was found in the message).", [
-                    'content' => Str::limit($content, 100)
-                ]);
-                return true;
-            }
+			if (preg_match($pattern, $content)) {
+				Log::info("AI reply decision: Yes (Programmatic check: A direct summons was found in the message).", [
+					'content' => Str::limit($content, 100)
+				]);
+				return true;
+			}
 
-            Log::info("AI reply decision: No (Programmatic check: No direct summons found).", [
-                'content' => Str::limit($content, 100)
-            ]);
-            return false;
-        }
+			Log::info("AI reply decision: No (Programmatic check: No direct summons found).", [
+				'content' => Str::limit($content, 100)
+			]);
+			return false;
+		}
 
-        public static function fetchAndCacheLlms(): array
-        {
-            $response = Http::timeout(30)->get('https://openrouter.ai/api/v1/models');
+		public static function fetchAndCacheLlms(): array
+		{
+			$response = Http::timeout(30)->get('https://openrouter.ai/api/v1/models');
 
-            if (!$response->successful()) {
-                throw new \Exception('Failed to fetch models from OpenRouter API. Status: ' . $response->status());
-            }
+			if (!$response->successful()) {
+				throw new \Exception('Failed to fetch models from OpenRouter API. Status: ' . $response->status());
+			}
 
-            $models = $response->json()['data'] ?? [];
-            if (empty($models)) {
-                throw new \Exception('No models found in the OpenRouter API response.');
-            }
+			$models = $response->json()['data'] ?? [];
+			if (empty($models)) {
+				throw new \Exception('No models found in the OpenRouter API response.');
+			}
 
-            $createdCount = 0;
-            $updatedCount = 0;
+			$createdCount = 0;
+			$updatedCount = 0;
 
-            foreach ($models as $modelData) {
-                $data = [
-                    'name' => $modelData['name'],
-                    'description' => $modelData['description'],
-                    'context_length' => $modelData['context_length'] ?? 0,
-                    'prompt_price' => (float)($modelData['pricing']['prompt'] ?? 0.0),
-                    'completion_price' => (float)($modelData['pricing']['completion'] ?? 0.0),
-                    'created_at_openrouter' => isset($modelData['created']) ? Carbon::createFromTimestamp($modelData['created']) : null,
-                ];
+			foreach ($models as $modelData) {
+				$data = [
+					'name' => $modelData['name'],
+					'description' => $modelData['description'],
+					'context_length' => $modelData['context_length'] ?? 0,
+					'prompt_price' => (float)($modelData['pricing']['prompt'] ?? 0.0),
+					'completion_price' => (float)($modelData['pricing']['completion'] ?? 0.0),
+					'created_at_openrouter' => isset($modelData['created']) ? Carbon::createFromTimestamp($modelData['created']) : null,
+				];
 
-                // The updateOrCreate method returns the model instance.
-                $llmInstance = Llm::updateOrCreate(['id' => $modelData['id']], $data);
+				// The updateOrCreate method returns the model instance.
+				$llmInstance = Llm::updateOrCreate(['id' => $modelData['id']], $data);
 
-                if ($llmInstance->wasRecentlyCreated) {
-                    $createdCount++;
-                } else {
-                    $updatedCount++;
-                }
-            }
+				if ($llmInstance->wasRecentlyCreated) {
+					$createdCount++;
+				} else {
+					$updatedCount++;
+				}
+			}
 
-            Log::info("LLM cache updated. Created: $createdCount, Updated: $updatedCount");
+			Log::info("LLM cache updated. Created: $createdCount, Updated: $updatedCount");
 
-            return ['created' => $createdCount, 'updated' => $updatedCount];
-        }
+			return ['created' => $createdCount, 'updated' => $updatedCount];
+		}
 
-        public static function getLlmList() {
-            if (self::$llmListCache !== null) {
-                return self::$llmListCache;
-            }
+		public static function getLlmList() {
+			if (self::$llmListCache !== null) {
+				return self::$llmListCache;
+			}
 
-            // Check if the table is empty.
-            if (Llm::count() === 0) {
-                Log::info('LLMs table is empty. Fetching from OpenRouter API...');
-                try {
-                    self::fetchAndCacheLlms();
-                } catch (\Exception $e) {
-                    Log::error('Failed to auto-fetch LLMs on first load: ' . $e->getMessage());
-                    // Return an empty collection on failure to avoid breaking the page.
-                    return collect();
-                }
-            }
+			// Check if the table is empty.
+			if (Llm::count() === 0) {
+				Log::info('LLMs table is empty. Fetching from OpenRouter API...');
+				try {
+					self::fetchAndCacheLlms();
+				} catch (\Exception $e) {
+					Log::error('Failed to auto-fetch LLMs on first load: ' . $e->getMessage());
+					// Return an empty collection on failure to avoid breaking the page.
+					return collect();
+				}
+			}
 
-            // Return a sorted list for the dropdown.
-            self::$llmListCache = Llm::query()
-                ->where('prompt_price', '>=', 0) // Exclude free/test models
-                ->orderBy('prompt_price', 'asc')
-                ->orderBy('name', 'asc')
-                ->get();
+			// Return a sorted list for the dropdown.
+			self::$llmListCache = Llm::query()
+				->where('prompt_price', '>=', 0) // Exclude free/test models
+				->orderBy('prompt_price', 'asc')
+				->orderBy('name', 'asc')
+				->get();
 
-            return self::$llmListCache;
-        }
+			return self::$llmListCache;
+		}
 
-        public static function transcribeAudio(UploadedFile $file): array
-        {
-            // Set a long timeout for potentially large audio files
-            // Note: The Http facade's timeout is separate from PHP's time limit
-            set_time_limit(600);
+		public static function transcribeAudio(UploadedFile $file): array
+		{
+			// Set a long timeout for potentially large audio files
+			// Note: The Http facade's timeout is separate from PHP's time limit
+			set_time_limit(600);
 
-            try {
-                $apiKey = env('OPEN_ROUTER_KEY');
-                if (!$apiKey) {
-                    throw new \Exception('OPENROUTER_API_KEY is not set in your .env file.');
-                }
+			try {
+				$apiKey = env('OPEN_ROUTER_KEY');
+				if (!$apiKey) {
+					throw new \Exception('OPENROUTER_API_KEY is not set in your .env file.');
+				}
 
-                // 1. Read file contents and Base64 encode it
-                $fileContents = file_get_contents($file->getRealPath());
-                if ($fileContents === false) {
-                    throw new \Exception("Failed to read file contents from: " . $file->getClientOriginalName());
-                }
-                $base64Audio = base64_encode($fileContents);
+				// 1. Read file contents and Base64 encode it
+				$fileContents = file_get_contents($file->getRealPath());
+				if ($fileContents === false) {
+					throw new \Exception("Failed to read file contents from: " . $file->getClientOriginalName());
+				}
+				$base64Audio = base64_encode($fileContents);
 
-                // 2. Determine the audio format from the file extension
-                // The API expects a simple string like "wav", "mp3", etc., not a full MIME type.
-                $extension = strtolower($file->getClientOriginalExtension());
-                $supportedFormats = ['wav', 'mp3', 'flac', 'm4a', 'ogg'];
-                if (!in_array($extension, $supportedFormats)) {
-                    // Default to 'wav' or throw an error if you want to be strict
-                    // throw new \Exception("Unsupported audio file extension: {$extension}");
-                    $format = 'wav'; // Let's be optimistic and default
-                } else {
-                    $format = $extension;
-                }
+				// 2. Determine the audio format from the file extension
+				// The API expects a simple string like "wav", "mp3", etc., not a full MIME type.
+				$extension = strtolower($file->getClientOriginalExtension());
+				$supportedFormats = ['wav', 'mp3', 'flac', 'm4a', 'ogg'];
+				if (!in_array($extension, $supportedFormats)) {
+					// Default to 'wav' or throw an error if you want to be strict
+					// throw new \Exception("Unsupported audio file extension: {$extension}");
+					$format = 'wav'; // Let's be optimistic and default
+				} else {
+					$format = $extension;
+				}
 
-                // 3. Construct the exact payload structure from the Python example
-                $payload = [
-                    'model' => 'google/gemini-2.5-flash',
-                    'messages' => [
-                        [
-                            'role' => 'user',
-                            // The 'content' key MUST be an array of objects
-                            'content' => [
-                                [
-                                    'type' => 'text',
-                                    'text' => 'Please transcribe this audio file.',
-                                ],
-                                [
-                                    'type' => 'input_audio',
-                                    'input_audio' => [
-                                        'data' => $base64Audio,
-                                        'format' => $format, // Use the derived format
-                                    ],
-                                ],
-                            ],
-                        ],
-                    ],
-                ];
+				// 3. Construct the exact payload structure from the Python example
+				$payload = [
+					'model' => 'google/gemini-2.5-flash',
+					'messages' => [
+						[
+							'role' => 'user',
+							// The 'content' key MUST be an array of objects
+							'content' => [
+								[
+									'type' => 'text',
+									'text' => 'Please transcribe this audio file.',
+								],
+								[
+									'type' => 'input_audio',
+									'input_audio' => [
+										'data' => $base64Audio,
+										'format' => $format, // Use the derived format
+									],
+								],
+							],
+						],
+					],
+				];
 
-                Log::info("Attempting transcription with OpenRouter.", [
-                    'model' => $payload['model'],
-                    'filename' => $file->getClientOriginalName(),
-                    'format' => $format,
-                ]);
+				Log::info("Attempting transcription with OpenRouter.", [
+					'model' => $payload['model'],
+					'filename' => $file->getClientOriginalName(),
+					'format' => $format,
+				]);
 
-                // 4. Make the direct API call using Laravel's Http facade
-                $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'Content-Type' => 'application/json',
-                    'X-Title' => 'Your-App-Name', // Optional: Good practice for OpenRouter
-                ])->timeout(600) // Set a request timeout in seconds
-                ->post('https://openrouter.ai/api/v1/chat/completions', $payload);
+				// 4. Make the direct API call using Laravel's Http facade
+				$response = Http::withHeaders([
+					'Authorization' => 'Bearer ' . $apiKey,
+					'Content-Type' => 'application/json',
+					'X-Title' => 'Your-App-Name', // Optional: Good practice for OpenRouter
+				])->timeout(600) // Set a request timeout in seconds
+				->post('https://openrouter.ai/api/v1/chat/completions', $payload);
 
-                // 5. Handle the response
-                if (!$response->successful()) {
-                    Log::error('OpenRouter API request failed', [
-                        'status' => $response->status(),
-                        'body' => $response->body()
-                    ]);
-                    throw new \Exception("API request failed with status {$response->status()}: " . $response->json('error.message', $response->body()));
-                }
+				// 5. Handle the response
+				if (!$response->successful()) {
+					Log::error('OpenRouter API request failed', [
+						'status' => $response->status(),
+						'body' => $response->body()
+					]);
+					throw new \Exception("API request failed with status {$response->status()}: " . $response->json('error.message', $response->body()));
+				}
 
-                $responseData = $response->json();
+				$responseData = $response->json();
 
-                // Extract the transcribed text from the response structure
-                $transcription = data_get($responseData, 'choices.0.message.content');
+				// Extract the transcribed text from the response structure
+				$transcription = data_get($responseData, 'choices.0.message.content');
 
-                if (is_null($transcription)) {
-                    Log::error('Could not find transcription in API response.', [
-                        'response' => $responseData
-                    ]);
-                    throw new \Exception('Transcription content was not found in the API response.');
-                }
+				if (is_null($transcription)) {
+					Log::error('Could not find transcription in API response.', [
+						'response' => $responseData
+					]);
+					throw new \Exception('Transcription content was not found in the API response.');
+				}
 
-                // Optional: Check for failure indicators in the response text
-                if (stripos($transcription, 'provide the audio') !== false || stripos($transcription, 'unable to process') !== false) {
-                    Log::error("Gemini transcription failed: Model did not process the audio.", ['response' => $transcription]);
-                    throw new \Exception("The AI model responded without processing the audio. The file type may be unsupported.");
-                }
+				// Optional: Check for failure indicators in the response text
+				if (stripos($transcription, 'provide the audio') !== false || stripos($transcription, 'unable to process') !== false) {
+					Log::error("Gemini transcription failed: Model did not process the audio.", ['response' => $transcription]);
+					throw new \Exception("The AI model responded without processing the audio. The file type may be unsupported.");
+				}
 
-                return ['success' => true, 'text' => trim($transcription)];
+				return ['success' => true, 'text' => trim($transcription)];
 
-            } catch (\Exception $e) {
-                Log::error("Exception during audio transcription: " . $e->getMessage());
-                return ['success' => false, 'error' => $e->getMessage()];
-            }
-        }
+			} catch (\Exception $e) {
+				Log::error("Exception during audio transcription: " . $e->getMessage());
+				return ['success' => false, 'error' => $e->getMessage()];
+			}
+		}
 
 
 	}
