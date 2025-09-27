@@ -1,7 +1,6 @@
 // public/js/my-notes.js:
 
 $(document).ready(function () {
-	// MODIFIED: Get dialog element
 	const notesModal = document.getElementById('myNotesModal');
 	const notesList = $('#notesList');
 	const noteForm = $('#noteForm');
@@ -42,7 +41,6 @@ $(document).ready(function () {
 	
 	function renderNoteItem(note) {
 		const safeTitle = $('<div>').text(note.title).html();
-		// MODIFIED: Replaced list-group classes with DaisyUI menu structure
 		return `
             <li>
                 <a href="#" data-id="${note.id}">
@@ -94,12 +92,10 @@ $(document).ready(function () {
 		});
 	}
 	
-	// MODIFIED: Changed from Bootstrap event to a click handler on the trigger button
 	$('#myNotesButton').on('click', function() {
 		if (notesList.length) {
 			loadNotes();
 		}
-		// MODIFIED: Use the native showModal() method
 		notesModal.showModal();
 	});
 	
@@ -120,7 +116,6 @@ $(document).ready(function () {
 		deleteNoteButton.show();
 		showForm();
 		
-		// MODIFIED: Use DaisyUI spinner
 		saveNoteButton.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span> Loading...');
 		$.ajax({
 			url: `/api/notes/${noteId}`,
@@ -163,7 +158,6 @@ $(document).ready(function () {
 			ajaxMethod = 'PUT';
 		}
 		
-		// MODIFIED: Use DaisyUI spinner
 		saveNoteButton.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span> Saving...');
 		
 		$.ajax({
@@ -192,7 +186,6 @@ $(document).ready(function () {
 		
 		const noteTitle = noteTitleInput.val() || "this note";
 		if (confirm(`Are you sure you want to delete "${noteTitle}"?`)) {
-			// MODIFIED: Use DaisyUI spinner
 			deleteNoteButton.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span> Deleting...');
 			$.ajax({
 				url: `/api/notes/${noteId}`,

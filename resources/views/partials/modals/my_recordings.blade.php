@@ -1,13 +1,10 @@
-{{-- MODIFIED: Converted from Bootstrap modal to DaisyUI dialog --}}
 <dialog id="myRecordingsModal" class="modal modal-bottom sm:modal-middle">
 	<div class="modal-box w-11/12 max-w-4xl">
 		<h3 class="font-bold text-lg">My Recordings</h3>
 		
 		<div class="py-4">
-			{{-- MODIFIED: Replaced row/col with flexbox --}}
 			<div class="flex flex-col md:flex-row gap-4">
 				<div class="md:w-2/5">
-					{{-- MODIFIED: Replaced list-group with DaisyUI menu --}}
 					<ul class="menu bg-base-200 rounded-box">
 						<li><a data-id="alpha-team"><strong>Team Meeting - Project Alpha</strong><span class="text-xs text-base-content/60">2024-12-05 - 45:30</span></a></li>
 						<li><a data-id="client-feature"><strong>Client Call - Feature Discussion</strong><span class="text-xs text-base-content/60">2024-12-04 - 32:15</span></a></li>

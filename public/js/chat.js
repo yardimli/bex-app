@@ -8,10 +8,10 @@ $(document).ready(function () {
 	const chatHeaderIdInput = $('#chat_header_id');
 	const chatLoader = $('#chat-loader');
 	const chatTitleDisplay = $('#chat-title-display');
-	const sidebarMenu = $('#chat-history-list'); // MODIFIED: Target the specific chat history UL by its new ID for robustness.
+	const sidebarMenu = $('#chat-history-list');
 
-	let currentAudio = null; // Variable to hold the current Audio object
-	let currentReadAloudButton = null; // Variable to hold the button associated with the current audio
+	let currentAudio = null;
+	let currentReadAloudButton = null;
 
 	// NOTE: The model selector dropdown logic has been moved to the global ui.js
 	// to be shared across pages (like Dashboard and Chat).
@@ -37,7 +37,6 @@ $(document).ready(function () {
 		const now = new Date();
 		const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-		// MODIFIED: Generate HTML for attached files using DaisyUI badges
 		let filesHtml = '';
 		if (files && files.length > 0) {
 			filesHtml += '<div class="flex flex-wrap gap-2 mb-2">';
@@ -53,17 +52,14 @@ $(document).ready(function () {
 			filesHtml += '</div>';
 		}
 
-		// MODIFIED: Delete button with DaisyUI and Tailwind classes
 		const deleteButtonHtml = (isUser && canDelete)
 			? `<button class="btn btn-ghost btn-xs btn-circle absolute top-0 right-0 opacity-50 hover:opacity-100 delete-message-btn" title="Delete pair" data-message-id="${messageId}">
                    <i class="bi bi-trash3-fill"></i>
                </button>`
 			: '';
 
-		// MODIFIED: Combined footer logic to prevent action buttons and timestamp from overlapping.
 		let footerHtml;
 		if (role === 'assistant') {
-			// For assistant, create a footer with action buttons and timestamp, using flexbox for layout.
 			footerHtml = `
                 <div class="chat-footer opacity-50 flex items-center justify-between mt-1 w-full">
                     <time class="text-xs">${timeString}</time>
@@ -85,7 +81,6 @@ $(document).ready(function () {
                 </div>`;
 		}
 
-		// MODIFIED: The entire bubble structure uses the DaisyUI 'chat' component
 		const bubbleHtml = `
             <div class="chat ${isUser ? 'chat-end' : 'chat-start'}" id="message-${messageId}" data-message-content="${escape(content)}">
                 <div class="chat-bubble ${isUser ? 'chat-bubble-primary' : ''} relative">
@@ -196,9 +191,7 @@ $(document).ready(function () {
 						const newUrl = '/chat/' + data.chat_header_id;
 						history.pushState({chatId: data.chat_header_id}, '', newUrl);
 
-						// Add new chat to sidebar menu
 						const newTitle = data.updated_title || 'Chat ' + data.chat_header_id;
-						// MODIFIED: Create new menu item for DaisyUI menu
 						const newLinkHtml = `
                          <li>
                             <a href="${newUrl}"
@@ -234,14 +227,12 @@ $(document).ready(function () {
 				} else {
 					// Handle backend error
 					console.error("Error from server:", data.error);
-					// MODIFIED: Use DaisyUI error class for visual feedback
 					$('#message-' + tempUserMessageId).find('.chat-bubble').addClass('chat-bubble-error');
 					alert(data.error || 'An error occurred.');
 				}
 			},
 			error: function (jqXHR, textStatus, errorThrown) {
 				console.error("AJAX Error:", textStatus, errorThrown);
-				// MODIFIED: Use DaisyUI error class for visual feedback
 				$('#message-' + tempUserMessageId).find('.chat-bubble').addClass('chat-bubble-error');
 				alert('Could not send message. Please check your connection and try again.');
 			},
@@ -262,7 +253,6 @@ $(document).ready(function () {
 
 	// --- Handle Delete Message Pair ---
 	chatHistoryArea.on('click', '.delete-message-btn', function () {
-		// MODIFIED: Use robust selectors for the new chat structure
 		const userMessageBubble = $(this).closest('.chat');
 		const userMessageId = $(this).data('message-id');
 		// Find the next assistant message bubble that follows the user bubble

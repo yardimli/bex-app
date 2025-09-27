@@ -6,15 +6,10 @@
 
 /* Custom styles that are difficult to achieve with utility classes alone */
 .chat-history {
-    /* MODIFIED: Removed the fixed height calculation. Flexbox will now control the height dynamically. */
-    /* MODIFIED: Added overflow-y to enable scrolling within this element only when content exceeds its size. */
     overflow-y: auto;
-    /* MODIFIED: Added min-height to prevent flexbox overflow issues, ensuring it can shrink correctly. */
     min-height: 0;
     height: calc(100vh - 220px);
 }
-
-/* MODIFIED: Removed the media query as the new flex layout is inherently responsive. */
 
 /* Style for completed action items */
 #actionItemsList .item-done .label-text {
@@ -37,7 +32,6 @@
     @apply bg-neutral;
 }
 
-/* MODIFIED: Added utility to hide scrollbars for a cleaner horizontal scroll on touch devices */
 @layer utilities {
   .scrollbar-hide {
     -ms-overflow-style: none;  /* IE and Edge */

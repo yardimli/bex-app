@@ -4,12 +4,11 @@
 @push('styles')
     <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.1/dist/cropper.css" />
     <style>
-        /* MODIFIED: Make the image container responsive and prevent modal overflow */
         .img-container {
-            max-height: 60vh; /* Limit height to 60% of the viewport height */
+            max-height: 60vh;
             width: 100%;
             background-color: #f7f7f7;
-            overflow: hidden; /* Hide parts of the image that overflow the container */
+            overflow: hidden;
         }
         .img-container img {
             max-width: 100%;
@@ -66,7 +65,6 @@
                         </div>
                     </div>
 
-                    {{-- MODIFIED: Profile Information Card with DaisyUI/Tailwind classes --}}
                     <div class="card bg-base-100 shadow-xl">
                         <div class="card-body">
                             <h2 class="card-title">{{ __('Profile Information') }}</h2>
@@ -106,7 +104,6 @@
                         </div>
                     </div>
 
-                    {{-- MODIFIED: Update Password Card with DaisyUI/Tailwind classes --}}
                     <div class="card bg-base-100 shadow-xl">
                         <div class="card-body">
                             <h2 class="card-title">{{ __('Update Password') }}</h2>
@@ -145,12 +142,10 @@
                         </div>
                     </div>
 
-                    {{-- MODIFIED: Delete Account Card with DaisyUI/Tailwind classes --}}
                     <div class="card bg-base-100 shadow-xl">
                         <div class="card-body">
                             <h2 class="card-title">{{ __('Delete Account') }}</h2>
                             <p class="text-error">{{ __('Once your account is deleted, all of your resources and data will be permanently deleted.') }}</p>
-                            {{-- MODIFIED: Button to open DaisyUI modal --}}
                             <div class="card-actions justify-start mt-4">
                                 <button type="button" class="btn btn-error" onclick="confirmUserDeletionModal.showModal()">
                                     {{ __('Delete Account') }}
@@ -186,7 +181,6 @@
         </div>
     </dialog>
 
-    <!-- MODIFIED: Delete confirmation modal converted to DaisyUI <dialog> -->
     <dialog id="confirmUserDeletionModal" class="modal">
         <div class="modal-box">
             <form method="post" action="{{ route('profile.destroy') }}">
@@ -212,7 +206,6 @@
 @endsection
 
 @push('scripts')
-    {{-- MODIFIED: Script to open modal on validation error --}}
     @if($errors->userDeletion->isNotEmpty())
         <script>
             document.addEventListener('DOMContentLoaded', function() {
@@ -224,8 +217,6 @@
         </script>
     @endif
 
-    {{-- ADDED: Cropper.js library and the script to handle avatar cropping/uploading --}}
-    {{-- MODIFIED: Switched to unpkg.com to avoid integrity hash issues --}}
     <script src="https://unpkg.com/cropperjs@1.6.1/dist/cropper.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -276,7 +267,6 @@
                 this.disabled = true;
                 this.innerHTML = '<span class="loading loading-spinner loading-sm"></span> Uploading...';
 
-                // MODIFIED: Fixed typo from getCrippedCanvas to getCroppedCanvas
                 cropper.getCroppedCanvas({
                     width: 512,
                     height: 512,

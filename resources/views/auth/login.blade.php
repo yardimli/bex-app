@@ -1,16 +1,10 @@
-{{--// resources/views/auth/login.blade.php:--}}
-
-{{-- MODIFIED: Changed layout to the new guest layout. --}}
 @extends('layouts.guest')
 
-{{-- MODIFIED: Added a title for the page. --}}
 @section('title', 'Login')
 
 @section('content')
-    {{-- MODIFIED: Replaced the app-specific layout with a hero section similar to the welcome page to center the content. --}}
     <div class="hero min-h-screen bg-base-200 pt-16">
         <div class="hero-content flex-col w-full max-w-md">
-            {{-- MODIFIED: Removed the page_header include as it's part of the app layout. --}}
             <div class="card bg-base-100 shadow-xl w-full">
                 <div class="card-body">
                     <h2 class="card-title justify-center text-2xl mb-4">{{ __('Login') }}</h2>

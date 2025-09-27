@@ -42,7 +42,6 @@
         </div>
     </div>
 
-    <!-- MODIFIED: Upload File Modal converted to DaisyUI <dialog> -->
     <dialog id="uploadFileModal" class="modal">
         <div class="modal-box">
             <h3 class="font-bold text-lg">Upload File</h3>
@@ -73,7 +72,6 @@
         <form method="dialog" class="modal-backdrop"><button>close</button></form>
     </dialog>
 
-    <!-- MODIFIED: Share File Modal converted to DaisyUI <dialog> -->
     <dialog id="shareFileModal" class="modal">
         <div class="modal-box">
             <h3 class="font-bold text-lg">Share File</h3>

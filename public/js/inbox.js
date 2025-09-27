@@ -5,12 +5,10 @@ $(document).ready(function() {
     const sentList = $('#sent-list');
     const unreadFilter = $('#unread-filter');
     const teamFilter = $('#team-filter');
-    // MODIFIED: Get the dialog element directly
     const messageDetailModal = document.getElementById('messageDetailModal');
     const unreadFilterContainer = $('#unread-filter-container');
     
     // --- Tab Management ---
-    // MODIFIED: Listen to change event on radio buttons for tabs
     $('input[name="inbox_tabs"]').on('change', function() {
         if ($('#inbox-tab-radio').is(':checked')) {
             unreadFilterContainer.show();
@@ -87,7 +85,6 @@ $(document).ready(function() {
         element.html(`<div class="text-center p-5"><span class="loading loading-spinner loading-lg text-primary"></span><p class="mt-2">${text}</p></div>`);
     }
     
-    // MODIFIED: renderInboxMessageItem updated with Tailwind/DaisyUI classes
     function renderInboxMessageItem(item) {
         const isUnread = !item.read_at;
         const message = item.message;
@@ -105,7 +102,6 @@ $(document).ready(function() {
         return itemHtml;
     }
     
-    // MODIFIED: renderSentMessageItem updated with Tailwind/DaisyUI classes
     function renderSentMessageItem(message) {
         const messageData = escape(JSON.stringify(message));
         const recipientsSummary = message.recipients.length > 2
@@ -128,7 +124,6 @@ $(document).ready(function() {
         return itemHtml;
     }
     
-    // MODIFIED: renderPagination rewritten for DaisyUI's 'join' component
     function renderPagination(response, container, callback) {
         container.empty();
         const links = response.links;
@@ -154,7 +149,6 @@ $(document).ready(function() {
     }
     
     // --- Modal Handling ---
-    // MODIFIED: Combined click handler for both inbox and sent items
     $(document).on('click', 'a[data-message-type]', function(e) {
         e.preventDefault();
         const item = $(this);
@@ -177,7 +171,7 @@ $(document).ready(function() {
                         <strong>Date:</strong> <span>${new Date(message.created_at).toLocaleString()}</span>
                     </div>
                 `);
-                messageDetailModal.showModal(); // MODIFIED: Use .showModal()
+                messageDetailModal.showModal();
             });
             
             if (item.hasClass('border-primary')) { // Check for unread class
@@ -215,14 +209,13 @@ $(document).ready(function() {
             recipientHtml += '</ul>';
             recipientListContainer.html(recipientHtml).show();
             
-            messageDetailModal.showModal(); // MODIFIED: Use .showModal()
+            messageDetailModal.showModal();
         }
     });
     
     // --- Filters ---
     unreadFilter.on('change', () => loadInbox());
     teamFilter.on('change', function() {
-        // MODIFIED: Check active tab via radio button
         if ($('#inbox-tab-radio').is(':checked')) {
             loadInbox();
         } else {

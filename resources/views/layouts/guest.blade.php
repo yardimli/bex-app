@@ -4,7 +4,6 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	{{-- MODIFIED: Title is now dynamic based on the page. --}}
 	<title>@yield('title', 'Bex - Your AI Team Assistant')</title>
 	<meta name="csrf-token" content="{{ csrf_token() }}">
 	<link rel="dns-prefetch" href="//fonts.bunny.net">
@@ -28,7 +27,6 @@
 				</a>
 			</div>
 			<div class="navbar-end">
-				{{-- MODIFIED: Navbar dynamically shows Dashboard or Login/Register links. --}}
 				@if (Route::has('login'))
 					@auth
 						<a href="{{ url('/home') }}" class="btn btn-primary">Dashboard</a>

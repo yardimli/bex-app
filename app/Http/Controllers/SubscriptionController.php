@@ -44,7 +44,7 @@
 			$user = Auth::user();
 
 			try {
-				// MODIFIED: The checkout creation logic has been changed to support
+				// The checkout creation logic has been changed to support
 				// Stripe Prices that use a 'tiered' or 'volume' billing scheme.
 				// Cashier's ->quantity() method is only for 'per_unit' pricing and
 				// causes an error with tiered prices. By building the 'line_items'

@@ -3,7 +3,6 @@
 $(document).ready(function() {
     const teamsList = $('#teams-list');
     const csrfToken = $('meta[name="csrf-token"]').attr('content');
-    // MODIFIED: Get dialog elements
     const createTeamModal = document.getElementById('createTeamModal');
     const addMemberModal = document.getElementById('addMemberModal');
     const teamAvatarCropModal = document.getElementById('teamAvatarCropModal');
@@ -63,7 +62,6 @@ $(document).ready(function() {
 
 
     function loadTeamsV2() {
-        // MODIFIED: DaisyUI loading spinner
         teamsList.html('<div class="col-span-full text-center p-5"><span class="loading loading-spinner loading-lg text-primary"></span><p class="mt-2">Loading your teams...</p></div>');
         $.ajax({
             url: '/api/user/teams',
@@ -99,7 +97,7 @@ $(document).ready(function() {
             data: $('#createTeamForm').serialize(),
             headers: { 'X-CSRF-TOKEN': csrfToken },
             success: function() {
-                createTeamModal.close(); // MODIFIED: Use .close()
+                createTeamModal.close();
                 $('#createTeamForm')[0].reset();
                 loadTeamsV2();
             },
@@ -118,7 +116,7 @@ $(document).ready(function() {
         const teamName = $(this).data('team-name');
         $('#addMemberTeamId').val(teamId);
         $('#addMemberTeamName').text(teamName);
-        addMemberModal.showModal(); // MODIFIED: Use .showModal()
+        addMemberModal.showModal();
     });
 
     // Add Member
@@ -132,7 +130,7 @@ $(document).ready(function() {
             data: $('#addMemberForm').serialize(),
             headers: { 'X-CSRF-TOKEN': csrfToken },
             success: function() {
-                addMemberModal.close(); // MODIFIED: Use .close()
+                addMemberModal.close();
                 $('#addMemberForm')[0].reset();
                 loadTeamsV2();
             },

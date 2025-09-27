@@ -45,7 +45,6 @@
 					// ... other events handled by Cashier
 				],
 			],
-			// ADDED: Price IDs for easy access in the controller
 			'tiered_monthly_price_id' => env('STRIPE_TIERED_MONTHLY_PRICE_ID'),
 			'tiered_yearly_price_id' => env('STRIPE_TIERED_YEARLY_PRICE_ID'),
 			],

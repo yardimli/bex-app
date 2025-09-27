@@ -2,13 +2,10 @@
     $llms = \App\Helpers\MyHelper::getLlmList();
 @endphp
 <div class="dropdown">
-    {{-- MODIFIED: Added the optional $buttonClass variable. This allows it to be full-width in the sidebar but auto-width in the header. --}}
     <div tabindex="0" role="button" class="btn btn-primary {{ $buttonClass ?? '' }}">
-        {{-- MODIFIED: Replaced ID with a class for multiple instance support --}}
         <span class="selected-model-name btn-text">Smart Mode</span>
         <i class="bi bi-chevron-down"></i>
     </div>
-    {{-- MODIFIED: Replaced ID with a class for multiple instance support --}}
     <ul tabindex="0" class="mode-dropdown-menu dropdown-content z-[1] menu flex-col p-2 shadow bg-base-100 rounded-box w-96 max-h-96" style="overflow-y: scroll; display: block">
         <li data-model-id="openai/gpt-4o-mini"><a data-display-name="Smart Mode (Default : gpt-4o-mini)">Smart Mode (Default : gpt-4o-mini)</a></li>
         <li><hr class="my-1"></li>

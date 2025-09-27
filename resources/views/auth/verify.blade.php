@@ -1,4 +1,3 @@
-{{-- MODIFIED: Changed layout to the new guest layout and updated styling. --}}
 @extends('layouts.guest')
 
 @section('title', 'Verify Email')

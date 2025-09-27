@@ -1,14 +1,9 @@
-{{-- MODIFIED: Rewritten with DaisyUI dropdown component --}}
 <div class="dropdown">
-	{{-- MODIFIED: Added the optional $buttonClass variable. This allows it to be full-width in the sidebar but auto-width in the header. --}}
 	<div tabindex="0" role="button" class="btn btn-primary {{ $buttonClass ?? '' }}">
-		{{-- MODIFIED: Replaced ID with a class for multiple instance support --}}
 		<span class="selected-model-name btn-text">Smart Mode</span>
 		<i class="bi bi-chevron-down"></i>
 	</div>
-	{{-- MODIFIED: Replaced ID with a class for multiple instance support --}}
 	<ul tabindex="0" class="mode-dropdown-menu dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-		{{-- The 'bordered' class will be used by JS to show the active item --}}
 		<li data-model-id="openai/gpt-4o-mini"><a data-display-name="Smart Mode (4o Mini)">Smart Mode (4o Mini)</a></li>
 		<li><hr class="my-1"></li>
 		<li data-model-id="openai/gpt-4o-mini"><a data-display-name="GPT-4o Mini">OpenAI: GPT-4o Mini</a></li>

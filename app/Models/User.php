@@ -9,14 +9,14 @@
 	use Illuminate\Database\Eloquent\Relations\HasMany;
 	use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 	use Illuminate\Support\Facades\Storage;
-	use Laravel\Cashier\Billable; // MODIFIED: Import Billable
+	use Laravel\Cashier\Billable;
 
 	use App\Models\ChatHeader;
 	use App\Models\ActionItem;
 
-	class User extends Authenticatable // <-- CHANGE TO THIS
+	class User extends Authenticatable
 	{
-		use HasApiTokens, HasFactory, Notifiable, Billable; // MODIFIED: Add Billable trait
+		use HasApiTokens, HasFactory, Notifiable, Billable;
 
 		// Adapt traits as needed
 

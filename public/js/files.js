@@ -28,12 +28,12 @@ $(document).ready(function() {
     $('input[name="file_tabs"]').on('change', toggleFilePanes);
 
     function getFileIcon(mimeType) {
-        if (!mimeType) return 'bi-file-earmark-fill text-base-content/50'; // MODIFIED: text-muted -> text-base-content/50
-        if (mimeType.includes('pdf')) return 'bi-file-earmark-pdf-fill text-error'; // MODIFIED: text-danger -> text-error
+        if (!mimeType) return 'bi-file-earmark-fill text-base-content/50';
+        if (mimeType.includes('pdf')) return 'bi-file-earmark-pdf-fill text-error';
         if (mimeType.includes('word')) return 'bi-file-earmark-word-fill text-primary';
         if (mimeType.includes('image')) return 'bi-file-earmark-image-fill text-info';
         if (mimeType.includes('text')) return 'bi-file-earmark-text-fill text-secondary';
-        return 'bi-file-earmark-fill text-base-content/50'; // MODIFIED: text-muted -> text-base-content/50
+        return 'bi-file-earmark-fill text-base-content/50';
     }
 
     function formatBytes(bytes, decimals = 2) {
@@ -45,7 +45,6 @@ $(document).ready(function() {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }
 
-    // MODIFIED: renderMyFileItem updated with Tailwind/DaisyUI classes
     function renderMyFileItem(file) {
         let sharedWithHtml = '<span class="text-base-content/70">Private</span>';
         if (file.shared_with_teams.length > 0) {
@@ -82,7 +81,6 @@ $(document).ready(function() {
             </div>`;
     }
 
-    // MODIFIED: renderTeamFileItem updated with Tailwind/DaisyUI classes
     function renderTeamFileItem(file) {
         let previewButtonHtml = '';
         if (file.mime_type.startsWith('image/') || file.mime_type === 'application/pdf') {
@@ -171,7 +169,7 @@ $(document).ready(function() {
         }
 
         button.prop('disabled', true).html('<span class="loading loading-spinner loading-xs"></span> Uploading...');
-        $('#upload-progress-container').show(); // MODIFIED: Selector for progress container
+        $('#upload-progress-container').show();
         $('#upload-progress-bar').css('width', '0%').text('0%');
         $('#upload-error').hide();
 
@@ -193,7 +191,7 @@ $(document).ready(function() {
                 return xhr;
             },
             success: function() {
-                uploadFileModal.close(); // MODIFIED: Use .close() for <dialog>
+                uploadFileModal.close();
                 loadMyFiles();
                 const teamIdForUpload = $('#upload-team-id').val();
                 const currentlySelectedTeamId = teamSelectFilter.val();
@@ -215,7 +213,7 @@ $(document).ready(function() {
 
     // Open Share Modal
     myFilesList.on('click', '.share-btn', function() {
-        const fileItem = $(this).closest('[data-file-id]'); // MODIFIED: More robust selector
+        const fileItem = $(this).closest('[data-file-id]');
         const fileId = fileItem.data('file-id');
         const fileName = fileItem.find('strong').text();
 
@@ -234,7 +232,6 @@ $(document).ready(function() {
             if (userTeams.length > 0) {
                 userTeams.forEach(team => {
                     const isChecked = sharedTeamIds.includes(team.id);
-                    // MODIFIED: DaisyUI form-control and checkbox
                     teamListContainer.append(`
                         <div class="form-control">
                             <label class="label cursor-pointer">
@@ -247,7 +244,7 @@ $(document).ready(function() {
             } else {
                 teamListContainer.html('<p class="text-base-content/70">You are not a member of any teams to share with.</p>');
             }
-            shareFileModal.showModal(); // MODIFIED: Use .showModal() for <dialog>
+            shareFileModal.showModal();
         });
     });
 
@@ -269,7 +266,7 @@ $(document).ready(function() {
             data: JSON.stringify({ team_ids: teamIds }),
             headers: { 'X-CSRF-TOKEN': csrfToken },
             success: function() {
-                shareFileModal.close(); // MODIFIED: Use .close() for <dialog>
+                shareFileModal.close();
                 loadMyFiles();
             },
             error: function(jqXHR) {
@@ -312,7 +309,6 @@ $(document).ready(function() {
         loadTeamFiles($(this).val());
     });
 
-    // MODIFIED: Replaced 'show.bs.modal' event with a click handler on the trigger button.
     $('#openUploadModalBtn').on('click', function() {
         const uploadDestination = $('#upload-destination');
         const uploadTeamIdInput = $('#upload-team-id');

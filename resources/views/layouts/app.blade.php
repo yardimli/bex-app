@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-{{-- MODIFIED: Added data-theme for DaisyUI theme handling --}}
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light">
 <head>
     <meta charset="utf-8">
@@ -19,12 +18,10 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
     <link rel="manifest" href="/images/site.webmanifest">
 
-    {{-- MODIFIED: Removed Bootstrap CSS, using Vite for Tailwind CSS --}}
     @vite('resources/css/app.css')
     @stack('styles')
 </head>
 <body class="min-h-screen bg-base-200">
-{{-- MODIFIED: Replaced entire layout with DaisyUI Drawer for responsive sidebar --}}
 <div class="drawer lg:drawer-open">
     <input id="my-drawer-2" type="checkbox" class="drawer-toggle" />
     <div class="drawer-content flex flex-col h-screen">
@@ -106,7 +103,6 @@
     </form>
 </dialog>
 
-{{-- MODIFIED: All modals rewritten with DaisyUI <dialog> syntax --}}
 @include('partials.modals.recent_meetings')
 @include('partials.modals.my_notes')
 @include('partials.modals.team_files')

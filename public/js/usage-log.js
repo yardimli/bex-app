@@ -50,7 +50,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const time = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
             const formattedTimestamp = `${date}, ${time}`;
 
-            // MODIFIED: Added text-right to numeric columns and used the formatted timestamp
             const row = `
                 <tr>
                     <td>${formattedTimestamp}</td>

@@ -40,7 +40,6 @@ $(document).ready(function () {
         const alignment = isAssistant ? 'chat-start' : (isCurrentUser ? 'chat-end' : 'chat-start');
         const bubbleColor = isCurrentUser ? 'chat-bubble-primary' : 'bg-white border border-base-200 text-base-content';
 
-        // --- START: MODIFIED MENTION HIGHLIGHTING ---
         let processedContent = $('<div>').text(content).html(); // Escape first
         if (typeof groupParticipants !== 'undefined' && groupParticipants.length > 0) {
             const participantNames = groupParticipants.map(p => p.name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
@@ -51,7 +50,6 @@ $(document).ready(function () {
             }
         }
         const escapedContentHtml = processedContent.replace(/\n/g, '<br>');
-        // --- END: MODIFIED MENTION HIGHLIGHTING ---
 
         const now = new Date();
         const timeString = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });

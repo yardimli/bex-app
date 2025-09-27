@@ -66,7 +66,6 @@
         <form method="dialog" class="modal-backdrop"><button>close</button></form>
     </dialog>
 
-    <!-- MODIFIED: Add Member Modal converted to DaisyUI <dialog> -->
     <dialog id="addMemberModal" class="modal">
         <div class="modal-box">
             <h3 class="font-bold text-lg">Add Member to <span id="addMemberTeamName"></span></h3>

@@ -1,7 +1,6 @@
 // public/js/action-items.js:
 
 $(document).ready(function() {
-	// MODIFIED: Get the dialog element directly.
 	const modal = document.getElementById('actionItemsModal');
 	const list = $('#actionItemsList'); // Target for the dynamic list
 	const input = $('#newActionItemInput');
@@ -11,12 +10,10 @@ $(document).ready(function() {
 	// --- Function to render a single action item ---
 	function renderActionItem(item) {
 		const isChecked = item.is_done ? 'checked' : '';
-		// MODIFIED: Use a class for styling done items, Tailwind classes for opacity/line-through
 		const itemClass = item.is_done ? 'item-done opacity-60' : '';
 		const dueDateHtml = item.due_date ? `<br><small class="text-base-content/70 ms-4">Due: ${item.due_date}</small>` : '';
 		const safeContent = $('<div>').text(item.content).html();
 		
-		// MODIFIED: Replaced Bootstrap list-group and form-check with DaisyUI/Tailwind structure
 		return `
             <li class="flex justify-between items-center p-3 bg-base-200 rounded-lg ${itemClass}" data-id="${item.id}">
                 <div class="flex-grow">
@@ -50,25 +47,21 @@ $(document).ready(function() {
 						list.append(renderActionItem(item));
 					});
 				} else {
-					// MODIFIED: Use DaisyUI/Tailwind classes
 					list.html('<li class="p-4 text-center text-base-content/70">No action items found.</li>');
 				}
 			},
 			error: function(jqXHR, textStatus, errorThrown) {
 				console.error("Error loading action items:", textStatus, errorThrown, jqXHR.responseText);
-				// MODIFIED: Use DaisyUI/Tailwind classes
 				list.html('<li class="p-4 text-center text-error">Could not load action items. Please try again later.</li>');
 			}
 		});
 	}
 	
 	// --- Load items when the modal is triggered to be shown ---
-	// MODIFIED: Changed from Bootstrap event to a click handler on the trigger button
 	$('#actionItemsButton').on('click', function() {
 		if (list.length) {
 			loadActionItems();
 		}
-		// MODIFIED: Use the native showModal() method for the <dialog> element
 		modal.showModal();
 	});
 	
@@ -80,7 +73,6 @@ $(document).ready(function() {
 			return;
 		}
 		
-		// MODIFIED: Use DaisyUI spinner
 		addButton.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span> Adding...');
 		
 		$.ajax({
@@ -107,7 +99,6 @@ $(document).ready(function() {
 				alert('Could not add action item. Error: ' + (jqXHR.responseJSON?.message || 'Please try again.'));
 			},
 			complete: function() {
-				// MODIFIED: Restore button text
 				addButton.prop('disabled', false).html('<i class="bi bi-plus-lg me-1"></i> Add');
 			}
 		});

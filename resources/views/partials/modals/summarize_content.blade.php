@@ -1,10 +1,8 @@
-{{-- MODIFIED: Converted from Bootstrap modal to DaisyUI dialog --}}
 <dialog id="summarizeContentModal" class="modal modal-bottom sm:modal-middle">
 	<div class="modal-box w-11/12 max-w-3xl">
 		<h3 class="font-bold text-lg">Summarize Content</h3>
 		
 		<div class="py-4">
-			{{-- MODIFIED: Replaced nav-tabs with DaisyUI tabs --}}
 			<div role="tablist" class="tabs tabs-lifted">
 				<input type="radio" name="summarize_tabs" role="tab" class="tab" aria-label="Web Page" checked />
 				<div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6">

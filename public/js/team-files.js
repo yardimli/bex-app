@@ -23,7 +23,6 @@ $(document).ready(function() {
             if (response.teams) {
                 userTeamsData = response.teams;
             }
-            // ADDED: Cache user data
             if (response.user_name) {
                 userData = {
                     name: response.user_name,
@@ -44,11 +43,9 @@ $(document).ready(function() {
         return 'bi-file-earmark-fill text-base-content/50';
     }
 
-    // MODIFIED: renderTeamFileItem to handle both team and personal files
     function renderTeamFileItem(file) {
         let previewButtonHtml = '';
         if (file.mime_type.startsWith('image/') || file.mime_type === 'application/pdf') {
-            // MODIFIED: Use DaisyUI button classes
             previewButtonHtml = `<button class="btn btn-sm btn-outline btn-info preview-btn" title="Preview" data-file-id="${file.id}" data-mime-type="${file.mime_type}"><i class="bi bi-eye-fill"></i></button>`;
         }
         const favoriteIconClass = file.is_favorited ? 'bi-heart-fill text-error' : 'bi-heart';
@@ -72,7 +69,6 @@ $(document).ready(function() {
     }
 
     function loadTeamFiles(teamId, searchTerm = '', filterType = 'recent') {
-        // MODIFIED: Use DaisyUI spinner
         teamFilesList.html('<div class="flex justify-center items-center h-full"><span class="loading loading-spinner loading-lg"></span></div>');
         detailsPane.html('Select a file to view details.');
 
@@ -98,11 +94,10 @@ $(document).ready(function() {
 
     // Rewrote the click handler to use cached team data
     function loadWorkspaceFiles(contextId, searchTerm = '', filterType = 'recent') {
-        // MODIFIED: Use DaisyUI spinner
         teamFilesList.html('<div class="flex justify-center items-center h-full"><span class="loading loading-spinner loading-lg"></span></div>');
         detailsPane.html('Select a file to view details.');
 
-        // ADDED: Determine API endpoint and data based on context
+        // Determine API endpoint and data based on context
         const isPersonal = contextId === 'personal';
         const apiUrl = isPersonal ? '/api/user/files' : `/api/teams/${contextId}/files`;
         // NOTE: The personal files endpoint doesn't support search/filter, so we only send that data for teams.
@@ -130,7 +125,6 @@ $(document).ready(function() {
             });
     }
 
-    // MODIFIED: Rewrote the click handler to use cached data and support both contexts
     $('#teamWorkspaceButton').on('click', function() {
         const currentTeamId = $('meta[name="current-team-id"]').attr('content');
         const isPersonalContext = !currentTeamId || currentTeamId === '0';
@@ -174,7 +168,6 @@ $(document).ready(function() {
         }
     });
 
-    // MODIFIED: Filter and Search handlers to check context
     filterLinks.on('click', function(e) {
         e.preventDefault();
         if ($(this).hasClass('disabled')) return;
@@ -208,7 +201,6 @@ $(document).ready(function() {
         detailsPane.html(` <h5 class="font-bold text-truncate">${$('<div>').text(fileName).html()}</h5> <p class="text-base-content/70 text-sm mt-2">Use the <i class="bi bi-eye-fill"></i> Preview or <i class="bi bi-download"></i> Download buttons to access the file.</p> `);
     });
 
-    // ADDED: Click handler for the new Summarize button
     teamFilesList.on('click', '.summarize-btn', function(e) {
         e.preventDefault();
         e.stopPropagation();

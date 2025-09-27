@@ -825,7 +825,7 @@ PROMPT;
 										$text .= $textElement->getText() . ' ';
 									}
 								}
-								$text .= "\n"; // Add a newline after each TextRun
+								$text .= "\n";
 							} elseif (method_exists($element, 'getText')) { // For simple Text elements
 								$text .= $element->getText() . "\n";
 							}
@@ -976,7 +976,6 @@ PROMPT;
                 // The updateOrCreate method returns the model instance.
                 $llmInstance = Llm::updateOrCreate(['id' => $modelData['id']], $data);
 
-                // MODIFIED: Check the 'wasRecentlyCreated' *property* on the returned instance.
                 if ($llmInstance->wasRecentlyCreated) {
                     $createdCount++;
                 } else {

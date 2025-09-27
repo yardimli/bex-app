@@ -48,9 +48,7 @@
                                 $colorIndex = abs($hash) % count($colors);
                                 $avatarColorClass = $colors[$colorIndex] . ' text-white';
                             }
-                            // --- END: NEW AVATAR & SENDER LOGIC ---
 
-                            // --- MODIFIED: BUBBLE & MENTION STYLING ---
                             $bubbleColor = $isCurrentUser ? 'chat-bubble-primary' : 'bg-white border border-base-200 text-base-content';
             $processedContent = e($message->content); // Escape first
             if (isset($participants) && $participants->isNotEmpty()) {
@@ -64,7 +62,6 @@
                 }
             }
                         @endphp
-                        {{-- START: MODIFIED MESSAGE STRUCTURE --}}
                         <div class="chat {{ $alignment }}" id="message-{{ $message->id }}"
                              data-message-content="{!! e($message->content) !!}">
                             <div class="chat-image avatar placeholder">
@@ -109,7 +106,6 @@
                                 </div>
                             @endif
                         </div>
-                        {{-- END: MODIFIED MESSAGE STRUCTURE --}}
                     @endforeach
                 @endif
             </div>
@@ -117,7 +113,6 @@
             <div id="chat-loader" class="text-center p-2 hidden">
                 <span class="loading loading-dots loading-md"></span>
             </div>
-            {{-- Message Input Area (MODIFIED: Added padding to match chat history) --}}
             <div class="w-full pt-4 px-4 pb-4">
                 <div id="typing-indicator" class="text-left px-2 pb-2 text-sm text-base-content/70 hidden"
                      style="min-height: 28px;">

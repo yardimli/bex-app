@@ -3,7 +3,6 @@
 	namespace App\Http\Controllers;
 
 	use Illuminate\Http\Request;
-// ADDED: Import the Auth facade to get the authenticated user.
 	use Illuminate\Support\Facades\Auth;
 
 	class HomeController extends Controller
@@ -25,7 +24,6 @@
 		 */
 		public function index()
 		{
-			// MODIFIED: The controller now fetches the necessary data for the shared header partial.
 			$user = Auth::user();
 			// Get all teams the user is a member of.
 			$userTeams = $user->teams()->get();

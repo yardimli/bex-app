@@ -35,7 +35,6 @@
 
 			$validated = $request->validate([
 				'content' => 'required|string|max:1000',
-				// Add validation for due_date if you implement it
 			]);
 
 			$actionItem = $user->actionItems()->create([

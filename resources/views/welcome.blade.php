@@ -168,7 +168,6 @@
 		const monthlyTiers = {
 			1: 6.99, 2: 6.49, 11: 5.99, 51: 5.49, 101: 4.99
 		};
-		// MODIFIED: Updated yearlyTiers with the new yearly prices.
 		const yearlyTiers = {
 			1: 69.90, 2: 64.90, 11: 59.90, 51: 54.90, 101: 49.90
 		};

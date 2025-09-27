@@ -1,9 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    {{-- MODIFIED: Replaced the entire file with a modern, card-based dashboard layout. --}}
     <div class="p-4 flex flex-col h-full gap-4">
-        {{-- ADDED: Included the standard page header for consistency. --}}
         @include('partials.page_header')
         
         {{-- Main content area that grows and allows scrolling --}}

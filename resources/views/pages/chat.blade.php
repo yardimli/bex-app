@@ -1,9 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-	{{-- MODIFIED: Adjusted padding and gap to be smaller on mobile (p-2, gap-2) and larger on medium screens and up (md:p-4, md:gap-4). --}}
 	<div class="p-2 md:p-4 flex flex-col h-full gap-2 md:gap-4">
-		{{-- MODIFIED: Replaced inline header with a reusable partial. --}}
 		@include('partials.page_header')
 		
 		{{-- Item 2: Main Chat Area (grows to fill space and is a flex container for its children) --}}
@@ -64,12 +62,8 @@
 				<span class="loading loading-dots loading-md"></span>
 			</div>
 			
-			{{-- Child 2c: Message Input Area (pushed to the bottom by chat history's flex-grow) --}}
-			{{-- MODIFIED: Removed the 'mt-auto' class from the previous attempt as it's not needed. The flex-grow on the history area handles positioning. --}}
 			<div class="w-full pt-4">
-				{{-- MODIFIED: Added a container with overflow-x-auto and a custom scrollbar-hide utility to allow horizontal dragging of buttons on small screens. --}}
 				<div class="overflow-x-auto pb-2 mb-2 scrollbar-hide">
-					{{-- MODIFIED: Changed to flex-nowrap to keep buttons on a single line. Added padding for scroll spacing and flex-shrink-0 to buttons. --}}
 					<div class="flex flex-nowrap justify-start md:justify-center gap-2 px-2">
 						<button class="btn btn-sm btn-outline flex-shrink-0" id="meetingSummaryButton"><i class="bi bi-calendar-check"></i> Meeting
 							Summary

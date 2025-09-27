@@ -1,5 +1,4 @@
 $(document).ready(function() {
-    // MODIFIED: Get the raw DOM element for the <dialog>.
     // DaisyUI modals are built on top of the native <dialog> element.
     const composeModal = document.getElementById('composeMessageModal');
     
@@ -47,7 +46,6 @@ $(document).ready(function() {
             }
         });
         
-        // MODIFIED: Use the native .showModal() method for <dialog> elements.
         composeModal.showModal();
     }
     
@@ -95,7 +93,6 @@ $(document).ready(function() {
             return;
         }
         
-        // MODIFIED: Use DaisyUI/Tailwind loading spinner class.
         button.prop('disabled', true).html('<span class="loading loading-spinner loading-sm"></span> Sending...');
         
         $.ajax({
@@ -109,7 +106,6 @@ $(document).ready(function() {
             }),
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             success: function() {
-                // MODIFIED: Use the native .close() method for <dialog> elements.
                 composeModal.close();
                 alert('Message sent successfully!');
                 // If on the inbox page, reload the message list.
@@ -126,8 +122,6 @@ $(document).ready(function() {
         });
     });
     
-    // MODIFIED: Listen for the native 'close' event on the <dialog> element
-    // instead of the Bootstrap-specific 'hidden.bs.modal' event.
     composeModal.addEventListener('close', function () {
         resetComposeForm();
     });
