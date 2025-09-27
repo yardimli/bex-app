@@ -1,4 +1,7 @@
-@php $llms = \App\Helpers\MyHelper::getLlmList(); @endphp
+{{-- MODIFIED: Use the new helper function to get the verified and grouped model list. --}}
+@php
+    $llms = \App\Helpers\MyHelper::getVerifiedGroupedModels();
+@endphp
 <dialog id="settingsModal" class="modal">
 	<div class="modal-box">
 		<form method="dialog">
@@ -10,12 +13,17 @@
 				<label class="label" for="defaultModeSelect">
 					<span class="label-text">Default Model (for new chats):</span>
 				</label>
+                {{-- MODIFIED: This select now uses <optgroup> to display the grouped models --}}
                 <select class="select select-bordered" id="defaultModeSelect">
-                    <option value="openai/gpt-4o-mini">Smart Mode (Default : gpt-4o-mini)</option>
+                    <option value="openai/gpt-4o-mini">Smart Mode (Default: gpt-4o-mini)</option>
                     <option disabled>────────────────</option>
-                    @if(isset($llms) && $llms->isNotEmpty())
-                        @foreach($llms as $llm)
-                            <option value="{{ $llm->id }}">{{ $llm->name }}</option>
+                    @if(!empty($llms))
+                        @foreach($llms as $group)
+                            <optgroup label="{{ $group['group'] }}">
+                                @foreach($group['models'] as $model)
+                                    <option value="{{ $model['id'] }}">{{ $model['name'] }}</option>
+                                @endforeach
+                            </optgroup>
                         @endforeach
                     @else
                         <option disabled>No models available</option>
