@@ -17,17 +17,7 @@
 		 */
 		public function index()
 		{
-			// MODIFIED: The controller now fetches the necessary data for the shared header partial.
-			$user = Auth::user();
-			// Get all teams the user is a member of.
-			$userTeams = $user->teams()->get();
-			// Get the ID of the currently active team from the session.
-			$currentTeamId = session('current_team_id');
-
-			return view('pages.subscribe', [
-				'userTeams' => $userTeams,
-				'currentTeamId' => $currentTeamId,
-			]);
+			return view('pages.subscribe');
 		}
 
 		/**
@@ -118,8 +108,14 @@
 			$user = Auth::user();
 			$subscription = $user->subscription('default');
 
+			// Get all teams the user is a member of.
+			$userTeams = $user->teams()->get();
+			// Get the ID of the currently active team from the session.
+			$currentTeamId = session('current_team_id');
+
 			return view('pages.subscription.manage', [
-				'subscription' => $subscription,
+				'userTeams' => $userTeams,
+				'currentTeamId' => $currentTeamId,
 			]);
 		}
 
