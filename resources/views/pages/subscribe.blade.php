@@ -1,73 +1,88 @@
-@extends('layouts.app')
+{{-- NEW: This file provides the subscription interface for logged-in, unsubscribed users. --}}
+@extends('layouts.guest')
+
+@section('title', 'Subscribe')
 
 @section('content')
-	<div class="p-4 flex flex-col h-full gap-4 items-center justify-center">
-		<div class="card bg-base-100 shadow-xl w-full max-w-2xl">
-			<div class="card-body">
-				<div class="text-center">
-					<h2 class="card-title justify-center text-3xl mb-2">Choose Your Plan</h2>
-					<p class="text-base-content/70">Select the number of users and your preferred billing cycle.</p>
-					
-					@if (session('error'))
-						<div role="alert" class="alert alert-error my-4"><i class="bi bi-x-circle-fill"></i><span>{{ session('error') }}</span></div>
-					@endif
+	<div class="hero min-h-screen bg-base-200 pt-16">
+		<div class="hero-content flex-col w-full max-w-2xl">
+			<div class="text-center mb-8">
+				<h1 class="text-4xl font-bold">Choose Your Plan</h1>
+				<p class="text-lg mt-4">You're one step away from unlocking Bex's full potential.</p>
+			</div>
+			
+			{{-- Display Errors --}}
+			@if (session('error'))
+				<div role="alert" class="alert alert-error mb-4">
+					<i class="bi bi-x-circle-fill"></i>
+					<span>{{ session('error') }}</span>
 				</div>
+			@endif
+			
+			{{-- Subscription Form --}}
+			<form id="subscription-form" method="POST" action="{{ route('subscribe.checkout') }}" class="w-full">
+				@csrf
+				<input type="hidden" name="billing_cycle" id="billing_cycle_input" value="monthly">
+				<input type="hidden" name="quantity" id="quantity_input" value="1">
 				
-				<form action="{{ route('subscribe.checkout') }}" method="POST" id="subscription-form">
-					@csrf
-					<input type="hidden" name="billing_cycle" id="billing-cycle-input" value="monthly">
-					<input type="hidden" name="quantity" id="quantity-input" value="1">
-					
-					<div class="text-center my-6">
-						<span class="font-semibold mr-4">Bill Monthly</span>
-						<input type="checkbox" class="toggle toggle-primary" id="billing-toggle" />
-						<span class="ml-4 font-semibold">Bill Yearly (Save up to 30%)</span>
-					</div>
-					
-					<div class="card bg-base-200 border-2 border-primary">
-						<div class="card-body">
-							<h3 class="card-title text-2xl" id="plan-title">Individual Plan</h3>
-							<p id="plan-description">For solo power users.</p>
-							
-							<div class="mt-4">
-								<label for="team-slider" class="label">Number of Users: <span class="font-bold" id="quantity-label">1</span></label>
-								<input type="range" min="1" max="100" value="1" class="range range-primary" id="quantity-slider" />
+				<div class="card bg-base-100 shadow-xl border-2 border-primary">
+					<div class="card-body">
+						<div class="text-center mb-6">
+							<span class="font-semibold mr-4">Bill Monthly</span>
+							<input type="checkbox" class="toggle toggle-primary" id="billing-toggle" />
+							<span class="ml-4 font-semibold">Bill Yearly (Save up to 30%)</span>
+						</div>
+						
+						<div class="flex justify-between items-start">
+							<div>
+								<h3 class="card-title text-2xl" id="plan-title">Individual Plan</h3>
+								<p id="plan-description">For solo power users.</p>
 							</div>
-							
-							<div class="my-4 text-center">
-								<p class="text-xl">
-									<span class="text-5xl font-extrabold" id="price-per-user">$6.99</span>
-									<span id="period">/ user / month</span>
-								</p>
-								<p class="text-2xl font-bold mt-4">
-									Total: <span id="total-price">$6.99</span> <span id="total-period">/ month</span>
-								</p>
-							</div>
+							<div class="badge badge-primary badge-lg">POPULAR</div>
+						</div>
+						
+						<div class="mt-4">
+							<label for="quantity-slider" class="label">Number of Users: <span class="font-bold" id="quantity-label">1</span></label>
+							<input type="range" min="1" max="100" value="1" class="range range-primary" id="quantity-slider" />
+						</div>
+						
+						<div class="my-4 text-center">
+							<p class="text-xl">
+								<span class="text-5xl font-extrabold" id="price-per-user">$6.99</span>
+								<span id="period">/ user / month</span>
+							</p>
+							<p class="text-2xl font-bold mt-4">
+								Total: <span id="total-price">$6.99</span> <span id="total-period">/ month</span>
+							</p>
+						</div>
+						
+						<ul class="space-y-2 mt-4">
+							<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Unlimited Personal & Group Chats</li>
+							<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Document Summarization & Analysis</li>
+							<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Audio Transcription</li>
+							<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Shared Team Workspace (2+ users)</li>
+							<li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Centralized Billing (2+ users)</li>
+						</ul>
+						
+						<div class="card-actions mt-6">
+							<button type="submit" class="btn btn-primary w-full">Proceed to Checkout</button>
 						</div>
 					</div>
-					
-					<div class="card-actions justify-center mt-8">
-						<button type="submit" class="btn btn-primary btn-lg w-full max-w-sm">
-							Proceed to Payment
-						</button>
-					</div>
-					<div class="text-center mt-4">
-						<a href="{{ route('billing.portal') }}" class="link link-hover">Already subscribed? Manage your billing here.</a>
-					</div>
-				</form>
-			</div>
+				</div>
+			</form>
 		</div>
 	</div>
 @endsection
 
 @push('scripts')
+	{{-- NEW: Added script to handle the dynamic pricing calculator and form input updates. --}}
 	<script>
 		document.addEventListener('DOMContentLoaded', function () {
 			// --- DOM Elements ---
 			const billingToggle = document.getElementById('billing-toggle');
 			const quantitySlider = document.getElementById('quantity-slider');
-			const billingCycleInput = document.getElementById('billing-cycle-input');
-			const quantityInput = document.getElementById('quantity-input');
+			const billingCycleInput = document.getElementById('billing_cycle_input');
+			const quantityInput = document.getElementById('quantity_input');
 			
 			const planTitle = document.getElementById('plan-title');
 			const planDescription = document.getElementById('plan-description');
@@ -81,7 +96,6 @@
 			const monthlyTiers = {
 				1: 6.99, 2: 6.49, 11: 5.99, 51: 5.49, 101: 4.99
 			};
-			// MODIFIED: Updated yearlyTiers with the new yearly prices.
 			const yearlyTiers = {
 				1: 69.90, 2: 64.90, 11: 59.90, 51: 54.90, 101: 49.90
 			};
@@ -103,7 +117,13 @@
 				const tiers = isYearly ? yearlyTiers : monthlyTiers;
 				const pricePerUser = getPriceForQuantity(quantity, tiers);
 				const totalPrice = pricePerUser * quantity;
+				const billingCycle = isYearly ? 'yearly' : 'monthly';
 				
+				// Update hidden form inputs
+				quantityInput.value = quantity;
+				billingCycleInput.value = billingCycle;
+				
+				// Update display elements
 				quantityLabel.textContent = quantity;
 				pricePerUserEl.textContent = `$${pricePerUser.toFixed(2)}`;
 				totalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
@@ -120,9 +140,6 @@
 					planDescription.textContent = `For your team of ${quantity}.`;
 					periodEl.textContent = `/ user / ${billingPeriodString}`;
 				}
-				
-				billingCycleInput.value = isYearly ? 'yearly' : 'monthly';
-				quantityInput.value = quantity;
 			}
 			
 			// --- Event Listeners ---
