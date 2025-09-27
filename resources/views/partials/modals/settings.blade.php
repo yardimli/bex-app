@@ -15,8 +15,6 @@
 				</label>
                 {{-- MODIFIED: This select now uses <optgroup> to display the grouped models --}}
                 <select class="select select-bordered" id="defaultModeSelect">
-                    <option value="openai/gpt-4o-mini">Smart Mode (Default: gpt-4o-mini)</option>
-                    <option disabled>────────────────</option>
                     @if(!empty($llms))
                         @foreach($llms as $group)
                             <optgroup label="{{ $group['group'] }}">
