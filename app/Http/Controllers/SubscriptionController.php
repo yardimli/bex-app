@@ -24,12 +24,20 @@
 		 */
 		public function checkout(Request $request)
 		{
+			// MODIFIED: Validation now checks for billing_cycle instead of a complex plan name.
 			$validated = $request->validate([
-				'plan' => 'required|string|in:individual_monthly,individual_yearly,team_monthly,team_yearly',
+				'billing_cycle' => 'required|string|in:monthly,yearly',
 				'quantity' => 'required|integer|min:1|max:100',
 			]);
 
-			$planId = config('services.stripe.' . $validated['plan'] . '_price_id');
+			// MODIFIED: Logic to select the single correct tiered price ID based on the billing cycle.
+			$planId = null;
+			if ($validated['billing_cycle'] === 'monthly') {
+				$planId = config('services.stripe.tiered_monthly_price_id');
+			} else {
+				$planId = config('services.stripe.tiered_yearly_price_id');
+			}
+
 			if (!$planId) {
 				return back()->with('error', 'The selected pricing plan is not configured.');
 			}
@@ -37,6 +45,7 @@
 			$user = Auth::user();
 
 			try {
+				// The core Cashier logic remains the same, it was already designed for this!
 				$checkout = $user->newSubscription('default', $planId)
 					->quantity($validated['quantity'])
 					->checkout([
@@ -46,7 +55,9 @@
 
 				return redirect($checkout->url);
 			} catch (\Exception $e) {
-				return back()->with('error', 'Could not process your subscription. ' . $e->getMessage());
+				// Added more specific error logging for debugging.
+				\Illuminate\Support\Facades\Log::error('Stripe Checkout Error: ' . $e->getMessage());
+				return back()->with('error', 'Could not process your subscription. Please try again or contact support.');
 			}
 		}
 

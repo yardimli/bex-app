@@ -46,10 +46,8 @@
 				],
 			],
 			// ADDED: Price IDs for easy access in the controller
-			'individual_monthly_price_id' => env('STRIPE_INDIVIDUAL_MONTHLY_PRICE_ID'),
-			'individual_yearly_price_id' => env('STRIPE_INDIVIDUAL_YEARLY_PRICE_ID'),
-			'team_monthly_price_id' => env('STRIPE_TEAM_MONTHLY_PRICE_ID'),
-			'team_yearly_price_id' => env('STRIPE_TEAM_YEARLY_PRICE_ID'),
-		],
+			'tiered_monthly_price_id' => env('STRIPE_TIERED_MONTHLY_PRICE_ID'),
+			'tiered_yearly_price_id' => env('STRIPE_TIERED_YEARLY_PRICE_ID'),
+			],
 
 	];

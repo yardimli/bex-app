@@ -2,64 +2,48 @@
 
 @section('content')
 	<div class="p-4 flex flex-col h-full gap-4 items-center justify-center">
-		<div class="card bg-base-100 shadow-xl w-full max-w-4xl">
+		<div class="card bg-base-100 shadow-xl w-full max-w-2xl">
 			<div class="card-body">
 				<div class="text-center">
 					<h2 class="card-title justify-center text-3xl mb-2">Choose Your Plan</h2>
-					<p class="text-base-content/70">You're almost there! Select a plan to unlock all of Bex's features.</p>
+					<p class="text-base-content/70">Select the number of users and your preferred billing cycle.</p>
 					
-					{{-- Error/Success Alerts --}}
 					@if (session('error'))
-						<div role="alert" class="alert alert-error my-4">
-							<i class="bi bi-x-circle-fill"></i>
-							<span>{{ session('error') }}</span>
-						</div>
-					@endif
-					@if (session('success'))
-						<div role="alert" class="alert alert-success my-4">
-							<i class="bi bi-check-circle-fill"></i>
-							<span>{{ session('success') }}</span>
-						</div>
+						<div role="alert" class="alert alert-error my-4"><i class="bi bi-x-circle-fill"></i><span>{{ session('error') }}</span></div>
 					@endif
 				</div>
 				
+				{{-- MODIFIED: Simplified form structure --}}
 				<form action="{{ route('subscribe.checkout') }}" method="POST" id="subscription-form">
 					@csrf
-					<input type="hidden" name="plan" id="plan-input" value="individual_monthly">
+					<input type="hidden" name="billing_cycle" id="billing-cycle-input" value="monthly">
 					<input type="hidden" name="quantity" id="quantity-input" value="1">
 					
 					<div class="text-center my-6">
 						<span class="font-semibold mr-4">Bill Monthly</span>
 						<input type="checkbox" class="toggle toggle-primary" id="billing-toggle" />
-						<span class="ml-4 font-semibold">Bill Yearly (Save 28%)</span>
+						<span class="ml-4 font-semibold">Bill Yearly (Save up to 30%)</span>
 					</div>
 					
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-						{{-- Individual Plan --}}
-						<div class="card bg-base-200 cursor-pointer plan-card border-2 border-primary" data-plan-monthly="individual_monthly" data-plan-yearly="individual_yearly" data-quantity="1">
-							<div class="card-body">
-								<h3 class="card-title text-2xl">Individual</h3>
-								<p>For solo power users.</p>
-								<div class="my-4 text-center">
-									<span class="text-5xl font-extrabold price" data-price-monthly="6.99" data-price-yearly="4.99">$6.99</span>
-									<span class="text-xl period">/ month</span>
-								</div>
+					{{-- MODIFIED: A single, unified pricing card --}}
+					<div class="card bg-base-200 border-2 border-primary">
+						<div class="card-body">
+							<h3 class="card-title text-2xl" id="plan-title">Individual Plan</h3>
+							<p id="plan-description">For solo power users.</p>
+							
+							<div class="mt-4">
+								<label for="team-slider" class="label">Number of Users: <span class="font-bold" id="quantity-label">1</span></label>
+								<input type="range" min="1" max="100" value="1" class="range range-primary" id="quantity-slider" />
 							</div>
-						</div>
-						
-						{{-- Team Plan --}}
-						<div class="card bg-base-200 cursor-pointer plan-card border-2 border-transparent" data-plan-monthly="team_monthly" data-plan-yearly="team_yearly">
-							<div class="card-body">
-								<h3 class="card-title text-2xl">Team</h3>
-								<p>For collaborative teams.</p>
-								<div class="my-4 text-center">
-									<span class="text-5xl font-extrabold price" data-price-monthly="6.49" data-price-yearly="4.49">$6.49</span>
-									<span class="text-xl period">/ user / month</span>
-								</div>
-								<div class="mt-4">
-									<label for="team-slider" class="label">Team Members: <span class="font-bold team-size-label">2</span></label>
-									<input type="range" min="2" max="100" value="2" class="range range-primary team-slider" />
-								</div>
+							
+							<div class="my-4 text-center">
+								<p class="text-xl">
+									<span class="text-5xl font-extrabold" id="price-per-user">$6.99</span>
+									<span id="period">/ user / month</span>
+								</p>
+								<p class="text-2xl font-bold mt-4">
+									Total: <span id="total-price">$6.99</span> <span id="total-period">/ month</span>
+								</p>
 							</div>
 						</div>
 					</div>
@@ -81,73 +65,75 @@
 @push('scripts')
 	<script>
 		document.addEventListener('DOMContentLoaded', function () {
+			// --- DOM Elements ---
 			const billingToggle = document.getElementById('billing-toggle');
-			const planCards = document.querySelectorAll('.plan-card');
-			const planInput = document.getElementById('plan-input');
+			const quantitySlider = document.getElementById('quantity-slider');
+			const billingCycleInput = document.getElementById('billing-cycle-input');
 			const quantityInput = document.getElementById('quantity-input');
-			const teamSlider = document.querySelector('.team-slider');
-			const teamSizeLabel = document.querySelector('.team-size-label');
 			
-			function updatePrices() {
-				const isYearly = billingToggle.checked;
-				
-				planCards.forEach(card => {
-					const priceEl = card.querySelector('.price');
-					const periodEl = card.querySelector('.period');
-					const monthlyPrice = parseFloat(priceEl.dataset.priceMonthly);
-					const yearlyPrice = parseFloat(priceEl.dataset.priceYearly);
-					
-					if (isYearly) {
-						priceEl.textContent = `$${yearlyPrice.toFixed(2)}`;
-						periodEl.textContent = card.dataset.quantity ? '/ month' : '/ user / month';
-					} else {
-						priceEl.textContent = `$${monthlyPrice.toFixed(2)}`;
-						periodEl.textContent = card.dataset.quantity ? '/ month' : '/ user / month';
-					}
-				});
+			const planTitle = document.getElementById('plan-title');
+			const planDescription = document.getElementById('plan-description');
+			const quantityLabel = document.getElementById('quantity-label');
+			const pricePerUserEl = document.getElementById('price-per-user');
+			const periodEl = document.getElementById('period');
+			const totalPriceEl = document.getElementById('total-price');
+			const totalPeriodEl = document.getElementById('total-period');
+			
+			// --- Pricing Tiers (MUST match Stripe) ---
+			const monthlyTiers = {
+				1: 6.99, 2: 6.49, 11: 5.99, 51: 5.49, 101: 4.99
+			};
+			const yearlyTiers = { // Example yearly prices
+				1: 4.99, 2: 4.49, 11: 3.99, 51: 3.49, 101: 2.99
+			};
+			
+			function getPriceForQuantity(quantity, tiers) {
+				let price = 0;
+				if (quantity >= 101) price = tiers[101];
+				else if (quantity >= 51) price = tiers[51];
+				else if (quantity >= 11) price = tiers[11];
+				else if (quantity >= 2) price = tiers[2];
+				else if (quantity >= 1) price = tiers[1];
+				return price;
 			}
 			
-			function selectPlan(selectedCard) {
+			function updateUI() {
+				const quantity = parseInt(quantitySlider.value, 10);
 				const isYearly = billingToggle.checked;
-				planCards.forEach(card => card.classList.remove('border-primary', 'border-transparent'));
-				selectedCard.classList.add('border-primary');
 				
-				const planName = isYearly ? selectedCard.dataset.planYearly : selectedCard.dataset.planMonthly;
-				planInput.value = planName;
+				// 1. Determine correct price per user
+				const tiers = isYearly ? yearlyTiers : monthlyTiers;
+				const pricePerUser = getPriceForQuantity(quantity, tiers);
+				const totalPrice = pricePerUser * quantity;
 				
-				let quantity = 1;
-				if (selectedCard.dataset.planMonthly.startsWith('team')) {
-					quantity = teamSlider.value;
+				// 2. Update UI Text
+				quantityLabel.textContent = quantity;
+				pricePerUserEl.textContent = `$${pricePerUser.toFixed(2)}`;
+				totalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
+				
+				const billingPeriodString = isYearly ? 'year' : 'month';
+				periodEl.textContent = quantity > 1 ? `/ user / ${billingPeriodString}` : `/ ${billingPeriodString}`;
+				totalPeriodEl.textContent = `/ ${billingPeriodString}`;
+				
+				if (quantity === 1) {
+					planTitle.textContent = 'Individual Plan';
+					planDescription.textContent = 'For solo power users.';
+				} else {
+					planTitle.textContent = 'Team Plan';
+					planDescription.textContent = `For your team of ${quantity}.`;
 				}
+				
+				// 3. Update Hidden Form Inputs
+				billingCycleInput.value = isYearly ? 'yearly' : 'monthly';
 				quantityInput.value = quantity;
 			}
 			
-			planCards.forEach(card => {
-				card.addEventListener('click', () => selectPlan(card));
-			});
+			// --- Event Listeners ---
+			billingToggle.addEventListener('change', updateUI);
+			quantitySlider.addEventListener('input', updateUI);
 			
-			billingToggle.addEventListener('change', () => {
-				updatePrices();
-				// Reselect the current plan to update the hidden input value
-				const selectedCard = document.querySelector('.plan-card.border-primary');
-				if (selectedCard) {
-					selectPlan(selectedCard);
-				}
-			});
-			
-			teamSlider.addEventListener('input', () => {
-				const teamSize = teamSlider.value;
-				teamSizeLabel.textContent = teamSize;
-				quantityInput.value = teamSize;
-				
-				// Auto-select team plan when slider is used
-				const teamCard = document.querySelector('[data-plan-monthly="team_monthly"]');
-				selectPlan(teamCard);
-			});
-			
-			// Initial setup
-			updatePrices();
-			selectPlan(document.querySelector('.plan-card')); // Select individual plan by default
+			// --- Initial Load ---
+			updateUI();
 		});
 	</script>
 @endpush
