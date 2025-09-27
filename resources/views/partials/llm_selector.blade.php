@@ -24,7 +24,7 @@
                 @endforeach
                 {{-- Add a divider after each group, except for the last one --}}
                 @if(!$loop->last)
-                    <li><hr class="my-1"></li>
+{{--                    <li><hr class="my-1"></li>--}}
                 @endif
             @endforeach
         @else
