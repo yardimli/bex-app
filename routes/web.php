@@ -48,8 +48,13 @@
 		Route::get('/subscribe/cancel', [SubscriptionController::class, 'cancel'])->name('subscribe.cancel');
 		Route::get('/billing-portal', [SubscriptionController::class, 'portal'])->name('billing.portal');
 
-		// Routes that require an active subscription
-		Route::middleware('subscribed')->group(function () {
+		// MODIFIED: Replaced 'subscribed' with a custom middleware 'check.subscription'.
+		// This new middleware allows access if the user is subscribed OR is a member
+		// of a team with an active subscription from its owner.
+		// NOTE: You must register this middleware in app/Http/Kernel.php. Add the following
+		// line to the $routeMiddleware array:
+		// 'check.subscription' => \App\Http\Middleware\CheckSubscriptionOrTeamMembership::class,
+		Route::middleware('check.subscription')->group(function () {
 			Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard'); // MODIFIED
 			Route::get('/home', [HomeController::class, 'index'])->name('home'); // MODIFIED
 
