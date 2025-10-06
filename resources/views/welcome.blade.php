@@ -134,67 +134,131 @@
     </div>
 
     <!-- Page 2: Collaboration & Auth (Initially hidden) -->
-    <div id="page2" class="text-center w-full max-w-4xl hidden opacity-0">
-        <h1 class="text-4xl md:text-5xl font-bold mb-8 text-base-content">Collaborate smarter with Bex</h1>
-
-        <div class="flex justify-center items-center gap-4 my-8">
-            <a href="{{ route('register') }}" class="btn btn-primary btn-lg" style="background-color: #023047">
-                <i class="bi bi-person-plus-fill text-xl"></i> Sign Up
-            </a>
-            <span class="text-base-content/60 font-semibold">or</span>
-            <a href="{{ route('login') }}" class="btn btn-outline btn-lg">
-                <i class="bi bi-box-arrow-in-right text-xl"></i> Log In
-            </a>
-        </div>
-
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-8">
-            <!-- Image Item 7 -->
-            <div class="relative flex flex-col items-center">
-                <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-accent p-2 shadow-lg">
-                    <img src="{{ asset('images/team_workspaces.png') }}" alt="Collaboration 1" class="w-full h-full object-cover rounded-lg">
-                </div>
-                <p class="absolute -bottom-4 bg-accent text-accent-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Team Workspaces</p>
-            </div>
-            <!-- Image Item 8 -->
-            <div class="relative flex flex-col items-center">
-                <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-warning p-2 shadow-lg">
-                    <img src="{{ asset('images/group_chats.png') }}" alt="Collaboration 2" class="w-full h-full object-cover rounded-lg">
-                </div>
-                <p class="absolute -bottom-4 bg-warning text-info-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Group Chats</p>
-            </div>
-            <!-- Image Item 9 -->
-            <div class="relative flex flex-col items-center">
-                <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-success p-2 shadow-lg">
-                    <img src="{{ asset('images/shared_files.png') }}" alt="Collaboration 3" class="w-full h-full object-cover rounded-lg">
-                </div>
-                <p class="absolute -bottom-4 bg-success text-success-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Shared Files</p>
-            </div>
-            <!-- Image Item 10 -->
-            <div class="relative flex flex-col items-center">
-                <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-info p-2 shadow-lg">
-                    <img src="{{ asset('images/member_management.png') }}" alt="Collaboration 4" class="w-full h-full object-cover rounded-lg">
-                </div>
-                <p class="absolute -bottom-4 bg-info text-warning-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Member Management</p>
-            </div>
-            <!-- Image Item 11 -->
-            <div class="relative flex flex-col items-center">
-                <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #fb6f92;">
-                    <img src="{{ asset('images/secure_data.png') }}" alt="Collaboration 5" class="w-full h-full object-cover rounded-lg">
-                </div>
-                <p class="absolute -bottom-4 text-primary-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #fb6f92">Secure Data</p>
-            </div>
-            <!-- Image Item 12 -->
-            <div class="relative flex flex-col items-center">
-                <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #023047">
-                    <img src="{{ asset('images/prepare_meetings.png') }}" alt="Collaboration 5" class="w-full h-full object-cover rounded-lg">
-                </div>
-                <p class="absolute -bottom-4 text-primary-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #023047">Prep for Meetings</p>
+    <div id="page2" class="w-full max-w-7xl hidden opacity-0 px-4">
+        <!-- START: Global Header for Page 2 -->
+        <div class="text-center w-full mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold mb-8 text-base-content">Collaborate smarter with Bex</h1>
+            <div class="flex justify-center items-center gap-4">
+                <a href="{{ route('register') }}" class="btn btn-primary btn-lg" style="background-color: #023047">
+                    <i class="bi bi-person-plus-fill text-xl"></i> Sign Up
+                </a>
+                <span class="text-base-content/60 font-semibold">or</span>
+                <a href="{{ route('login') }}" class="btn btn-outline btn-lg">
+                    <i class="bi bi-box-arrow-in-right text-xl"></i> Log In
+                </a>
             </div>
         </div>
+        <!-- END: Global Header for Page 2 -->
+
+        <!-- START: Two-Column Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+
+            <!-- Left Column: Collaboration Features -->
+            <div class="grid grid-cols-2 gap-4 md:gap-6">
+                <!-- Image Item 7 -->
+                <div class="relative flex flex-col items-center">
+                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-accent p-2 shadow-lg">
+                        <img src="{{ asset('images/team_workspaces.png') }}" alt="Collaboration 1" class="w-full h-full object-cover rounded-lg">
+                    </div>
+                    <p class="absolute -bottom-3 bg-accent text-accent-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Team Workspaces</p>
+                </div>
+                <!-- Image Item 8 -->
+                <div class="relative flex flex-col items-center">
+                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-warning p-2 shadow-lg">
+                        <img src="{{ asset('images/group_chats.png') }}" alt="Collaboration 2" class="w-full h-full object-cover rounded-lg">
+                    </div>
+                    <p class="absolute -bottom-3 bg-warning text-info-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Group Chats</p>
+                </div>
+                <!-- Image Item 9 -->
+                <div class="relative flex flex-col items-center">
+                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-success p-2 shadow-lg">
+                        <img src="{{ asset('images/shared_files.png') }}" alt="Collaboration 3" class="w-full h-full object-cover rounded-lg">
+                    </div>
+                    <p class="absolute -bottom-3 bg-success text-success-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Shared Files</p>
+                </div>
+                <!-- Image Item 10 -->
+                <div class="relative flex flex-col items-center">
+                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-info p-2 shadow-lg">
+                        <img src="{{ asset('images/member_management.png') }}" alt="Collaboration 4" class="w-full h-full object-cover rounded-lg">
+                    </div>
+                    <p class="absolute -bottom-3 bg-info text-warning-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Member Management</p>
+                </div>
+                <!-- Image Item 11 -->
+                <div class="relative flex flex-col items-center">
+                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #fb6f92;">
+                        <img src="{{ asset('images/secure_data.png') }}" alt="Collaboration 5" class="w-full h-full object-cover rounded-lg">
+                    </div>
+                    <p class="absolute -bottom-3 text-primary-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #fb6f92">Secure Data</p>
+                </div>
+                <!-- Image Item 12 -->
+                <div class="relative flex flex-col items-center">
+                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #023047">
+                        <img src="{{ asset('images/prepare_meetings.png') }}" alt="Collaboration 5" class="w-full h-full object-cover rounded-lg">
+                    </div>
+                    <p class="absolute -bottom-3 text-primary-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #023047">Prep for Meetings</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Pricing -->
+            <div class="bg-base-100/50 backdrop-blur-lg p-6 md:p-8 rounded-2xl shadow-xl border border-white/20">
+                <div class="text-center mb-6">
+                    <h2 class="text-3xl font-bold">Affordable Plans for Every Team</h2>
+                    <p class="text-md mt-2">More members means more savings.</p>
+                </div>
+
+                <div class="w-full max-w-md mx-auto">
+                    <div class="text-center mb-6">
+                        <span class="font-semibold mr-4">Bill Monthly</span>
+                        <input type="checkbox" class="toggle toggle-primary" id="billing-toggle">
+                        <span class="ml-4 font-semibold">Bill Yearly</span>
+                    </div>
+
+                    <div class="card bg-base-100 shadow-lg">
+                        <div class="card-body">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="card-title text-2xl" id="plan-title">Individual Plan</h3>
+                                    <p id="plan-description">For solo power users.</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <label for="quantity-slider" class="label">Number of Users: <span class="font-bold" id="quantity-label">1</span></label>
+                                <input type="range" min="1" max="100" value="1" class="range range-primary" id="quantity-slider">
+                            </div>
+
+                            <div class="my-4 text-center">
+                                <p class="text-xl">
+                                    <span class="text-5xl font-extrabold" id="price-per-user">$6.99</span>
+                                    <span id="period">/ month</span>
+                                </p>
+                                <p class="text-2xl font-bold mt-4">
+                                    Total: <span id="total-price">$6.99</span> <span id="total-period">/ month</span>
+                                </p>
+                            </div>
+
+                            <ul class="space-y-2 mt-4 text-sm">
+                                <li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Unlimited Personal &amp; Group Chats</li>
+                                <li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Document Summarization &amp; Analysis</li>
+                                <li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Audio Transcription</li>
+                                <li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Shared Team Workspace (2+ users)</li>
+                                <li class="flex items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i> Centralized Billing (2+ users)</li>
+                            </ul>
+
+                            <div class="card-actions mt-6">
+                                <a href="{{ route('register') }}" class="btn btn-primary w-full">Get Started</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END: Two-Column Layout -->
     </div>
 </div>
 
 <script>
+    // Script for page transition
     document.getElementById('continue-btn').addEventListener('click', function() {
         const page1 = document.getElementById('page1');
         const page2 = document.getElementById('page2');
@@ -210,6 +274,73 @@
         setTimeout(() => {
             page2.style.opacity = '1';
         }, 50); // A small delay to ensure the transition triggers
+    });
+
+    // Script for pricing calculator
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- DOM Elements ---
+        const billingToggle = document.getElementById('billing-toggle');
+        const quantitySlider = document.getElementById('quantity-slider');
+
+        const planTitle = document.getElementById('plan-title');
+        const planDescription = document.getElementById('plan-description');
+        const quantityLabel = document.getElementById('quantity-label');
+        const pricePerUserEl = document.getElementById('price-per-user');
+        const periodEl = document.getElementById('period');
+        const totalPriceEl = document.getElementById('total-price');
+        const totalPeriodEl = document.getElementById('total-period');
+
+        // --- Pricing Tiers (MUST match Stripe) ---
+        const monthlyTiers = {
+            1: 6.99, 2: 6.49, 11: 5.99, 51: 5.49, 101: 4.99
+        };
+        const yearlyTiers = {
+            1: 69.90, 2: 64.90, 11: 59.90, 51: 54.90, 101: 49.90
+        };
+
+        function getPriceForQuantity(quantity, tiers) {
+            let price = 0;
+            if (quantity >= 101) price = tiers[101];
+            else if (quantity >= 51) price = tiers[51];
+            else if (quantity >= 11) price = tiers[11];
+            else if (quantity >= 2) price = tiers[2];
+            else if (quantity >= 1) price = tiers[1];
+            return price;
+        }
+
+        function updateUI() {
+            const quantity = parseInt(quantitySlider.value, 10);
+            const isYearly = billingToggle.checked;
+
+            const tiers = isYearly ? yearlyTiers : monthlyTiers;
+            const pricePerUser = getPriceForQuantity(quantity, tiers);
+            const totalPrice = pricePerUser * quantity;
+
+            quantityLabel.textContent = quantity;
+            pricePerUserEl.textContent = `$${pricePerUser.toFixed(2)}`;
+            totalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
+
+            const billingPeriodString = isYearly ? 'year' : 'month';
+            totalPeriodEl.textContent = `/ ${billingPeriodString}`;
+
+            if (quantity === 1) {
+                planTitle.textContent = 'Individual Plan';
+                planDescription.textContent = 'For solo power users.';
+                periodEl.textContent = `/ ${billingPeriodString}`;
+            } else {
+                planTitle.textContent = 'Team Plan';
+                planDescription.textContent = `For your team of ${quantity}.`;
+                periodEl.textContent = `/ user / ${billingPeriodString}`;
+            }
+        }
+
+        // --- Event Listeners ---
+        if (billingToggle && quantitySlider) {
+            billingToggle.addEventListener('change', updateUI);
+            quantitySlider.addEventListener('input', updateUI);
+            // --- Initial Load ---
+            updateUI();
+        }
     });
 </script>
 </body>
