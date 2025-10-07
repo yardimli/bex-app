@@ -92,7 +92,7 @@
     </style>
 </head>
 <body class="bg-base-200 font-sans antialiased">
-<div id="main-container" class="container mx-auto min-h-screen flex flex-col items-center justify-center p-4" style="background-color: #a2d2ff; padding-bottom: 2rem;">
+<div id="main-container" class="container min-h-screen flex flex-col items-center justify-center p-4" style="background-color: #a2d2ff; padding-bottom: 2rem;">
 
     <!-- START: Background Curves SVG -->
     <div id="background-curves">
@@ -200,14 +200,14 @@
                     <div class="flip-card-inner">
                         <div class="flip-card-front">
                             <!-- Changed here -->
-                            <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #0a9396;">
+                            <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #a06cd5;">
                                 <img src="{{ asset('images/team_workspaces.png') }}" alt="Team Workspaces" class="w-full h-full object-cover rounded-lg">
                             </div>
                             <!-- Changed here -->
-                            <p class="absolute -bottom-4 text-accent-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #0a9396;">Team Workspaces</p>
+                            <p class="absolute -bottom-4 text-accent-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #a06cd5;">Team Workspaces</p>
                         </div>
                         <!-- Changed here -->
-                        <div class="flip-card-back border-4" style="background-color: #0a9396; border-color: #0a9396;">
+                        <div class="flip-card-back border-4" style="background-color: #a06cd5; border-color: #a06cd5;">
                             <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 z-0 opacity-50"><path d="M-10 20 C 40 0, 60 100, 110 80" stroke="rgba(255, 255, 255, 0.2)" stroke-width="2" fill="none" /><path d="M-5 90 C 30 110, 70 50, 105 60" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1" fill="none" /></svg>
                             <div class="relative z-10 p-4">
                                 <h4 class="font-bold text-lg mb-1 text-white">Team Workspaces</h4>
@@ -273,14 +273,14 @@
                     <div class="flip-card-inner">
                         <div class="flip-card-front">
                             <!-- Changed here -->
-                            <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #0a9396;">
+                            <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #a06cd5;">
                                 <img src="{{ asset('images/action_items.png') }}" alt="Action Items" class="w-full h-full object-cover rounded-lg">
                             </div>
                             <!-- Changed here -->
-                            <p class="absolute -bottom-3 text-accent-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #0a9396;">Action Items</p>
+                            <p class="absolute -bottom-3 text-accent-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #a06cd5;">Action Items</p>
                         </div>
                         <!-- Changed here -->
-                        <div class="flip-card-back border-4" style="background-color: #0a9396; border-color: #0a9396;">
+                        <div class="flip-card-back border-4" style="background-color: #a06cd5; border-color: #a06cd5;">
                             <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 z-0 opacity-50"><path d="M-10 20 C 40 0, 60 100, 110 80" stroke="rgba(255, 255, 255, 0.2)" stroke-width="2" fill="none" /><path d="M-5 90 C 30 110, 70 50, 105 60" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1" fill="none" /></svg>
                             <div class="relative z-10 p-4">
                                 <h4 class="font-bold text-lg mb-1 text-white">Action Items</h4>
