@@ -25,9 +25,8 @@
         /* Add this rule for a smooth background color change */
         #main-container {
             transition: background-color 0.5s ease-in-out;
-            /* Make this a positioning context for the background SVG */
             position: relative;
-            overflow: hidden; /* Hide parts of the curves that go outside */
+            overflow: hidden;
         }
 
         /* START: Styles for Background Curves */
@@ -37,7 +36,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 0; /* Place it behind the content */
+            z-index: 0;
         }
         /* END: Styles for Background Curves */
 
@@ -46,6 +45,50 @@
             position: relative;
             z-index: 1;
         }
+
+        /* START: Flip Card Styles */
+        .flip-card {
+            background-color: transparent;
+            aspect-ratio: 1 / 1; /* Ensure the card area is square */
+            perspective: 1000px; /* 3D effect */
+            cursor: pointer;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        /* This class is added by JS on click */
+        .flip-card:hover .flip-card-inner,
+        .flip-card-inner.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden; /* Safari */
+            backface-visibility: hidden;
+            border-radius: 1rem; /* 16px */
+        }
+
+        .flip-card-back {
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            /* Added for SVG background positioning */
+            position: relative;
+            overflow: hidden;
+        }
+        /* END: Flip Card Styles */
     </style>
 </head>
 <body class="bg-base-200 font-sans antialiased">
@@ -54,9 +97,7 @@
     <!-- START: Background Curves SVG -->
     <div id="background-curves">
         <svg width="100%" height="100%" viewBox="0 0 1440 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-            <!-- Curve 1: A gentle S-curve -->
             <path d="M-200 200 C 400 0, 1000 800, 1600 600" stroke="rgba(255, 255, 255, 0.2)" stroke-width="5" fill="none" />
-            <!-- Curve 2: A different, more subtle curve -->
             <path d="M-100 700 C 500 900, 900 100, 1500 200" stroke="rgba(255, 255, 255, 0.15)" stroke-width="4" fill="none" />
         </svg>
     </div>
@@ -65,70 +106,142 @@
 
     <!-- Page 1: Introduction -->
     <div id="page1" class="text-center w-full max-w-7xl">
-
-        <!-- This is the canvas for the floating elements on large screens -->
-        <!-- On mobile, it will just be a container for a grid -->
         <div class="relative w-full lg:h-[600px] flex flex-col justify-center">
-
-            <!-- Central Title: Positioned absolutely on large screens -->
             <h1 class="text-4xl md:text-5xl font-bold lg:my-0 lg:absolute lg:top-1/4 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:z-10">
                 Accomplish more<br> with Bex
             </h1>
+            <div class="grid grid-cols-2 gap-8 lg:gap-6 lg:block mt-8 lg:mt-0">
 
-            <!-- Images Container: A grid on mobile, but its children become absolute on large screens -->
-            <div class="grid grid-cols-2 gap-8 lg:gap-6 lg:block">
-
-                <!-- Image Item 1 -->
-                <div class="relative flex flex-col items-center lg:absolute lg:top-[10%] lg:left-[10%] lg:w-1/5 transition-transform duration-300 hover:scale-110">
-                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #023047">
-                        <img src="{{ asset('images/smart_summaries.png') }}" alt="Feature 1" class="w-full h-full object-cover rounded-lg">
+                <!-- Item 1: Smart Summaries -->
+                <div class="flip-card lg:absolute lg:top-[47%] lg:left-[-2%] lg:w-1/6 transition-transform duration-300 hover:scale-110">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <!-- Changed here -->
+                            <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #fca311;">
+                                <img src="{{ asset('images/group_chats.png') }}" alt="Group Chats" class="w-full h-full object-cover rounded-lg">
+                            </div>
+                            <!-- Changed here -->
+                            <p class="absolute -bottom-4 text-warning-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #fca311;">Group Chats</p>
+                        </div>
+                        <!-- Changed here -->
+                        <div class="flip-card-back border-4" style="background-color: #fca311; border-color: #fca311;">
+                            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 z-0 opacity-50"><path d="M-10 20 C 40 0, 60 100, 110 80" stroke="rgba(0, 0, 0, 0.1)" stroke-width="2" fill="none" /><path d="M-5 90 C 30 110, 70 50, 105 60" stroke="rgba(0, 0, 0, 0.05)" stroke-width="1" fill="none" /></svg>
+                            <div class="relative z-10 p-4">
+                                <h4 class="font-bold text-lg mb-1 text-secondary-content">Group Chats</h4>
+                                <!-- Changed here -->
+                                <p class="text-base text-secondary-content/80">Collaborate in real-time with your team in dedicated, organized conversation channels.</p>
+                            </div>
+                        </div>
                     </div>
-                    <p class="absolute -bottom-4 text-primary-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #023047">Smart Summaries</p>
                 </div>
 
-                <!-- Image Item 2 -->
-                <div class="relative flex flex-col items-center lg:absolute lg:top-[5%] lg:right-[2%] lg:w-1/6 transition-transform duration-300 hover:scale-110">
-                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #fb6f92;">
-                        <img src="{{ asset('images/ai_chat.png') }}" alt="Feature 2" class="w-full h-full object-cover rounded-lg">
+                <!-- Item 2: AI-Powered Chat -->
+                <div class="flip-card lg:absolute lg:top-[5%] lg:right-[2%] lg:w-1/6 transition-transform duration-300 hover:scale-110">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #fb6f92;">
+                                <img src="{{ asset('images/ai_chat.png') }}" alt="AI-Powered Chat" class="w-full h-full object-cover rounded-lg">
+                            </div>
+                            <p class="absolute -bottom-4 text-secondary-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #fb6f92">AI-Powered Chat</p>
+                        </div>
+                        <div class="flip-card-back border-4" style="background-color: #fb6f92; border-color: #fb6f92">
+                            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 z-0 opacity-50"><path d="M-10 20 C 40 0, 60 100, 110 80" stroke="rgba(255, 255, 255, 0.2)" stroke-width="2" fill="none" /><path d="M-5 90 C 30 110, 70 50, 105 60" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1" fill="none" /></svg>
+                            <div class="relative z-10 p-4">
+                                <h4 class="font-bold text-lg mb-1 text-secondary-content">AI-Powered Chat</h4>
+                                <!-- Changed here -->
+                                <p class="text-base text-secondary-content/80">Ask questions, brainstorm ideas, and get instant answers from an AI that understands your context.</p>
+                            </div>
+                        </div>
                     </div>
-                    <p class="absolute -bottom-4 text-secondary-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #fb6f92">AI-Powered Chat</p>
                 </div>
 
-                <!-- Image Item 3 -->
-                <div class="relative flex flex-col items-center lg:absolute lg:top-[45%] lg:left-[-5%] lg:w-1/6 transition-transform duration-300 hover:scale-110">
-                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-accent p-2 shadow-lg">
-                        <img src="{{ asset('images/action_items.png') }}" alt="Feature 3" class="w-full h-full object-cover rounded-lg">
+                <!-- Item 3: Group Chats -->
+                <div class="flip-card lg:absolute lg:top-[10%] lg:left-[10%] lg:w-1/5 transition-transform duration-300 hover:scale-110">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #023047">
+                                <img src="{{ asset('images/smart_summaries.png') }}" alt="Smart Summaries" class="w-full h-full object-cover rounded-lg">
+                            </div>
+                            <p class="absolute -bottom-4 text-primary-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #023047">Smart Summaries</p>
+                        </div>
+                        <div class="flip-card-back border-4" style="background-color: #023047; border-color: #023047">
+                            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 z-0 opacity-50"><path d="M-10 20 C 40 0, 60 100, 110 80" stroke="rgba(255, 255, 255, 0.2)" stroke-width="2" fill="none" /><path d="M-5 90 C 30 110, 70 50, 105 60" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1" fill="none" /></svg>
+                            <div class="relative z-10 p-4">
+                                <h4 class="font-bold text-lg mb-1 text-primary-content">Smart Summaries</h4>
+                                <!-- Changed here -->
+                                <p class="text-base text-primary-content/80">Instantly condense long documents and conversations into key points, saving you hours of reading.</p>
+                            </div>
+                        </div>
                     </div>
-                    <p class="absolute -bottom-4 bg-accent text-accent-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Action Items</p>
                 </div>
 
-                <!-- Image Item 4 -->
-                <div class="relative flex flex-col items-center lg:absolute lg:bottom-[6%] lg:left-[30%] lg:w-1/6 transition-transform duration-300 hover:scale-110">
-                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-info p-2 shadow-lg">
-                        <img src="{{ asset('images/audio_transcription.png') }}" alt="Feature 4" class="w-full h-full object-cover rounded-lg">
+                <!-- Item 4: Audio Transcription -->
+                <div class="flip-card lg:absolute lg:bottom-[6%] lg:left-[30%] lg:w-1/6 transition-transform duration-300 hover:scale-110">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-info p-2 shadow-lg">
+                                <img src="{{ asset('images/audio_transcription.png') }}" alt="Audio Transcription" class="w-full h-full object-cover rounded-lg">
+                            </div>
+                            <p class="absolute -bottom-4 bg-info text-info-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Audio Transcription</p>
+                        </div>
+                        <div class="flip-card-back bg-info border-4 border-info">
+                            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 z-0 opacity-50"><path d="M-10 20 C 40 0, 60 100, 110 80" stroke="rgba(255, 255, 255, 0.2)" stroke-width="2" fill="none" /><path d="M-5 90 C 30 110, 70 50, 105 60" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1" fill="none" /></svg>
+                            <div class="relative z-10 p-4">
+                                <h4 class="font-bold text-lg mb-1 text-white">Audio Transcription</h4>
+                                <!-- Changed here -->
+                                <p class="text-base text-white/80">Turn spoken words from audio or video files into searchable, editable text in seconds.</p>
+                            </div>
+                        </div>
                     </div>
-                    <p class="absolute -bottom-4 bg-info text-info-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Audio Transcription</p>
                 </div>
 
-                <!-- Image Item 5 -->
-                <div class="relative flex flex-col items-center lg:absolute lg:bottom-[5%] lg:right-[20%] lg:w-1/4 transition-transform duration-300 hover:scale-110">
-                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-success p-2 shadow-lg">
-                        <img src="{{ asset('images/personal_notes.png') }}" alt="Feature 5" class="w-full h-full object-cover rounded-lg">
+                <!-- Item 5: Team Workspaces -->
+                <div class="flip-card lg:absolute lg:bottom-[5%] lg:right-[20%] lg:w-1/4 transition-transform duration-300 hover:scale-110">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <!-- Changed here -->
+                            <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #0a9396;">
+                                <img src="{{ asset('images/team_workspaces.png') }}" alt="Team Workspaces" class="w-full h-full object-cover rounded-lg">
+                            </div>
+                            <!-- Changed here -->
+                            <p class="absolute -bottom-4 text-accent-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #0a9396;">Team Workspaces</p>
+                        </div>
+                        <!-- Changed here -->
+                        <div class="flip-card-back border-4" style="background-color: #0a9396; border-color: #0a9396;">
+                            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 z-0 opacity-50"><path d="M-10 20 C 40 0, 60 100, 110 80" stroke="rgba(255, 255, 255, 0.2)" stroke-width="2" fill="none" /><path d="M-5 90 C 30 110, 70 50, 105 60" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1" fill="none" /></svg>
+                            <div class="relative z-10 p-4">
+                                <h4 class="font-bold text-lg mb-1 text-white">Team Workspaces</h4>
+                                <!-- Changed here -->
+                                <p class="text-base text-white/80">A central hub for your team's projects, files, and conversations. Keep everyone aligned and informed.</p>
+                            </div>
+                        </div>
                     </div>
-                    <p class="absolute -bottom-4 bg-success text-success-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Personal Notes</p>
                 </div>
 
-                <!-- Image Item 6 -->
-                <div class="relative flex flex-col items-center lg:absolute lg:top-[65%] lg:right-[-5%] lg:w-1/6 transition-transform duration-300 hover:scale-110">
-                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-warning p-2 shadow-lg">
-                        <img src="{{ asset('images/file_management.png') }}" alt="Feature 6" class="w-full h-full object-cover rounded-lg">
+                <!-- Item 6: Personal Notes -->
+                <div class="flip-card lg:absolute lg:top-[65%] lg:right-[-5%] lg:w-1/6 transition-transform duration-300 hover:scale-110">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-success p-2 shadow-lg">
+                                <img src="{{ asset('images/personal_notes.png') }}" alt="Personal Notes" class="w-full h-full object-cover rounded-lg">
+                            </div>
+                            <p class="absolute -bottom-4 bg-success text-success-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Personal Notes</p>
+                        </div>
+                        <div class="flip-card-back bg-success border-4 border-success">
+                            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 z-0 opacity-50"><path d="M-10 20 C 40 0, 60 100, 110 80" stroke="rgba(255, 255, 255, 0.2)" stroke-width="2" fill="none" /><path d="M-5 90 C 30 110, 70 50, 105 60" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1" fill="none" /></svg>
+                            <div class="relative z-10 p-4">
+                                <h4 class="font-bold text-lg mb-1 text-white">Personal Notes</h4>
+                                <!-- Changed here -->
+                                <p class="text-base text-white/80">A private space to jot down ideas, draft messages, and organize your thoughts before sharing.</p>
+                            </div>
+                        </div>
                     </div>
-                    <p class="absolute -bottom-4 bg-warning text-warning-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">File Management</p>
                 </div>
+
             </div>
         </div>
 
-        <div class="mt-16 lg:mt-0">
+        <div class="mt-24 lg:mt-0">
             <button id="continue-btn" class="btn btn-primary btn-wide btn-lg" style="background-color: #023047">Continue</button>
         </div>
     </div>
@@ -155,47 +268,125 @@
 
             <!-- Left Column: Collaboration Features -->
             <div class="grid grid-cols-2 gap-4 md:gap-6">
-                <!-- Image Item 7 -->
-                <div class="relative flex flex-col items-center">
-                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-accent p-2 shadow-lg">
-                        <img src="{{ asset('images/team_workspaces.png') }}" alt="Collaboration 1" class="w-full h-full object-cover rounded-lg">
+                <!-- Item 7: Action Items -->
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <!-- Changed here -->
+                            <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #0a9396;">
+                                <img src="{{ asset('images/action_items.png') }}" alt="Action Items" class="w-full h-full object-cover rounded-lg">
+                            </div>
+                            <!-- Changed here -->
+                            <p class="absolute -bottom-3 text-accent-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #0a9396;">Action Items</p>
+                        </div>
+                        <!-- Changed here -->
+                        <div class="flip-card-back border-4" style="background-color: #0a9396; border-color: #0a9396;">
+                            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 z-0 opacity-50"><path d="M-10 20 C 40 0, 60 100, 110 80" stroke="rgba(255, 255, 255, 0.2)" stroke-width="2" fill="none" /><path d="M-5 90 C 30 110, 70 50, 105 60" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1" fill="none" /></svg>
+                            <div class="relative z-10 p-4">
+                                <h4 class="font-bold text-lg mb-1 text-white">Action Items</h4>
+                                <!-- Changed here -->
+                                <p class="text-base text-white/80">AI automatically identifies tasks and deadlines from your conversations so nothing gets missed.</p>
+                            </div>
+                        </div>
                     </div>
-                    <p class="absolute -bottom-3 bg-accent text-accent-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Team Workspaces</p>
                 </div>
-                <!-- Image Item 8 -->
-                <div class="relative flex flex-col items-center">
-                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-warning p-2 shadow-lg">
-                        <img src="{{ asset('images/group_chats.png') }}" alt="Collaboration 2" class="w-full h-full object-cover rounded-lg">
+                <!-- Item 8: File Management -->
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <!-- Changed here -->
+                            <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #fca311;">
+                                <img src="{{ asset('images/file_management.png') }}" alt="File Management" class="w-full h-full object-cover rounded-lg">
+                            </div>
+                            <!-- Changed here -->
+                            <p class="absolute -bottom-3 text-warning-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #fca311;">File Management</p>
+                        </div>
+                        <!-- Changed here -->
+                        <div class="flip-card-back border-4" style="background-color: #fca311; border-color: #fca311;">
+                            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 z-0 opacity-50"><path d="M-10 20 C 40 0, 60 100, 110 80" stroke="rgba(0, 0, 0, 0.1)" stroke-width="2" fill="none" /><path d="M-5 90 C 30 110, 70 50, 105 60" stroke="rgba(0, 0, 0, 0.05)" stroke-width="1" fill="none" /></svg>
+                            <div class="relative z-10 p-4">
+                                <h4 class="font-bold text-lg mb-1 text-secondary-content">File Management</h4>
+                                <!-- Changed here -->
+                                <p class="text-base text-secondary-content/80">Upload, organize, and find any file within your chats and workspaces. Fully searchable and secure.</p>
+                            </div>
+                        </div>
                     </div>
-                    <p class="absolute -bottom-3 bg-warning text-info-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Group Chats</p>
                 </div>
-                <!-- Image Item 9 -->
-                <div class="relative flex flex-col items-center">
-                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-success p-2 shadow-lg">
-                        <img src="{{ asset('images/shared_files.png') }}" alt="Collaboration 3" class="w-full h-full object-cover rounded-lg">
+                <!-- Item 9: Shared Files -->
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-success p-2 shadow-lg">
+                                <img src="{{ asset('images/shared_files.png') }}" alt="Shared Files" class="w-full h-full object-cover rounded-lg">
+                            </div>
+                            <p class="absolute -bottom-3 bg-success text-success-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Shared Files</p>
+                        </div>
+                        <div class="flip-card-back bg-success border-4 border-success">
+                            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 z-0 opacity-50"><path d="M-10 20 C 40 0, 60 100, 110 80" stroke="rgba(255, 255, 255, 0.2)" stroke-width="2" fill="none" /><path d="M-5 90 C 30 110, 70 50, 105 60" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1" fill="none" /></svg>
+                            <div class="relative z-10 p-4">
+                                <h4 class="font-bold text-lg mb-1 text-white">Shared Files</h4>
+                                <!-- Changed here -->
+                                <p class="text-base text-white/80">Easily share documents with team members and get feedback directly within the platform.</p>
+                            </div>
+                        </div>
                     </div>
-                    <p class="absolute -bottom-3 bg-success text-success-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Shared Files</p>
                 </div>
-                <!-- Image Item 10 -->
-                <div class="relative flex flex-col items-center">
-                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-info p-2 shadow-lg">
-                        <img src="{{ asset('images/member_management.png') }}" alt="Collaboration 4" class="w-full h-full object-cover rounded-lg">
+                <!-- Item 10: Member Management -->
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 border-info p-2 shadow-lg">
+                                <img src="{{ asset('images/member_management.png') }}" alt="Member Management" class="w-full h-full object-cover rounded-lg">
+                            </div>
+                            <p class="absolute -bottom-3 bg-info text-info-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Member Management</p>
+                        </div>
+                        <div class="flip-card-back bg-info border-4 border-info">
+                            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 z-0 opacity-50"><path d="M-10 20 C 40 0, 60 100, 110 80" stroke="rgba(255, 255, 255, 0.2)" stroke-width="2" fill="none" /><path d="M-5 90 C 30 110, 70 50, 105 60" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1" fill="none" /></svg>
+                            <div class="relative z-10 p-4">
+                                <h4 class="font-bold text-lg mb-1 text-white">Member Management</h4>
+                                <!-- Changed here -->
+                                <p class="text-base text-white/80">Invite, remove, and manage user roles and permissions with simple, intuitive controls.</p>
+                            </div>
+                        </div>
                     </div>
-                    <p class="absolute -bottom-3 bg-info text-warning-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md">Member Management</p>
                 </div>
-                <!-- Image Item 11 -->
-                <div class="relative flex flex-col items-center">
-                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #fb6f92;">
-                        <img src="{{ asset('images/secure_data.png') }}" alt="Collaboration 5" class="w-full h-full object-cover rounded-lg">
+                <!-- Item 11: Secure Data -->
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #fb6f92;">
+                                <img src="{{ asset('images/secure_data.png') }}" alt="Secure Data" class="w-full h-full object-cover rounded-lg">
+                            </div>
+                            <p class="absolute -bottom-3 text-primary-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #fb6f92">Secure Data</p>
+                        </div>
+                        <div class="flip-card-back border-4" style="background-color: #fb6f92; border-color: #fb6f92">
+                            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 z-0 opacity-50"><path d="M-10 20 C 40 0, 60 100, 110 80" stroke="rgba(255, 255, 255, 0.2)" stroke-width="2" fill="none" /><path d="M-5 90 C 30 110, 70 50, 105 60" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1" fill="none" /></svg>
+                            <div class="relative z-10 p-4">
+                                <h4 class="font-bold text-lg mb-1 text-secondary-content">Secure Data</h4>
+                                <!-- Changed here -->
+                                <p class="text-base text-secondary-content/80">Your conversations and files are protected with end-to-end encryption and enterprise-grade security.</p>
+                            </div>
+                        </div>
                     </div>
-                    <p class="absolute -bottom-3 text-primary-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #fb6f92">Secure Data</p>
                 </div>
-                <!-- Image Item 12 -->
-                <div class="relative flex flex-col items-center">
-                    <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #023047">
-                        <img src="{{ asset('images/prepare_meetings.png') }}" alt="Collaboration 5" class="w-full h-full object-cover rounded-lg">
+                <!-- Item 12: Prep for Meetings -->
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="w-full aspect-square bg-base-300 rounded-2xl border-4 p-2 shadow-lg" style="border-color: #023047">
+                                <img src="{{ asset('images/prepare_meetings.png') }}" alt="Prep for Meetings" class="w-full h-full object-cover rounded-lg">
+                            </div>
+                            <p class="absolute -bottom-3 text-primary-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #023047">Prep for Meetings</p>
+                        </div>
+                        <div class="flip-card-back border-4" style="background-color: #023047; border-color: #023047">
+                            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 z-0 opacity-50"><path d="M-10 20 C 40 0, 60 100, 110 80" stroke="rgba(255, 255, 255, 0.2)" stroke-width="2" fill="none" /><path d="M-5 90 C 30 110, 70 50, 105 60" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1" fill="none" /></svg>
+                            <div class="relative z-10 p-4">
+                                <h4 class="font-bold text-lg mb-1 text-primary-content">Prep for Meetings</h4>
+                                <!-- Changed here -->
+                                <p class="text-base text-primary-content/80">Generate agendas, talking points, and summaries of past conversations to walk into every meeting prepared.</p>
+                            </div>
+                        </div>
                     </div>
-                    <p class="absolute -bottom-3 text-primary-content text-sm font-semibold px-3 py-1 rounded-lg shadow-md" style="background-color: #023047">Prep for Meetings</p>
                 </div>
             </div>
 
@@ -265,23 +456,28 @@
         const mainContainer = document.getElementById('main-container');
 
         mainContainer.style.backgroundColor = '#0077b6';
-
-        // Hide page 1
         page1.style.display = 'none';
-
-        // Show page 2 with a fade-in effect
         page2.classList.remove('hidden');
         setTimeout(() => {
             page2.style.opacity = '1';
-        }, 50); // A small delay to ensure the transition triggers
+        }, 50);
     });
 
-    // Script for pricing calculator
     document.addEventListener('DOMContentLoaded', function () {
-        // --- DOM Elements ---
+        // --- Script for Flip Cards (for touch devices) ---
+        const cards = document.querySelectorAll('.flip-card');
+        cards.forEach(card => {
+            card.addEventListener('click', function() {
+                const cardInner = card.querySelector('.flip-card-inner');
+                if (cardInner) {
+                    cardInner.classList.toggle('is-flipped');
+                }
+            });
+        });
+
+        // --- Script for pricing calculator ---
         const billingToggle = document.getElementById('billing-toggle');
         const quantitySlider = document.getElementById('quantity-slider');
-
         const planTitle = document.getElementById('plan-title');
         const planDescription = document.getElementById('plan-description');
         const quantityLabel = document.getElementById('quantity-label');
@@ -290,37 +486,28 @@
         const totalPriceEl = document.getElementById('total-price');
         const totalPeriodEl = document.getElementById('total-period');
 
-        // --- Pricing Tiers (MUST match Stripe) ---
-        const monthlyTiers = {
-            1: 6.99, 2: 6.49, 11: 5.99, 51: 5.49, 101: 4.99
-        };
-        const yearlyTiers = {
-            1: 69.90, 2: 64.90, 11: 59.90, 51: 54.90, 101: 49.90
-        };
+        const monthlyTiers = { 1: 6.99, 2: 6.49, 11: 5.99, 51: 5.49, 101: 4.99 };
+        const yearlyTiers = { 1: 69.90, 2: 64.90, 11: 59.90, 51: 54.90, 101: 49.90 };
 
         function getPriceForQuantity(quantity, tiers) {
-            let price = 0;
-            if (quantity >= 101) price = tiers[101];
-            else if (quantity >= 51) price = tiers[51];
-            else if (quantity >= 11) price = tiers[11];
-            else if (quantity >= 2) price = tiers[2];
-            else if (quantity >= 1) price = tiers[1];
-            return price;
+            if (quantity >= 101) return tiers[101];
+            if (quantity >= 51) return tiers[51];
+            if (quantity >= 11) return tiers[11];
+            if (quantity >= 2) return tiers[2];
+            return tiers[1];
         }
 
         function updateUI() {
             const quantity = parseInt(quantitySlider.value, 10);
             const isYearly = billingToggle.checked;
-
             const tiers = isYearly ? yearlyTiers : monthlyTiers;
             const pricePerUser = getPriceForQuantity(quantity, tiers);
             const totalPrice = pricePerUser * quantity;
+            const billingPeriodString = isYearly ? 'year' : 'month';
 
             quantityLabel.textContent = quantity;
             pricePerUserEl.textContent = `$${pricePerUser.toFixed(2)}`;
             totalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
-
-            const billingPeriodString = isYearly ? 'year' : 'month';
             totalPeriodEl.textContent = `/ ${billingPeriodString}`;
 
             if (quantity === 1) {
@@ -334,11 +521,9 @@
             }
         }
 
-        // --- Event Listeners ---
         if (billingToggle && quantitySlider) {
             billingToggle.addEventListener('change', updateUI);
             quantitySlider.addEventListener('input', updateUI);
-            // --- Initial Load ---
             updateUI();
         }
     });
